@@ -1,11 +1,3 @@
-const multiples = new Set();
 const LIMIT = 1000;
-
-for (let n = 1; n < LIMIT; n++) {
-	if (n % 3 === 0 || n % 5 === 0) {
-		multiples.add(n);
-	}
-}
-
-const sum = Array.from(multiples).reduce((acc, curr) => acc + curr, 0);
-console.log(`Summation = ${sum}`);
+const sumMultiples = (n) => n * Math.floor((LIMIT - 1) / n) * Math.floor((LIMIT - 1) / n + 1) / 2;
+console.log(`Summation = ${sumMultiples(3) + sumMultiples(5) - sumMultiples(15)}`);
