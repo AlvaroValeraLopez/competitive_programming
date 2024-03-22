@@ -1,19 +1,27 @@
-const NUMBER = 13195;
-const factors = [];
+const N = 600_851_475_143;
+const primeFactors = findPrimeFactors(N);
+console.log('Biggest prime factor of', N, 'is', primeFactors[primeFactors.length - 1]);
 
-for (let i = 2; i <= Math.sqrt(NUMBER); i++) {
-  if (NUMBER % i === 0) {
-    factors.push(i);
-  }
-}
+function findPrimeFactors(n) {
+    let primeFactors = [];
 
-const primeFactors = factors.filter((factor) => {
-  for (let i = 2; i <= Math.sqrt(factor); i++) {
-    if (factor % i === 0) {
-      return false;
+    while (n % 2 === 0) {
+        primeFactors.push(2);
+        n = n / 2;
     }
-  }
-  return true;
-});
 
-console.log('Largest Prime Factor = ', primeFactors[primeFactors.length - 1])
+    let sqrtN = Math.sqrt(n);
+    for (let i = 3; i <= sqrtN; i += 2) {
+        while (n % i === 0) {
+            primeFactors.push(i);
+            n = n / i;
+            sqrtN = Math.sqrt(n);
+        }
+    }
+
+    if (n > 2) {
+        primeFactors.push(n);
+    }
+
+    return primeFactors;
+}
