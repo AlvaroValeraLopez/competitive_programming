@@ -6,14 +6,14 @@ function isPrime(num, primes) {
 }
 
 function findNthPrime(n) {
-    const primes = [2]; // Starting with the first prime
-    let num = 3; // Starting from the first odd number after 2
+    const primes = [2];
+    let num = 3;
 
     while (primes.length < n) {
         if (isPrime(num, primes)) {
             primes.push(num);
         }
-        num += 2; // Only check odd numbers
+        num += 2;
     }
 
     return primes[n - 1];
