@@ -1,13 +1,14 @@
 const LIMIT = 4_000_000;
-const fibonacciSequence = [1, 2, 3, 5, 8, 13, 21, 34, 55, 89];
+let sum = 0;
+let a = 1;
+let b = 1; 
+let c = a + b;
 
-let newFibonacciNumber;
-do{
-    newFibonacciNumber = fibonacciSequence[fibonacciSequence.length - 1] + fibonacciSequence[fibonacciSequence.length - 2];
-    fibonacciSequence.push(newFibonacciNumber);
-}while(newFibonacciNumber < LIMIT);
+while (c < LIMIT) {
+    sum += c;
+    a = b + c;
+    b = a + c;
+    c = a + b;
+}
 
-fibonacciSequence.pop();
-const evenFibonacciSummation = fibonacciSequence.filter(number => number % 2 === 0).reduce((acc, curr) => acc + curr, 0);
-
-console.log('Even Fibonacci Sumattion = ', evenFibonacciSummation);
+console.log('Even Fibonacci Summation = ', sum);
