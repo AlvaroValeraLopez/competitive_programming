@@ -1,16 +1,16 @@
 const fs = require('fs');
 
-fs.readFile('triangle.txt', 'utf8', (err, data) => {
+fs.readFile('67_triangle.txt', 'utf8', (err, data) => {
   if (err) {
     console.error(err);
     return;
   }
-  
+
   // Parse the triangle into a two-dimensional array
   let triangle = data.split('\n')
-                     .filter(line => line !== '')
-                     .map(line => line.split(' ').map(Number));
-                     
+    .filter(line => line !== '')
+    .map(line => line.split(' ').map(Number));
+
   console.log(maximumPathSum(triangle));
 });
 
