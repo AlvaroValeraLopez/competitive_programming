@@ -61,7 +61,7 @@ numero: 3
 dificultad: media # facil | media | dificil
 ```
 
-Las fuentes están en `src/lib/fuentes.ts`. Una fuente numerada (Project Euler, Acepta el reto) agrupa sus ejercicios por decenas y los nombra con su prefijo («Problema 3: …»); una que no lo está (Exercism) los ordena alfabéticamente. Para añadir una fuente nueva basta con añadirla ahí.
+Las fuentes están en `src/lib/fuentes.ts`. Una fuente numerada (Project Euler, Acepta el reto) ordena sus ejercicios por número y los nombra con su prefijo («Problema 3: …»); una que no lo está (Exercism) los ordena alfabéticamente. Para añadir una fuente nueva basta con añadirla ahí.
 
 La dificultad (`src/lib/dificultad.ts`) es obligatoria en todos los ejercicios: si falta, la compilación falla. Es **fácil** si basta una idea directa o la fuerza bruta ya es suficiente, **media** si hace falta un concepto que no es inmediato (la criba, la factorización, la programación dinámica…) y **difícil** si hay que combinar varios conceptos y pensar en la eficiencia. Se ve como una píldora verde, ámbar o roja en la lista de ejercicios y en la ficha que hay bajo el título de cada ejercicio, junto a su fuente y los conceptos que aplica, separados por dominio.
 

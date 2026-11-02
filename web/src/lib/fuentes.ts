@@ -3,7 +3,7 @@
  *
  * Una fuente puede numerar sus ejercicios (Project Euler, Acepta el reto) o
  * identificarlos solo por su nombre (Exercism). Los ejercicios numerados se
- * agrupan por decenas; los demás, por orden alfabético.
+ * ordenan por número; los demás, por orden alfabético.
  *
  * Lógica pura, sin Astro, para poder probarla con `node --test`.
  */

@@ -1,7 +1,6 @@
 /**
- * Agrupación de ejercicios y conceptos para el menú lateral y los catálogos:
- * los ejercicios por fuente (y, si la fuente los numera, por decenas) y los
- * conceptos por dominio y área.
+ * Agrupación de ejercicios y conceptos para los catálogos: los ejercicios por
+ * fuente y los conceptos por dominio y área.
  *
  * Lógica pura, sin Astro, para poder probarla con `node --test`.
  */
@@ -44,18 +43,9 @@ export interface Entrada {
 	orden?: number;
 }
 
-export interface Decena<T extends Entrada = Entrada> {
-	desde: number;
-	hasta: number;
-	etiqueta: string;
-	problemas: T[];
-}
-
 export interface GrupoFuente<T extends Entrada = Entrada> {
 	fuente: string;
 	nombre: string;
-	/** Fuentes numeradas: sus ejercicios por decenas. */
-	decenas?: Decena<T>[];
 	/** Todos sus ejercicios, ordenados por número o, si no tienen, por orden y título. */
 	ejercicios: T[];
 }
@@ -68,25 +58,6 @@ export interface GrupoArea<T extends Entrada = Entrada> {
 export interface GrupoDominio<T extends Entrada = Entrada> {
 	dominio: Dominio;
 	areas: GrupoArea<T>[];
-}
-
-/** La decena a la que pertenece un problema: 1–10, 11–20, …, 91–100. */
-export function decena(numero: number): Omit<Decena, 'problemas'> {
-	if (!Number.isInteger(numero) || numero < 1) {
-		throw new Error(`Número de problema no válido: ${numero}`);
-	}
-	const desde = Math.floor((numero - 1) / 10) * 10 + 1;
-	return { desde, hasta: desde + 9, etiqueta: `${desde}–${desde + 9}` };
-}
-
-function porDecenas<T extends Entrada>(ejercicios: T[]): Decena<T>[] {
-	const decenas = new Map<number, Decena<T>>();
-	for (const p of ejercicios) {
-		const d = decena(p.numero!);
-		if (!decenas.has(d.desde)) decenas.set(d.desde, { ...d, problemas: [] });
-		decenas.get(d.desde)!.problemas.push(p);
-	}
-	return [...decenas.values()].sort((a, b) => a.desde - b.desde);
 }
 
 /**
@@ -128,7 +99,6 @@ export function agruparEjercicios<T extends Entrada>(
 			return {
 				fuente: id,
 				nombre: fuente.nombre,
-				decenas: fuente.numerada ? porDecenas(ordenados) : undefined,
 				ejercicios: ordenados,
 			};
 		})

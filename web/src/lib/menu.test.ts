@@ -2,21 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
 import { nombreDeEjercicio, prefijoDeEjercicio } from './fuentes.ts';
-import { agruparConceptos, agruparEjercicios, AREAS, decena, DOMINIOS, dominioDe, normalizar } from './menu.ts';
-
-describe('decena', () => {
-	test('agrupa de diez en diez, como las carpetas del repositorio', () => {
-		assert.equal(decena(1).etiqueta, '1–10');
-		assert.equal(decena(10).etiqueta, '1–10');
-		assert.equal(decena(11).etiqueta, '11–20');
-		assert.equal(decena(67).etiqueta, '61–70');
-		assert.equal(decena(100).etiqueta, '91–100');
-	});
-
-	test('rechaza números que no son de un problema', () => {
-		for (const n of [0, -3, 2.5, Number.NaN]) assert.throws(() => decena(n), /no válido/);
-	});
-});
+import { agruparConceptos, agruparEjercicios, AREAS, DOMINIOS, dominioDe, normalizar } from './menu.ts';
 
 // Un registro de prueba con una fuente numerada y otra que no lo es.
 const FUENTES_PRUEBA = {
@@ -25,7 +11,7 @@ const FUENTES_PRUEBA = {
 };
 
 describe('agruparEjercicios', () => {
-	test('agrupa por fuente, en el orden del registro, y las numeradas por decenas', () => {
+	test('agrupa por fuente, en el orden del registro; las numeradas, por número', () => {
 		const grupos = agruparEjercicios(
 			[
 				{ id: 'p/grains', titulo: 'Grains', fuente: 'exercism' },
@@ -45,21 +31,9 @@ describe('agruparEjercicios', () => {
 			],
 		);
 		assert.deepEqual(
-			grupos[0].decenas!.map((d) => [d.etiqueta, d.problemas.map((p) => p.numero)]),
-			[
-				['1–10', [1]],
-				['11–20', [12, 15]],
-				['61–70', [67]],
-			],
+			grupos[0].ejercicios.map((e) => e.numero),
+			[1, 12, 15, 67],
 		);
-		assert.equal(grupos[1].decenas, undefined);
-	});
-
-	test('con los 100 problemas de una fuente numerada salen exactamente 10 decenas de 10', () => {
-		const todos = Array.from({ length: 100 }, (_, i) => ({ id: `p/${i + 1}`, titulo: `P${i + 1}`, fuente: 'euler', numero: i + 1 }));
-		const [grupo] = agruparEjercicios(todos, FUENTES_PRUEBA);
-		assert.equal(grupo.decenas!.length, 10);
-		assert.ok(grupo.decenas!.every((d) => d.problemas.length === 10));
 	});
 
 	test('el mismo número puede repetirse en fuentes distintas, pero no en la misma', () => {

@@ -78,13 +78,9 @@ const vistas = [
 ].filter((v): v is string => Boolean(v));
 const resumenPanel = `Filtrar por ${vistas.slice(0, -1).join(', ')}${vistas.length > 1 ? ' o ' : ''}${vistas.at(-1) ?? ''}`;
 
-// Los ejercicios, por fuente; las fuentes numeradas, además, por decenas.
-const bloques = agruparEjercicios(problemas).flatMap((f) =>
-	f.decenas
-		? f.decenas.map((d) => ({ titulo: `${f.nombre} · ${d.etiqueta}`, detalle: `${d.problemas.length} de 10`, problemas: d.problemas }))
-		: [{ titulo: f.nombre, detalle: `${f.ejercicios.length}`, problemas: f.ejercicios }],
-);
-const posicion = new Map(bloques.flatMap((b) => b.problemas).map((p, i) => [p.id, i]));
+// Una sola rejilla, como la de Exercism, en el orden por fuente y número; cada
+// tarjeta ya dice su fuente y su dificultad.
+const ordenados = agruparEjercicios(problemas).flatMap((f) => f.ejercicios);
 ---
 
 <lista-problemas class="ejercicios not-content">
@@ -216,66 +212,58 @@ const posicion = new Map(bloques.flatMap((b) => b.problemas).map((p, i) => [p.id
 		</button>
 	</div>
 
-	<div class="rejilla" data-rejilla>
+	<div class="rejilla">
 		{
-			bloques.map((d) => (
-				<>
-					<h2 class="decena" data-decena>
-						{d.titulo}
-						<span>{d.detalle}</span>
-					</h2>
-					{d.problemas.map((p) => {
-						const usados = conceptosDe(p.id);
-						return (
-							<article
-								class="ejercicio"
-								data-ejercicio
-								data-posicion={posicion.get(p.id)}
-								data-numero={p.numero ?? ''}
-								data-rango={rangoDeDificultad(p.dificultad)}
-								data-texto={normalizar([p.numero, p.etiqueta, p.descripcion, ...p.temas].filter(Boolean).join(' '))}
-								data-valores={JSON.stringify(valores.get(p.id))}
-							>
-								<span class="insignia" aria-hidden="true">
-									{p.numero ?? p.etiqueta.slice(0, 2)}
-								</span>
-								<div class="cuerpo">
-									{p.fuente && <p class="fuente">{FUENTES[p.fuente as keyof typeof FUENTES].nombre}</p>}
-									<div class="titular">
-										<h3>
-											<a href={p.href} class="enlace">
-												<span class="sr-only">{prefijoDeEjercicio(p)}</span>
-												{p.etiqueta}
-											</a>
-										</h3>
-										{p.dificultad && <Dificultad dificultad={p.dificultad} />}
-									</div>
-									{p.descripcion && <p class="descripcion">{p.descripcion}</p>}
-									{usados.length > 0 && (
-										<ul class="usa" aria-label="Conceptos que usa">
-											{usados.map((c) => (
-												<li>
-													<button
-														type="button"
-														aria-pressed="false"
-														data-grupo="conceptos"
-														data-opcion={slug(c)}
-														data-etiqueta={conceptoPorId.get(c)?.etiqueta}
-														data-track={trackDe(c)}
-														title="Filtrar por este concepto"
-													>
-														{conceptoPorId.get(c)?.etiqueta}
-													</button>
-												</li>
-											))}
-										</ul>
-									)}
-								</div>
-							</article>
-						);
-					})}
-				</>
-			))
+			ordenados.map((p, posicion) => {
+				const usados = conceptosDe(p.id);
+				return (
+					<article
+						class="ejercicio"
+						data-ejercicio
+						data-posicion={posicion}
+						data-numero={p.numero ?? ''}
+						data-rango={rangoDeDificultad(p.dificultad)}
+						data-texto={normalizar([p.numero, p.etiqueta, p.descripcion, ...p.temas].filter(Boolean).join(' '))}
+						data-valores={JSON.stringify(valores.get(p.id))}
+					>
+						<span class="insignia" aria-hidden="true">
+							{p.numero ?? p.etiqueta.slice(0, 2)}
+						</span>
+						<div class="cuerpo">
+							{p.fuente && <p class="fuente">{FUENTES[p.fuente as keyof typeof FUENTES].nombre}</p>}
+							<div class="titular">
+								<h2>
+									<a href={p.href} class="enlace">
+										<span class="sr-only">{prefijoDeEjercicio(p)}</span>
+										{p.etiqueta}
+									</a>
+								</h2>
+								{p.dificultad && <Dificultad dificultad={p.dificultad} />}
+							</div>
+							{p.descripcion && <p class="descripcion">{p.descripcion}</p>}
+							{usados.length > 0 && (
+								<ul class="usa" aria-label="Conceptos que usa">
+									{usados.map((c) => (
+										<li>
+											<button
+												type="button"
+												aria-pressed="false"
+												data-grupo="conceptos"
+												data-opcion={slug(c)}
+												data-etiqueta={conceptoPorId.get(c)?.etiqueta}
+												data-track={trackDe(c)}
+												title="Filtrar por este concepto"
+											>
+												{conceptoPorId.get(c)?.etiqueta}
+											</button>
+										</li>
+									))}
+								</ul>
+							)}
+						</div>
+					</article>
+				);
+			})
 		}
 	</div>
 
@@ -308,7 +296,6 @@ const posicion = new Map(bloques.flatMap((b) => b.problemas).map((p, i) => [p.id
 			const recuento = this.querySelector<HTMLElement>('[data-recuento]')!;
 			const activos = this.querySelector<HTMLElement>('[data-activos]')!;
 			const limpiar = this.querySelector<HTMLButtonElement>('[data-limpiar]')!;
-			const rejilla = this.querySelector<HTMLElement>('[data-rejilla]')!;
 			const vacio = this.querySelector<HTMLElement>('[data-vacio]')!;
 			const botones = [...this.querySelectorAll<HTMLButtonElement>('button[data-grupo]')];
 			const tarjetas = [...this.querySelectorAll<HTMLElement>('[data-ejercicio]')].map((elemento) => ({
@@ -368,9 +355,7 @@ const posicion = new Map(bloques.flatMap((b) => b.problemas).map((p, i) => [p.id
 
 			const aplicar = (guardar = true) => {
 				const activo = hayFiltro(filtro);
-				// Con filtro, o en otro orden, las tarjetas se reordenan (CSS `order`) y
-				// se ocultan las cabeceras de las decenas.
-				const reordenar = activo || filtro.orden !== 'fuente';
+				// Las tarjetas visibles se colocan en el orden del filtro (CSS `order`).
 				const visibles = filtrar(tarjetas, filtro);
 				for (const t of tarjetas) {
 					t.elemento.hidden = true;
@@ -378,9 +363,8 @@ const posicion = new Map(bloques.flatMap((b) => b.problemas).map((p, i) => [p.id
 				}
 				visibles.forEach((t, i) => {
 					t.elemento.hidden = false;
-					if (reordenar) t.elemento.style.order = String(i);
+					t.elemento.style.order = String(i);
 				});
-				rejilla.classList.toggle('reordenada', reordenar);
 				for (const b of botones) {
 					b.setAttribute('aria-pressed', String(filtro.seleccion[grupoDe(b)].includes(b.dataset.opcion!)));
 				}
@@ -731,28 +715,7 @@ const posicion = new Map(bloques.flatMap((b) => b.problemas).map((p, i) => [p.id
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(min(100%, 21rem), 1fr));
 		gap: 1rem 1.25rem;
-		margin-top: 0.5rem;
-	}
-	.decena {
-		display: flex;
-		grid-column: 1 / -1;
-		gap: 0.75rem;
-		align-items: baseline;
-		margin: 1.5rem 0 0;
-		font-size: var(--sl-text-2xl);
-		font-weight: 700;
-		color: var(--sl-color-white);
-	}
-	.decena span {
-		font-size: var(--sl-text-sm);
-		font-weight: 500;
-		color: var(--sl-color-gray-3);
-	}
-	.reordenada {
 		margin-top: 1rem;
-	}
-	.reordenada .decena {
-		display: none;
 	}
 
 	.ejercicio {
@@ -810,7 +773,7 @@ const posicion = new Map(bloques.flatMap((b) => b.problemas).map((p, i) => [p.id
 		align-items: flex-start;
 		justify-content: space-between;
 	}
-	h3 {
+	h2 {
 		margin: 0;
 		font-size: var(--sl-text-lg);
 		font-weight: 600;
