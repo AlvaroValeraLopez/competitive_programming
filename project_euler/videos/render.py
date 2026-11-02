@@ -23,6 +23,9 @@ VIDEOS = {
     "funcion-divisor": ("escenas/funcion_divisor.py", "FuncionDivisor"),
     "coeficientes-binomiales": ("escenas/coeficientes_binomiales.py", "CoeficientesBinomiales"),
     "mcd-y-mcm": ("escenas/mcd_mcm.py", "McdMcm"),
+    "test-de-primalidad": ("escenas/primalidad.py", "Primalidad"),
+    "factorizacion-en-primos": ("escenas/factorizacion.py", "Factorizacion"),
+    "criba-de-eratostenes": ("escenas/criba.py", "Criba"),
 }
 
 CALIDADES = {"baja": "l", "media": "m", "alta": "h"}
