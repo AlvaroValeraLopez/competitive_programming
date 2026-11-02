@@ -8,6 +8,7 @@ sidebar:
 
 import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
 import GaussStaircase from '../../../components/GaussStaircase.astro';
+import Video from '../../../components/Video.astro';
 
 ## El resultado
 
@@ -48,7 +49,15 @@ El resultado siempre es un número entero: de dos números consecutivos $n$ y $n
 
 ## Demostración 2: con un dibujo
 
-La misma idea, dibujada. Cada fila $r$ tiene $r$ cuadrados de color y $n + 1 - r$ grises, así que todas las filas miden $n + 1$:
+La misma idea, en movimiento: una copia de la escalera, girada media vuelta, encaja con la original y entre las dos forman un rectángulo de $n \times (n + 1)$.
+
+<Video
+	archivo="suma-de-gauss.mp4"
+	titulo="Dos escaleras de 1 + 2 + 3 + 4 + 5 casillas, una de ellas girada media vuelta, forman un rectángulo de 5 por 6, así que cada escalera tiene 15 casillas."
+	pie="Vídeo generado con código (Manim). Las posiciones de cada casilla se comprueban antes de renderizarlo."
+/>
+
+Y en una imagen fija. Cada fila $r$ tiene $r$ cuadrados de color y $n + 1 - r$ grises, así que todas las filas miden $n + 1$:
 
 <GaussStaircase n={5} />
 
