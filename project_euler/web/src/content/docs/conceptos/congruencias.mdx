@@ -1,0 +1,88 @@
+---
+title: Congruencias y aritmética modular
+description: Qué significa que dos números sean congruentes módulo n, por qué se puede sumar y multiplicar quedándose solo con los restos, cuándo se puede dividir y cómo sirve para contar días de la semana.
+sidebar:
+  label: Congruencias
+  order: 15
+requiere: [mcd-y-mcm]
+area: Aritmética modular
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+
+## Qué es una congruencia
+
+Dos enteros $a$ y $b$ son **congruentes módulo $n$** si su diferencia es múltiplo de $n$:
+
+$$
+a \equiv b \pmod{n} \quad\Longleftrightarrow\quad n \mid a - b
+$$
+
+Equivale a que $a$ y $b$ dejen el mismo resto al dividirlos entre $n$. Por ejemplo, $17 \equiv 3 \pmod 7$, porque $17 - 3 = 14$, y los dos dejan resto 3.
+
+Es la aritmética de los relojes y de los calendarios. Si hoy es martes, dentro de 100 días será jueves: $100 = 14 \cdot 7 + 2$, así que $100 \equiv 2 \pmod 7$ y avanzar 100 días es como avanzar 2. Solo importa el resto.
+
+## Sumar y multiplicar con restos
+
+> Si $a \equiv a'$ y $b \equiv b' \pmod n$, entonces $a + b \equiv a' + b'$ y $a \cdot b \equiv a' \cdot b' \pmod n$.
+
+**Demostración.** Escribimos $a' = a + sn$ y $b' = b + tn$. Entonces $a' + b' = a + b + (s + t)\,n$, y
+
+$$
+a' b' = ab + (at + bs + stn)\,n
+$$
+
+En los dos casos la diferencia es un múltiplo de $n$.
+
+La consecuencia práctica es enorme: **se puede reducir módulo $n$ en cada paso**, y los números nunca pasan de $n$, por grande que sea el cálculo. Por ejemplo, ¿en qué cifra acaba $7^{100}$? La última cifra es el resto módulo 10. Como $7^4 = 2401 \equiv 1 \pmod{10}$,
+
+$$
+7^{100} = \left(7^4\right)^{25} \equiv 1^{25} = 1 \pmod{10}
+$$
+
+así que acaba en 1, sin calcular un número de 85 cifras.
+
+<Aside type="caution" title="El resto de un número negativo">
+En matemáticas, el resto de dividir entre $n$ está siempre entre $0$ y $n - 1$: $-3 \equiv 4 \pmod 7$. En JavaScript, `-3 % 7` da `-3`, porque `%` conserva el signo del dividendo. Para obtener el resto matemático se escribe `((a % n) + n) % n`. En Python, `-3 % 7` ya da `4`.
+</Aside>
+
+## Dividir: solo a veces
+
+La división no funciona igual. Por ejemplo, $2 \cdot 3 \equiv 2 \cdot 8 \pmod{10}$, porque $6$ y $16$ acaban igual, pero $3 \not\equiv 8 \pmod{10}$: no se puede tachar el 2.
+
+> Si $\operatorname{mcd}(c, n) = 1$ y $ca \equiv cb \pmod n$, entonces $a \equiv b \pmod n$.
+
+**Demostración.** $n$ divide a $c\,(a - b)$ y no comparte ningún factor primo con $c$, así que todos sus factores primos están en $a - b$: $n$ divide a $a - b$. Ver [mcd y mcm](../mcd-y-mcm/).
+
+**Inversos.** Si $\operatorname{mcd}(a, n) = 1$, existe un $x$ con $ax \equiv 1 \pmod n$: el **inverso** de $a$ módulo $n$. La razón es que la función $x \mapsto ax \bmod n$ es inyectiva en $\{0, 1, \dots, n-1\}$, por la propiedad anterior, y una función inyectiva de un conjunto finito en sí mismo es biyectiva: algún $x$ va a parar al 1. Por ejemplo, $3 \cdot 5 = 15 \equiv 1 \pmod 7$, así que el inverso de 3 módulo 7 es 5. Si $\operatorname{mcd}(a, n) > 1$, no hay inverso: $ax - 1$ nunca es múltiplo de $n$, porque $\operatorname{mcd}(a, n)$ divide a $ax$ y a $n$ pero no a $1$.
+
+## Contar días de la semana
+
+Numerando los días de la semana del 0 (domingo) al 6 (sábado), avanzar $L$ días es sumar $L$ módulo 7. Por eso solo importa la longitud de cada mes **módulo 7**:
+
+| Días del mes | 28 | 29 | 30 | 31 |
+| --- | --- | --- | --- | --- |
+| Módulo 7 | 0 | 1 | 2 | 3 |
+
+Un año normal tiene $365 = 52 \cdot 7 + 1$ días, y uno bisiesto 366: de un año al siguiente, el mismo día de la fecha avanza **un** día de la semana, o **dos** si por medio hay un 29 de febrero.
+
+En el calendario gregoriano, un año es bisiesto si es múltiplo de 4, salvo los múltiplos de 100 que no lo son de 400: 1900 no fue bisiesto y 2000 sí. Así que 400 años tienen $400 \cdot 365 + 97 = 146\,097$ días, y
+
+$$
+146\,097 = 7 \cdot 20\,871
+$$
+
+**Cada 400 años el calendario se repite exactamente**, con los mismos días de la semana en las mismas fechas.
+
+## Potencias módulo n
+
+Para calcular $a^k \bmod n$ con $k$ grande se combina la potenciación rápida con la reducción en cada paso: se eleva al cuadrado repetidamente, reduciendo módulo $n$ cada vez, y nunca aparece un número mayor que $n^2$. En Python lo hace `pow(a, k, n)`. Las potencias de un número módulo $n$ acaban repitiéndose en ciclo, y la longitud de ese ciclo es su [orden multiplicativo](../orden-multiplicativo/).
+
+## Conceptos previos
+
+<Relaciones mostrar="requiere" />
+
+## Dónde aparece
+
+<Relaciones mostrar="aparece" />
