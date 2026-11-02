@@ -1,0 +1,190 @@
+---
+title: Números primos y test de primalidad
+description: Qué es un número primo, cómo comprobar si un número lo es probando divisores solo hasta su raíz cuadrada y cuántos primos hay.
+sidebar:
+  label: Test de primalidad
+  order: 5
+area: Teoría de números
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+
+## Qué es un número primo
+
+Un entero $n > 1$ es **primo** si sus únicos divisores positivos son $1$ y $n$. Si $n > 1$ no es primo, se llama **compuesto**, y entonces se puede escribir como $n = a \cdot b$ con $1 < a, b < n$. Los primeros primos son
+
+$$
+2,\ 3,\ 5,\ 7,\ 11,\ 13,\ 17,\ 19,\ 23,\ 29,\ 31,\ 37,\ 41,\ 43,\ 47,\ \dots
+$$
+
+Dicho con la [función divisor](../funcion-divisor/): los primos son exactamente los números con dos divisores, $d(n) = 2$.
+
+**El 1 no es primo.** Tiene un solo divisor, así que no cumple la definición. Y no es un capricho: si el 1 fuera primo, la descomposición en primos dejaría de ser única, porque $6 = 2 \cdot 3 = 1 \cdot 2 \cdot 3 = 1 \cdot 1 \cdot 2 \cdot 3 = \cdots$. El [teorema fundamental de la aritmética](../factorizacion-en-primos/) necesitaría una excepción.
+
+**El menor divisor mayor que 1 es primo.** Sea $n > 1$ y sea $q$ su menor divisor mayor que 1. Si $q$ fuera compuesto, $q = a \cdot b$ con $1 < a < q$, y $a$ dividiría a $q$ y por tanto a $n$: sería un divisor de $n$ mayor que 1 y más pequeño que $q$. Imposible. En particular, **todo $n > 1$ tiene al menos un factor primo**. Usaremos este hecho varias veces.
+
+## Basta con probar hasta la raíz cuadrada
+
+La forma ingenua de saber si $n$ es primo es probar si lo divide algún $d$ entre $2$ y $n - 1$. Son $n - 2$ divisiones, pero casi todas sobran:
+
+$$
+n > 1 \text{ es compuesto} \quad\Longrightarrow\quad n \text{ tiene un divisor } d \text{ con } 1 < d \le \sqrt{n}
+$$
+
+**Demostración.** Si $n$ es compuesto, $n = a \cdot b$ con $1 < a, b < n$. Ordenamos los factores para que $a \le b$. Entonces
+
+$$
+a^2 = a \cdot a \le a \cdot b = n \quad\Longrightarrow\quad a \le \sqrt{n}.
+$$
+
+Dicho al revés: **si ningún $d$ con $2 \le d \le \sqrt{n}$ divide a $n$, entonces $n$ es primo.** Los divisores van por parejas $(a,\ n/a)$, y el menor de cada pareja nunca pasa de $\sqrt{n}$. Si además juntamos esto con el apartado anterior, basta con probar los **primos** hasta $\sqrt{n}$: el menor divisor de un compuesto es primo y no pasa de $\sqrt{n}$.
+
+**Ejemplos.** Para $n = 91$ basta probar hasta $\lfloor \sqrt{91} \rfloor = 9$, y el 7 lo divide: $91 = 7 \cdot 13$. Para $n = 97$ ninguno de los números del 2 al 9 lo divide, así que 97 es primo, tras 8 divisiones en lugar de 95.
+
+<Aside type="tip" title="En el código, mejor d · d ≤ n">
+En vez de calcular la raíz, se comprueba la condición $d \cdot d \le n$. Así todo son operaciones con enteros y no hay que preocuparse por el redondeo de la raíz cuadrada cuando $n$ es grande.
+</Aside>
+
+## Saltarse los pares y el truco 6k ± 1
+
+**Los pares.** Si $n$ es impar, ningún número par lo divide: si un par $d$ dividiera a $n$, $n$ sería par. Así que, después de probar el 2, solo hace falta probar $d = 3, 5, 7, 9, \dots$: la mitad de los candidatos.
+
+**Los múltiplos de 3.** Se puede ir un paso más allá:
+
+$$
+p \text{ primo y } p > 3 \quad\Longrightarrow\quad p = 6k + 1 \ \text{ o } \ p = 6k - 1 \text{ para algún entero } k
+$$
+
+**Demostración.** Todo entero se escribe como $p = 6k + r$ con $r \in \{0, 1, 2, 3, 4, 5\}$. Veamos qué restos son posibles para un primo $p > 3$:
+
+- $r = 0, 2, 4$: $p = 2\,(3k + r/2)$ es par y mayor que 2, luego no es primo;
+- $r = 3$: $p = 3\,(2k + 1)$ es múltiplo de 3 y mayor que 3, luego no es primo.
+
+Solo quedan $r = 1$, es decir $p = 6k + 1$, y $r = 5$, es decir $p = 6k + 5 = 6(k + 1) - 1$.
+
+Por tanto, después de probar el 2 y el 3, solo hace falta probar los candidatos de la forma $6k \pm 1$:
+
+$$
+5,\ 7,\ \ 11,\ 13,\ \ 17,\ 19,\ \ 23,\ 25,\ \ 29,\ 31,\ \dots
+$$
+
+que son 2 de cada 6 números: **un tercio** de los candidatos. Algunos no son primos (el 25, el 35…), pero probarlos no estropea nada: si el 25 dividiera a $n$, el 5 ya lo habría hecho antes. La condición es necesaria pero no suficiente: todo primo mayor que 3 es de la forma $6k \pm 1$, pero no todo número de esa forma es primo.
+
+Para un $n$ cercano a $10^{12}$, cuya raíz es $10^6$, la diferencia se nota:
+
+| Candidatos hasta $\sqrt{n} = 10^6$ | Cuántos |
+| --- | --- |
+| Todos, del 2 al $10^6$ | 999 999 |
+| El 2 y los impares | 500 000 |
+| El 2, el 3 y los $6k \pm 1$ | 333 334 |
+
+En código, el bucle avanza de 6 en 6 y prueba dos candidatos por vuelta, $d$ y $d + 2$:
+
+```python
+def es_primo(n):
+    if n < 2:
+        return False
+    if n < 4:
+        return True          # 2 y 3
+    if n % 2 == 0 or n % 3 == 0:
+        return False
+    d = 5
+    while d * d <= n:
+        if n % d == 0 or n % (d + 2) == 0:
+            return False
+        d += 6
+    return True
+
+print([n for n in range(30) if es_primo(n)])
+# [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
+```
+
+Con $n = 97$ solo prueba el 2, el 3, el 5 y el 7: en la siguiente vuelta $d = 11$ y $11^2 = 121 > 97$.
+
+## Coste
+
+En el peor caso, cuando $n$ es primo, el bucle llega hasta $\sqrt{n}$ y hace unas $\sqrt{n}/3$ divisiones. El coste es $O(\sqrt{n})$:
+
+| $n$ | $\sqrt{n}$ | Divisiones (aprox.) |
+| --- | --- | --- |
+| $10^6$ | $10^3$ | 333 |
+| $10^{12}$ | $10^6$ | 333 333 |
+| $10^{18}$ | $10^9$ | 333 333 333 |
+
+Es muy rápido para los números que suelen aparecer en Project Euler, pero conviene fijarse en la última columna: **cada dos cifras más en $n$ multiplican el trabajo por 10**. Hay dos situaciones en las que conviene otra herramienta:
+
+- Si hay que saber qué números son primos **en todo un rango** $1, \dots, N$, es mucho más barato tacharlos todos a la vez con la [criba de Eratóstenes](../criba-de-eratostenes/).
+- Para números de cientos de cifras se usan tests probabilísticos, como el de Miller-Rabin, que no buscan divisores.
+
+## Hay infinitos primos
+
+La demostración de Euclides, de hace más de dos mil años, sigue siendo la más elegante.
+
+**Demostración.** Supongamos que solo hubiera un número finito de primos, $p_1, p_2, \dots, p_k$, y consideremos
+
+$$
+N = p_1\, p_2 \cdots p_k + 1.
+$$
+
+Como $N > 1$, tiene algún factor primo $q$ (lo vimos al principio). Pero $q$ no puede ser ninguno de los $p_i$: al dividir $N$ entre cualquier $p_i$ sobra 1. Así que $q$ es un primo que no estaba en la lista, lo que contradice que la lista los tuviera todos.
+
+<Aside type="caution" title="N no tiene por qué ser primo">
+La demostración no dice que $N$ sea primo, sino que sus factores primos son nuevos. Por ejemplo, $2 \cdot 3 \cdot 5 \cdot 7 \cdot 11 \cdot 13 + 1 = 30031 = 59 \cdot 509$: no es primo, pero 59 y 509 no estaban en la lista.
+</Aside>
+
+## Cuántos primos hay hasta x
+
+Que haya infinitos no dice con qué frecuencia aparecen. Se llama $\pi(x)$ al número de primos menores o iguales que $x$; por ejemplo, $\pi(30) = 10$. El **teorema de los números primos**, que demostraron de forma independiente Hadamard y de la Vallée Poussin en 1896, dice que
+
+$$
+\pi(x) \sim \frac{x}{\ln x},
+$$
+
+es decir, que el cociente entre los dos lados tiende a 1 cuando $x$ crece. La forma intuitiva de leerlo: **cerca de $x$, aproximadamente uno de cada $\ln x$ números es primo**. Cerca de un millón, $\ln 10^6 \approx 13{,}8$, así que hay más o menos un primo cada 14 números.
+
+| $x$ | $\pi(x)$ | $x / \ln x$ | Cociente |
+| --- | --- | --- | --- |
+| $10^2$ | 25 | 21,7 | 1,151 |
+| $10^3$ | 168 | 144,8 | 1,160 |
+| $10^4$ | 1 229 | 1 085,7 | 1,132 |
+| $10^5$ | 9 592 | 8 685,9 | 1,104 |
+| $10^6$ | 78 498 | 72 382,4 | 1,084 |
+| $10^7$ | 664 579 | 620 420,7 | 1,071 |
+
+El cociente se acerca a 1, aunque despacio.
+
+## Una cota para el n-ésimo primo
+
+Llamemos $p_n$ al $n$-ésimo primo: $p_1 = 2$, $p_2 = 3$, $p_3 = 5$… Del teorema anterior se deduce que $p_n \sim n \ln n$, pero eso es solo un comportamiento a la larga. Para programar hace falta una cota que se cumpla siempre, y la hay:
+
+$$
+n \ln n \;<\; p_n \;<\; n\,(\ln n + \ln \ln n) \qquad \text{para } n \ge 6.
+$$
+
+La cota inferior, válida para todo $n \ge 1$, es el **teorema de Rosser** (J. Barkley Rosser, 1939). La superior también la demostró Rosser, en 1941, y aparece en el trabajo de Rosser y Schoenfeld de 1962.
+
+**Por qué $n \ge 6$.** Para $n$ pequeño la cota superior falla: con $n = 5$ da $5\,(\ln 5 + \ln \ln 5) \approx 10{,}43$, que es menor que $p_5 = 11$. A partir de $n = 6$ (con $6\,(\ln 6 + \ln\ln 6) \approx 14{,}25 > 13$) ya no falla nunca. Comprobándolo con un ordenador para todos los $n$ entre 6 y un millón, el primo nunca pasa del 95 % de la cota.
+
+**Para qué sirve.** Una criba necesita saber de antemano hasta dónde llegar. Si buscamos el $n$-ésimo primo, basta con cribar hasta
+
+$$
+N = \big\lceil n\,(\ln n + \ln \ln n) \big\rceil
+$$
+
+y quedarnos con el primo número $n$ de la lista: es seguro que está, y no se criba mucho de más.
+
+| $n$ | $p_n$ | $n \ln n$ | $n\,(\ln n + \ln \ln n)$ |
+| --- | --- | --- | --- |
+| 1 000 | 7 919 | 6 907,8 | 8 840,4 |
+| 1 000 000 | 15 485 863 | 13 815 510,6 | 16 441 302,5 |
+
+Para $n = 10^6$ la criba se pasa solo un 6 % del primo que buscamos. Es una forma de plantear el [problema 7](../../problemas/007-primo-10001/), que pide un primo por su posición.
+
+<Aside type="note">
+$\ln$ es el logaritmo natural, en base $e$: `Math.log` en JavaScript y `math.log` en Python.
+</Aside>
+
+## Dónde aparece
+
+<Relaciones mostrar="aparece" />

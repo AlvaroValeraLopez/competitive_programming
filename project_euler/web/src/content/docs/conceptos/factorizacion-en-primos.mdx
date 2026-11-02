@@ -1,0 +1,155 @@
+---
+title: Factorización en primos
+description: El teorema fundamental de la aritmética y cómo descomponer un número en primos dividiendo hasta su raíz cuadrada.
+sidebar:
+  label: Factorización en primos
+  order: 6
+requiere: [test-de-primalidad]
+area: Teoría de números
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+
+## El teorema fundamental de la aritmética
+
+Todo entero $n > 1$ se puede escribir como producto de números primos, y esa descomposición es **única** salvo el orden de los factores. Agrupando los primos repetidos:
+
+$$
+n = p_1^{e_1}\, p_2^{e_2} \cdots p_r^{e_r}, \qquad p_1 < p_2 < \cdots < p_r \text{ primos},\ e_i \ge 1.
+$$
+
+Por ejemplo, $12 = 2^2 \cdot 3$, $13195 = 5 \cdot 7 \cdot 13 \cdot 29$ y $2520 = 2^3 \cdot 3^2 \cdot 5 \cdot 7$. El teorema tiene dos partes, y cada una necesita su propia demostración: que la descomposición **existe** y que es **única**.
+
+### Existencia
+
+Por inducción fuerte sobre $n$. Si $n$ es primo, ya es un producto de primos (de uno solo). Si no, $n = a \cdot b$ con $1 < a, b < n$. Como $a$ y $b$ son menores que $n$, por hipótesis de inducción los dos son productos de primos, y juntando las dos listas se obtiene una descomposición de $n$.
+
+### Unicidad: el lema de Euclides
+
+La unicidad no es nada evidente. Todo descansa en este lema:
+
+$$
+p \text{ primo y } p \mid a\,b \quad\Longrightarrow\quad p \mid a \ \text{ o } \ p \mid b
+$$
+
+(El símbolo $p \mid a$ significa «$p$ divide a $a$».)
+
+**Demostración.** Supongamos que $p \nmid a$ y veamos que entonces $p \mid b$. Consideremos el conjunto de los enteros positivos $x$ tales que $p$ divide a $x\,b$:
+
+$$
+S = \{\, x \ge 1 \;:\; p \mid x\,b \,\}.
+$$
+
+$S$ contiene a $p$ (porque $p \mid p\,b$) y a $a$ (por hipótesis). Sea $m$ su elemento más pequeño.
+
+- **$m$ divide a todos los elementos de $S$.** Si $x \in S$, dividimos: $x = q\,m + r$ con $0 \le r < m$. Entonces $r\,b = x\,b - q\,(m\,b)$ es diferencia de dos múltiplos de $p$, luego también lo es. Si fuera $r > 0$, $r$ estaría en $S$ y sería menor que $m$; por tanto $r = 0$.
+- En particular $m \mid p$, así que $m = 1$ o $m = p$. Y también $m \mid a$: si fuera $m = p$, tendríamos $p \mid a$, en contra de lo supuesto. Luego $m = 1$, es decir, $p \mid 1 \cdot b = b$. $\blacksquare$
+
+Que $p$ sea primo es imprescindible: $6$ divide a $4 \cdot 9 = 36$, pero no divide ni a 4 ni a 9. Aplicando el lema varias veces, si un primo divide a un producto de varios factores, divide a alguno de ellos.
+
+**Demostración de la unicidad.** Supongamos que un número tiene dos descomposiciones,
+
+$$
+p_1\, p_2 \cdots p_r = q_1\, q_2 \cdots q_s,
+$$
+
+con todos los $p_i$ y $q_j$ primos (pueden repetirse). El primo $p_1$ divide al lado derecho, así que por el lema divide a algún $q_j$. Como $q_j$ es primo, sus únicos divisores son 1 y $q_j$, luego $p_1 = q_j$. Tachamos ese factor en los dos lados y nos queda una igualdad con un primo menos en cada lado. Repitiendo, los primos se van emparejando uno a uno hasta agotarse: las dos listas son la misma, salvo el orden.
+
+<Aside type="note" title="Por eso el 1 no es primo">
+Si el 1 contara como primo, se podría añadir a cualquier descomposición tantas veces como se quisiera y la unicidad fallaría. Está explicado en [números primos](../test-de-primalidad/#qué-es-un-número-primo).
+</Aside>
+
+## Cómo factorizar: división por tanteo
+
+El método más directo prueba los posibles divisores en orden y, **cada vez que encuentra uno, lo divide tantas veces como pueda**:
+
+1. Empezamos con $m = n$ y $d = 2$.
+2. Mientras $d \cdot d \le m$: mientras $d$ divida a $m$, apuntamos $d$ y hacemos $m \leftarrow m / d$. Después pasamos a $d + 1$.
+3. Al terminar, si $m > 1$, apuntamos también $m$.
+
+Hay tres detalles que hacen que funcione.
+
+**Solo se apuntan primos.** Cuando el bucle llega a un $d$, ya se han quitado de $m$ todos los factores primos menores que $d$. Si $d$ es compuesto, sus factores primos son menores que $d$ y ya no están en $m$, así que $d$ tampoco puede dividir a $m$. Por eso se puede recorrer $d = 2, 3, 4, 5, 6, \dots$ sin preocuparse de si $d$ es primo.
+
+**La cota baja a medida que se divide.** La condición compara $d$ con $\sqrt{m}$, no con $\sqrt{n}$. Cada vez que se encuentra un factor, $m$ se hace más pequeño y la cota también. Es la misma idea del [test de primalidad](../test-de-primalidad/#basta-con-probar-hasta-la-raíz-cuadrada) aplicada al número que va quedando.
+
+**Lo que queda al final es primo.** Cuando el bucle termina, $d^2 > m$ y $m$ no tiene factores primos menores que $d$. Si $m > 1$ fuera compuesto, tendría un factor primo $q \le \sqrt{m}$, y por tanto $q < d$: imposible. Así que $m$ es 1 o es primo. Si es primo, es mayor o igual que $d$, luego es **el mayor factor primo de $n$**, y aparece una sola vez.
+
+### Ejemplo: 13195
+
+Es el ejemplo del enunciado del [problema 3](../../problemas/003-mayor-factor-primo/):
+
+| $d$ | ¿Divide a $m$? | $m$ después |
+| --- | --- | --- |
+| 2, 3, 4 | no | 13195 |
+| 5 | sí: $13195 = 5 \cdot 2639$ | 2639 |
+| 6 | no | 2639 |
+| 7 | sí: $2639 = 7 \cdot 377$ | 377 |
+| 8 a 12 | no | 377 |
+| 13 | sí: $377 = 13 \cdot 29$ | 29 |
+| 14 | se para: $14^2 = 196 > 29$ | 29 |
+
+El 29 que queda es primo, así que $13195 = 5 \cdot 7 \cdot 13 \cdot 29$. El bucle ha probado 12 valores de $d$, del 2 al 13, cuando sin reducir $m$ habría tenido que llegar hasta $\lfloor \sqrt{13195} \rfloor = 114$.
+
+### Ejemplo: 2520
+
+- $d = 2$ divide tres veces: $2520 \to 1260 \to 630 \to 315$.
+- $d = 3$ divide dos veces: $315 \to 105 \to 35$.
+- $d = 4$ no divide.
+- $d = 5$ divide una vez: $35 \to 7$.
+- $d = 6$: $6^2 = 36 > 7$, se para. Queda el 7, que es primo.
+
+Resultado: $2520 = 2^3 \cdot 3^2 \cdot 5 \cdot 7$, tras probar solo cuatro valores de $d$.
+
+### En código
+
+```python
+def factorizar(n):
+    factores = {}
+    d = 2
+    while d * d <= n:
+        while n % d == 0:
+            factores[d] = factores.get(d, 0) + 1
+            n //= d
+        d += 1
+    if n > 1:
+        factores[n] = factores.get(n, 0) + 1
+    return factores
+
+print(factorizar(13195))  # {5: 1, 7: 1, 13: 1, 29: 1}
+print(factorizar(2520))   # {2: 3, 3: 2, 5: 1, 7: 1}
+```
+
+Devuelve un diccionario de primo a exponente. Aquí `n` hace el papel de $m$: se va reduciendo dentro del propio bucle.
+
+## Coste
+
+En el peor caso el bucle llega hasta $\sqrt{n}$, así que el coste es $O(\sqrt{n})$ divisiones. Ese peor caso se da cuando $n$ no tiene factores pequeños:
+
+- si $n$ es primo, no se reduce nunca y hay que llegar hasta $\sqrt{n}$;
+- si $n$ es producto de dos primos parecidos, hay que llegar hasta el menor, que está cerca de $\sqrt{n}$. Por ejemplo, $999\,985\,999\,949 = 999\,983 \cdot 1\,000\,003$ necesita casi un millón de vueltas.
+
+En cambio, si $n$ tiene muchos factores pequeños, $m$ baja deprisa y el bucle acaba mucho antes, como con 13195 y 2520. Igual que en el test de primalidad, se puede dividir el trabajo entre dos probando solo el 2 y los impares, o entre tres con el truco $6k \pm 1$.
+
+## Para qué sirve
+
+Muchas propiedades de un número se leen directamente en los exponentes de su factorización.
+
+**Contar y sumar divisores.** Los divisores de $n = p_1^{e_1} \cdots p_r^{e_r}$ son los números $p_1^{f_1} \cdots p_r^{f_r}$ con $0 \le f_i \le e_i$. De ahí sale que hay $d(n) = (e_1 + 1) \cdots (e_r + 1)$; por ejemplo, $d(2520) = 4 \cdot 3 \cdot 2 \cdot 2 = 48$. También sale una fórmula para su suma. Las dos están en [la función divisor](../funcion-divisor/).
+
+**Máximo común divisor y mínimo común múltiplo.** Para cada primo, el mcd se queda con el **menor** de los dos exponentes y el mcm con el **mayor**. Con $12 = 2^2 \cdot 3$ y $18 = 2 \cdot 3^2$:
+
+$$
+\operatorname{mcd}(12, 18) = 2^1 \cdot 3^1 = 6, \qquad \operatorname{mcm}(12, 18) = 2^2 \cdot 3^2 = 36.
+$$
+
+La demostración y la forma rápida de calcularlos, sin factorizar, están en [mcd y mcm](../mcd-y-mcm/).
+
+## Conceptos previos
+
+<Relaciones mostrar="requiere" />
+
+## Dónde aparece
+
+<Relaciones mostrar="aparece" />
