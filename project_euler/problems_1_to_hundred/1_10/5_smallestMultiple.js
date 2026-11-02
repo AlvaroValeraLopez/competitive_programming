@@ -19,7 +19,7 @@ function lcmOfArray(numbers) {
     return currentLcm;
 }
 
-const MAX = 10
+const MAX = 20
 const numbers = Array.from({length: MAX}, (_, i) => i + 1);
 const result = lcmOfArray(numbers);
 console.log(`The LCM of the list is: ${result}`);

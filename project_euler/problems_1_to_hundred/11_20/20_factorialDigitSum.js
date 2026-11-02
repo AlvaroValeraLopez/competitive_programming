@@ -10,7 +10,7 @@ function sumOfDigits(n) {
   return n.toString().split('').reduce((sum, digit) => sum + parseInt(digit, 10), 0);
 }
   
-const factorial100 = factorial(BigInt(10));
+const factorial100 = factorial(BigInt(100));
 const sum = sumOfDigits(factorial100);
 console.log(sum);
   
