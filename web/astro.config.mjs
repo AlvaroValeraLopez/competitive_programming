@@ -24,9 +24,9 @@ export default defineConfig({
 	},
 	integrations: [
 		starlight({
-			title: 'Euler, paso a paso',
+			title: 'Retos, paso a paso',
 			description:
-				'Las matemáticas detrás de los problemas de Project Euler, explicadas con detalle.',
+				'Retos de programación explicados con detalle: la matemática y la programación que hay detrás de cada solución.',
 			defaultLocale: 'root',
 			locales: {
 				root: { label: 'Español', lang: 'es' },

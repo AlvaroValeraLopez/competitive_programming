@@ -1,7 +1,7 @@
 [project]
 name = "euler-video"
 version = "0.1.0"
-description = "Vídeos matemáticos generados con código para «Euler, paso a paso»."
+description = "Vídeos generados con código para «Retos, paso a paso»."
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
 dependencies = [

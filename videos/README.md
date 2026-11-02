@@ -1,4 +1,4 @@
-# Vídeos de «Euler, paso a paso»
+# Vídeos de «Retos, paso a paso»
 
 Vídeos matemáticos generados con código usando [Manim Community](https://www.manim.community), la versión mantenida por la comunidad de la biblioteca con la que se hacen los vídeos de 3Blue1Brown.
 
