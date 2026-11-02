@@ -1,0 +1,103 @@
+---
+title: 'Problema 67: Camino de suma máxima II'
+description: El mismo problema que el 18, pero con un triángulo de 100 filas y 2⁹⁹ caminos, imposible de recorrer; la programación dinámica lo resuelve con 4950 sumas.
+sidebar:
+  label: '67 · Camino de suma máxima II'
+  order: 67
+temas: [Programación dinámica, Caminos]
+conceptos: [principio-de-optimalidad]
+---
+
+import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+import solucion from '@soluciones/61_70/67_maximumPathSum.js?raw';
+
+## El problema
+
+Es el [problema 18](../018-camino-de-suma-maxima-i/) a lo grande: empezando en lo alto de un triángulo y bajando en cada paso a uno de los dos números adyacentes de la fila de abajo, **encuentra la suma máxima de arriba abajo en un triángulo de 100 filas**, que se da en un archivo de texto.
+
+[Enunciado original en Project Euler](https://projecteuler.net/problem=67)
+
+## La idea en una frase
+
+Exactamente la misma que en el problema 18: la mejor suma desde cada casilla es su número más la mejor de las dos de debajo, así que se calcula de abajo arriba, una vez por casilla, y el tamaño del triángulo deja de importar.
+
+## Primer intento: probar todos los caminos
+
+Un camino es una secuencia de 99 decisiones, así que hay $2^{99} \approx 6{,}3 \cdot 10^{29}$ caminos. El propio enunciado lo advierte: aunque se comprobaran $10^{12}$ caminos por segundo, harían falta más de 20 000 millones de años, más que la edad del universo.
+
+**Tampoco sirve memorizar a medias.** La función recursiva del problema 18, sin guardar resultados, llama a cada casilla una vez por cada camino que llega a ella desde arriba. Para la casilla central de la última fila son $\binom{99}{49} \approx 5 \cdot 10^{28}$ llamadas.
+
+## Desarrollo matemático
+
+### Paso 1: la recurrencia
+
+Con $t(i, j)$ el número de la fila $i$ y posición $j$, contando desde 0, y $M(i, j)$ la mejor suma desde esa casilla hasta abajo, el [principio de optimalidad](../../conceptos/principio-de-optimalidad/) da
+
+$$
+M(i, j) = t(i, j) + \max\big(M(i + 1, j),\ M(i + 1, j + 1)\big), \qquad M(99, j) = t(99, j)
+$$
+
+y la respuesta es $M(0, 0)$. Está explicada con detalle, y comprobada con el ejemplo de cuatro filas, en el [problema 18](../018-camino-de-suma-maxima-i/#desarrollo-matemático).
+
+### Paso 2: cuánto cuesta
+
+El triángulo tiene $1 + 2 + \cdots + 100 = 5050$ casillas. Las 100 de la última fila no requieren cálculo, y cada una de las otras 4950 necesita una comparación y una suma. **De $6{,}3 \cdot 10^{29}$ caminos a 4950 operaciones.**
+
+### Paso 3: los números caben de sobra
+
+Los números del triángulo tienen como mucho dos cifras, así que ninguna suma pasa de $100 \cdot 99 = 9900$. No hay ningún riesgo de desbordamiento.
+
+### Paso 4: de arriba abajo, con memoria
+
+Si se prefiere programar la recurrencia tal cual, como una función recursiva, basta con **guardar cada $M(i, j)$ la primera vez que se calcula** para que el coste vuelva a ser de 5050 llamadas. La profundidad de la recursión es de 100 llamadas, sin problemas.
+
+## El código
+
+<Tabs>
+<TabItem label="JavaScript (repositorio)">
+
+<Code code={solucion} lang="js" title="67_maximumPathSum.js" />
+
+Lee `67_triangle.txt` desde la misma carpeta que el script (`__dirname`), descarta las líneas vacías y convierte cada línea en una lista de números. Después aplica la misma función que el problema 18: recorre las filas de abajo arriba sumando a cada número el mayor de los dos de debajo. Si no puede leer el archivo, lo dice y termina con un código de error.
+
+</TabItem>
+<TabItem label="Python (con memoria)">
+
+```python
+from functools import cache
+from pathlib import Path
+
+filas = [[int(x) for x in linea.split()] for linea in Path("67_triangle.txt").read_text().split("\n") if linea]
+
+@cache
+def M(i, j):
+    if i == len(filas) - 1:
+        return filas[i][j]
+    return filas[i][j] + max(M(i + 1, j), M(i + 1, j + 1))
+
+print(M(0, 0))
+```
+
+Es el paso 4: la recurrencia tal cual, con `@cache` para que cada casilla se calcule una sola vez.
+
+</TabItem>
+</Tabs>
+
+## Complejidad
+
+| Método | Operaciones para 100 filas |
+| --- | --- |
+| Probar todos los caminos | ~$6{,}3 \cdot 10^{29}$ caminos |
+| Recursión sin memoria | más de $10^{29}$ llamadas |
+| Programación dinámica (repositorio o con memoria) | 4950 sumas y comparaciones |
+
+En general, con $n$ filas, la fuerza bruta cuesta $O(2^n)$ y la programación dinámica $O(n^2)$: lineal en el número de casillas, que es lo mínimo, porque hay que leer el triángulo entero.
+
+## Conceptos utilizados
+
+<Relaciones mostrar="conceptos" />
+
+## Problemas relacionados
+
+<Relaciones mostrar="relacionados" />

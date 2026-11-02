@@ -1,0 +1,129 @@
+---
+title: 'Problema 13: Suma de números grandes'
+description: Obtener las diez primeras cifras de la suma de cien números de cincuenta cifras, con enteros de precisión arbitraria o con solo las primeras cifras de cada número y una cota que garantiza el resultado.
+sidebar:
+  label: '13 · Suma de números grandes'
+  order: 13
+temas: [Números grandes, Cotas de error]
+conceptos: [precision-arbitraria]
+---
+
+import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+import solucion from '@soluciones/11_20/13_largeSum.js?raw';
+
+## El problema
+
+**Calcula las diez primeras cifras de la suma de estos cien números de cincuenta cifras:**
+
+```text
+37107287533902102798797998220837590246510135740250
+46376937677490009712648124896970078050417018260538
+74324986199524741059474233309513058123726617309629
+…
+53503534226472524250874054075591789781264330331690
+```
+
+La lista completa está en el [enunciado original en Project Euler](https://projecteuler.net/problem=13).
+
+## La idea en una frase
+
+Con enteros de precisión arbitraria basta con sumar; pero para las diez primeras cifras ni siquiera hacen falta las cincuenta de cada número: con las trece primeras se puede acotar la suma por arriba y por abajo, y si las dos cotas empiezan igual, esas son las cifras.
+
+## Primer intento: con Number
+
+```js
+const suma = numeros.reduce((acc, linea) => acc + Number(linea), 0);
+console.log(String(suma));
+```
+
+Imprime el resultado en notación científica, con `e+51` al final: un número de coma flotante con unas 16 cifras significativas. Cada `Number(linea)` ya redondea el número de 50 cifras a las 16 primeras, y cada suma vuelve a redondear. **Probablemente** las diez primeras cifras salgan bien, pero nada lo garantiza: si la suma real tuviera las cifras 11.ª a 16.ª cerca de $999999$ o de $000000$, el redondeo podría cambiar la décima. Para estar seguros hace falta, o bien sumar exactamente, o bien controlar cuánto error se comete.
+
+## Desarrollo matemático
+
+Llamemos $n_1, \dots, n_{100}$ a los números y $S$ a su suma.
+
+### Paso 1: cuántas cifras tiene la suma
+
+Todos los números tienen exactamente 50 cifras, es decir, $10^{49} \le n_i < 10^{50}$. Sumando las cien desigualdades:
+
+$$
+10^{51} = 100 \cdot 10^{49} \le S < 100 \cdot 10^{50} = 10^{52}
+$$
+
+Así que **$S$ tiene exactamente 52 cifras**, y sus diez primeras cifras son $\left\lfloor S / 10^{42} \right\rfloor$.
+
+### Paso 2: sumar exactamente
+
+Con [enteros de precisión arbitraria](../../conceptos/precision-arbitraria/), la suma es exacta y cuesta poco: unas $100 \cdot 50 = 5000$ operaciones con cifras. Si se suman los cien números a la vez, columna a columna, cada columna aporta como mucho $100 \cdot 9 = 900$, y la llevada nunca pasa de 99: si entra como mucho 99, la columna suma como mucho $999$.
+
+### Paso 3: ¿hacen falta las cincuenta cifras?
+
+Partimos cada número por la cifra 13.ª: $n_i = q_i \cdot 10^{37} + r_i$, donde $q_i$ son sus 13 primeras cifras y $0 \le r_i < 10^{37}$ es el resto. Llamemos $L = q_1 + \cdots + q_{100}$. Entonces
+
+$$
+L \cdot 10^{37} \;\le\; S \;<\; L \cdot 10^{37} + 100 \cdot 10^{37} = (L + 100) \cdot 10^{37}
+$$
+
+porque los cien restos suman menos de $100 \cdot 10^{37}$. Dividiendo entre $10^{42}$:
+
+$$
+\left\lfloor \frac{L}{10^5} \right\rfloor \;\le\; \left\lfloor \frac{S}{10^{42}} \right\rfloor \;\le\; \left\lfloor \frac{L + 99}{10^5} \right\rfloor
+$$
+
+**Si las dos cotas coinciden, son las diez primeras cifras de $S$.** Y coinciden salvo que las cinco últimas cifras de $L$ estén entre 99 901 y 99 999, algo que se comprueba al hacer la cuenta. Además, $L < 100 \cdot 10^{13} = 10^{15}$, por debajo de $2^{53} \approx 9 \cdot 10^{15}$, así que **$L$ se calcula exactamente con `Number`**, sin enteros grandes.
+
+### Paso 4: comprobarlo con un ejemplo pequeño
+
+Con tres números de seis cifras, buscamos las tres primeras cifras de la suma usando solo las cuatro primeras de cada uno, así que los restos son menores que 100 y la cota superior es $L + 2$:
+
+| Números | Sus 4 primeras cifras | $L$ | Cotas de $\lfloor S/100 \rfloor$ | Primeras cifras |
+| --- | --- | --- | --- | --- |
+| 123 456, 654 321, 999 999 | 1234, 6543, 9999 | 17 776 | de 17 776 a 17 778 | 177, seguro |
+| 499 990, 300 005, 200 004 | 4999, 3000, 2000 | 9 999 | de 9 999 a 10 001 | ¿999 o 100? |
+
+En el primer caso las dos cotas empiezan por 177, y en efecto $S = 1\,777\,776$. En el segundo no se puede decidir: la suma real, $999\,999$, empieza por 999, pero bastaría con que los restos sumaran un poco más para que pasara a $1\,000\,0\ldots$ Cuando pasa esto, hay que tomar más cifras de cada número.
+
+## El código
+
+<Tabs>
+<TabItem label="JavaScript (repositorio)">
+
+<Code code={solucion} lang="js" title="13_largeSum.js" />
+
+Es el paso 2: convierte cada línea en un `BigInt`, los suma todos exactamente y se queda con los diez primeros caracteres del resultado. El paso 1 garantiza que no hace falta preocuparse por el signo ni por ceros a la izquierda.
+
+</TabItem>
+<TabItem label="Python (13 cifras)">
+
+```python
+numeros = NUMEROS.split()  # las cien líneas del enunciado
+
+L = sum(int(n[:13]) for n in numeros)
+inferior, superior = L // 10**5, (L + len(numeros) - 1) // 10**5
+assert len(str(L)) == 15 and inferior == superior, "hacen falta más cifras"
+print(inferior)
+```
+
+Es el paso 3. Si alguna vez las dos cotas no coincidieran, la aserción avisaría en lugar de dar un resultado dudoso.
+
+</TabItem>
+</Tabs>
+
+## Complejidad
+
+| Método | Operaciones | ¿Exacto? |
+| --- | --- | --- |
+| `Number` | 100 sumas | no garantizado |
+| `BigInt` (repositorio) | unas 5000 operaciones con cifras | sí |
+| 13 cifras con cota (paso 3) | 100 sumas de `Number` | sí, si las cotas coinciden |
+
+Con cien números cualquier método es instantáneo. La idea del paso 3 importa cuando los números son muchísimos o enormes, o cuando no se dispone de enteros grandes: **solo hay que llevar las cifras que pueden influir en el resultado, más unas pocas de margen**, y acotar el error de lo que se descarta.
+
+## Conceptos utilizados
+
+<Relaciones mostrar="conceptos" />
+
+## Problemas relacionados
+
+<Relaciones mostrar="relacionados" />

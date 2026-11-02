@@ -1,0 +1,151 @@
+---
+title: 'Problema 18: Camino de suma máxima I'
+description: Encontrar el camino de suma máxima en un triángulo de 15 filas sin probar sus 16 384 caminos, calculando de abajo arriba la mejor suma desde cada casilla.
+sidebar:
+  label: '18 · Camino de suma máxima I'
+  order: 18
+temas: [Programación dinámica, Caminos]
+conceptos: [principio-de-optimalidad]
+---
+
+import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+import solucion from '@soluciones/11_20/18_maximumPathSum.js?raw';
+
+## El problema
+
+Empezando en lo alto del triángulo y bajando en cada paso a uno de los dos números adyacentes de la fila de abajo, la suma máxima en este triángulo es $3 + 7 + 4 + 9 = 23$:
+
+$$
+\begin{array}{ccccccc}
+&&&\mathbf{3}&&& \\
+&&\mathbf{7}&&4&& \\
+&2&&\mathbf{4}&&6& \\
+8&&5&&\mathbf{9}&&3
+\end{array}
+$$
+
+**Encuentra la suma máxima de arriba abajo en el triángulo de 15 filas del enunciado.**
+
+[Enunciado original en Project Euler](https://projecteuler.net/problem=18)
+
+## La idea en una frase
+
+El mejor camino desde una casilla es esa casilla más el mejor camino desde una de las dos de debajo, así que, recorriendo el triángulo de abajo arriba, cada casilla se resuelve con una suma y una comparación.
+
+## Primer intento: probar todos los caminos
+
+Cada camino es una secuencia de 14 decisiones, izquierda o derecha, así que hay $2^{14} = 16\,384$. Se pueden probar todos:
+
+```js
+function mejorPorFuerzaBruta(triangulo, fila = 0, columna = 0) {
+  const aqui = triangulo[fila][columna];
+  if (fila === triangulo.length - 1) return aqui;
+  return aqui + Math.max(
+    mejorPorFuerzaBruta(triangulo, fila + 1, columna),
+    mejorPorFuerzaBruta(triangulo, fila + 1, columna + 1),
+  );
+}
+```
+
+Es instantáneo, como avisa el propio enunciado. Pero el [problema 67](../067-camino-de-suma-maxima-ii/) es el mismo con 100 filas, y entonces hay $2^{99} \approx 6{,}3 \cdot 10^{29}$ caminos: así no se puede.
+
+## Desarrollo matemático
+
+Numeramos las filas desde 0 y las posiciones dentro de cada fila también desde 0, y llamamos $t(i, j)$ al número que hay en la fila $i$, posición $j$. Desde $(i, j)$ se puede bajar a $(i+1, j)$ o a $(i+1, j+1)$.
+
+### Paso 1: ir siempre hacia el mayor no funciona
+
+Bajar siempre hacia el número más grande parece razonable, pero falla. En el triángulo $1;\ 2, 3;\ 9, 1, 1$, el voraz va de 1 a 3 y suma $1 + 3 + 1 = 5$, cuando $1 + 2 + 9 = 12$. En el ejemplo del enunciado acierta, pero por casualidad.
+
+### Paso 2: el principio de optimalidad
+
+Sea $M(i, j)$ la mayor suma posible de un camino que empieza en $(i, j)$ y llega a la última fila. Por el [principio de optimalidad](../../conceptos/principio-de-optimalidad/), el mejor camino desde $(i, j)$ da un primer paso a una de las dos casillas de debajo y sigue por el mejor camino desde ella. Así que
+
+$$
+M(i, j) = t(i, j) + \max\big(M(i + 1, j),\ M(i + 1, j + 1)\big)
+$$
+
+y en la última fila, $M(14, j) = t(14, j)$. La respuesta es $M(0, 0)$.
+
+### Paso 3: cada casilla, una sola vez
+
+La fuerza bruta recalcula las casillas una y otra vez: a la casilla $(i, j)$ se llega desde lo alto por $\binom{i}{j}$ caminos, y a las del centro de la última fila, por $\binom{14}{7} = 3432$. Pero solo hay $1 + 2 + \cdots + 15 = 120$ casillas. Si se recorren las filas **de abajo arriba**, cuando se llega a una casilla las dos de debajo ya tienen su $M$, y basta con una suma y una comparación.
+
+### Paso 4: comprobarlo con el ejemplo
+
+En el triángulo del enunciado, sustituyendo cada número por su $M$ de abajo arriba:
+
+$$
+\begin{array}{ccccccc}
+&&&23&&& \\
+&&20&&19&& \\
+&10&&13&&15& \\
+8&&5&&9&&3
+\end{array}
+$$
+
+Por ejemplo, $10 = 2 + \max(8, 5)$ y $20 = 7 + \max(10, 13)$. Arriba queda $23$, la suma del enunciado. Para recuperar el camino se baja desde arriba hacia la casilla con mayor $M$: $23 \to 20 \to 13 \to 9$, es decir, $3, 7, 4, 9$.
+
+## El código
+
+<Tabs>
+<TabItem label="JavaScript (repositorio)">
+
+<Code code={solucion} lang="js" title="18_maximumPathSum.js" />
+
+Es el paso 3, hecho **sobre el propio triángulo**: empieza en la penúltima fila y sube, sumando a cada número el mayor de los dos de debajo. Al terminar, `triangle[0][0]` es $M(0, 0)$. No necesita memoria extra, pero modifica el triángulo que recibe; si hubiera que usarlo después, convendría trabajar sobre una copia.
+
+</TabItem>
+<TabItem label="Python">
+
+```python
+TRIANGULO = """
+75
+95 64
+17 47 82
+18 35 87 10
+20 04 82 47 65
+19 01 23 75 03 34
+88 02 77 73 07 63 67
+99 65 04 28 06 16 70 92
+41 41 26 56 83 40 80 70 33
+41 48 72 33 47 32 37 16 94 29
+53 71 44 65 25 43 91 52 97 51 14
+70 11 33 28 77 73 17 78 39 68 17 57
+91 71 52 38 17 14 91 43 58 50 27 29 48
+63 66 04 68 89 53 67 30 73 16 69 87 40 31
+04 62 98 27 23 09 70 98 73 93 38 53 60 04 23
+"""
+
+def mejor_camino(triangulo):
+    mejor = list(triangulo[-1])
+    for fila in reversed(triangulo[:-1]):
+        mejor = [x + max(mejor[j], mejor[j + 1]) for j, x in enumerate(fila)]
+    return mejor[0]
+
+filas = [[int(x) for x in linea.split()] for linea in TRIANGULO.strip().splitlines()]
+print(mejor_camino(filas))
+```
+
+Con `mejor_camino([[3], [7, 4], [2, 4, 6], [8, 5, 9, 3]])` devuelve 23. Esta versión no modifica el triángulo: guarda solo la fila de valores $M$ que está calculando.
+
+</TabItem>
+</Tabs>
+
+## Complejidad
+
+| Método | Coste para 15 filas | Para $n$ filas |
+| --- | --- | --- |
+| Probar todos los caminos | 16 384 caminos de 15 números | $O(2^n)$ |
+| De abajo arriba (repositorio) | 105 sumas y comparaciones | $O(n^2)$ |
+
+Con 15 filas da igual; con 100, la diferencia es entre 5050 operaciones y un tiempo mayor que la edad del universo. Es el [problema 67](../067-camino-de-suma-maxima-ii/).
+
+## Conceptos utilizados
+
+<Relaciones mostrar="conceptos" />
+
+## Problemas relacionados
+
+<Relaciones mostrar="relacionados" />

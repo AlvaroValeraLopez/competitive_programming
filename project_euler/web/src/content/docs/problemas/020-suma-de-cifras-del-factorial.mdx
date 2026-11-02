@@ -1,0 +1,127 @@
+---
+title: 'Problema 20: Suma de las cifras de un factorial'
+description: Sumar las cifras de 100!, un número de 158 cifras, multiplicando una lista de cifras por 2, 3, …, 100, y por qué sus 24 ceros finales se pueden quitar antes de empezar.
+sidebar:
+  label: '20 · Cifras de 100!'
+  order: 20
+temas: [Números grandes, Factorial]
+conceptos: [precision-arbitraria, factorizacion-en-primos]
+---
+
+import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+import solucion from '@soluciones/11_20/20_factorialDigitSum.js?raw';
+
+## El problema
+
+$n!$ es el producto $n \times (n - 1) \times \cdots \times 3 \times 2 \times 1$. Por ejemplo, $10! = 3\,628\,800$, y la suma de sus cifras es $3 + 6 + 2 + 8 + 8 + 0 + 0 = 27$. **¿Cuánto suman las cifras de $100!$?**
+
+[Enunciado original en Project Euler](https://projecteuler.net/problem=20)
+
+## La idea en una frase
+
+$100!$ tiene 158 cifras, así que hay que calcularlo exactamente, multiplicando una lista de cifras por cada número del 2 al 100; los 24 ceros del final no suman nada y se pueden quitar por el camino.
+
+## Primer intento: con Number
+
+```js
+let f = 1;
+for (let i = 2; i <= 100; i++) f *= i;
+```
+
+$100! \approx 9{,}33 \cdot 10^{157}$ cabe en un `Number`, cuyo máximo ronda $1{,}8 \cdot 10^{308}$, pero solo sus primeras 16 cifras son correctas: el resto se ha perdido en los redondeos. Y a partir de $171!$ el resultado ya es `Infinity`. Hace falta el número exacto.
+
+## Desarrollo matemático
+
+### Paso 1: cuántas cifras tiene
+
+El número de cifras es $\lfloor \log_{10} 100! \rfloor + 1$, y el logaritmo de un producto es la suma de los logaritmos:
+
+$$
+\log_{10} 100! = \log_{10} 2 + \log_{10} 3 + \cdots + \log_{10} 100 \approx 157{,}97
+$$
+
+así que **$100!$ tiene 158 cifras**. La fórmula de Stirling, $\ln n! \approx n \ln n - n + \tfrac{1}{2} \ln(2\pi n)$, da el mismo valor sin sumar cien logaritmos.
+
+### Paso 2: multiplicar por números pequeños
+
+Guardamos el número como una lista de cifras, empezando por las unidades, y lo multiplicamos sucesivamente por $2, 3, \dots, 100$. Para multiplicar por $q$ basta una pasada: en cada cifra se calcula $s = q \cdot d + \text{llevada}$, se escribe $s \bmod 10$ y la llevada pasa a ser $\lfloor s / 10 \rfloor$.
+
+**Con $q \le 100$, la llevada nunca pasa de 99**: si entra como mucho 99, entonces $s \le 100 \cdot 9 + 99 = 999$ y sale como mucho 99. Así que todos los números que intervienen son pequeños y exactos. En total son 99 pasadas sobre listas de hasta 158 cifras: menos de 16 000 operaciones.
+
+### Paso 3: los ceros del final
+
+Cada cero del final de $100!$ es un factor 10, es decir, un 2 y un 5. En $100!$ hay muchos más doses que cincos, así que el número de ceros es el exponente del 5 en su [factorización](../../conceptos/factorizacion-en-primos/). Ese exponente se cuenta con la **fórmula de Legendre**: los múltiplos de 5 aportan un 5 cada uno, los de 25 otro más, los de 125 otro…
+
+$$
+\left\lfloor \frac{100}{5} \right\rfloor + \left\lfloor \frac{100}{25} \right\rfloor + \left\lfloor \frac{100}{125} \right\rfloor + \cdots = 20 + 4 + 0 = 24
+$$
+
+El exponente del 2 es $50 + 25 + 12 + 6 + 3 + 1 = 97$. Por tanto **$100!$ acaba en 24 ceros**, que no aportan nada a la suma de las cifras. Si cada vez que el número acaba en 0 se divide entre 10, la lista se queda en 134 cifras en lugar de 158.
+
+### Paso 4: comprobarlo con el ejemplo
+
+Para $10!$, la fórmula de Legendre da $\lfloor 10/5 \rfloor = 2$ ceros, y en efecto $10! = 3\,628\,800$. Sin ellos queda $36\,288$, cuyas cifras suman $3 + 6 + 2 + 8 + 8 = 27$, como dice el enunciado.
+
+**Una comprobación con el 9.** Un número y la suma de sus cifras dejan el mismo resto al dividirlos entre 9. Para $n \ge 6$, $n!$ es múltiplo de 9, porque entre sus factores están el 3 y el 6. Así que la suma de las cifras de $n!$ también es múltiplo de 9, como el 27 de $10!$.
+
+## El código
+
+<Tabs>
+<TabItem label="JavaScript (repositorio)">
+
+<Code code={solucion} lang="js" title="20_factorialDigitSum.js" />
+
+`factorial` multiplica con `BigInt` todos los números del 2 al `n`, y `sumOfDigits` convierte el resultado en texto y suma sus cifras.
+
+</TabItem>
+<TabItem label="JavaScript (lista de cifras)">
+
+```js
+function cifrasDelFactorial(n) {
+  let cifras = [1]; // empezando por las unidades
+  for (let q = 2; q <= n; q++) {
+    let llevada = 0;
+    for (let j = 0; j < cifras.length; j++) {
+      const s = q * cifras[j] + llevada;
+      cifras[j] = s % 10;
+      llevada = Math.floor(s / 10);
+    }
+    while (llevada > 0) {
+      cifras.push(llevada % 10);
+      llevada = Math.floor(llevada / 10);
+    }
+    while (cifras[0] === 0) cifras.shift(); // fuera los ceros del final (paso 3)
+  }
+  return cifras;
+}
+
+const suma = cifrasDelFactorial(100).reduce((a, b) => a + b, 0);
+console.log(suma);
+```
+
+Son los pasos 2 y 3: al terminar cada multiplicación, la llevada que queda puede tener dos cifras, así que se añade cifra a cifra.
+
+</TabItem>
+<TabItem label="Python">
+
+```python
+from math import factorial
+
+print(sum(int(c) for c in str(factorial(100))))
+```
+
+</TabItem>
+</Tabs>
+
+## Complejidad
+
+Multiplicar una lista de $k$ cifras por un número pequeño cuesta $O(k)$, y $n!$ tiene del orden de $n \log_{10} n$ cifras. Calcular $n!$ así cuesta, por tanto, del orden de $n^2 \log n$ operaciones con cifras: unas 16 000 para $n = 100$. Para factoriales de millones se usan otros métodos, que multiplican los factores por parejas para que los productos tengan tamaños parecidos y aprovechar la multiplicación rápida.
+
+## Conceptos utilizados
+
+<Relaciones mostrar="conceptos" />
+
+## Problemas relacionados
+
+<Relaciones mostrar="relacionados" />

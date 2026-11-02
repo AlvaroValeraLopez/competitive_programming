@@ -1,0 +1,130 @@
+---
+title: El problema del cambio de monedas
+description: De cuántas formas se puede pagar una cantidad con unas monedas dadas, por qué importa el orden de los bucles y cuándo basta con elegir siempre la moneda más grande para pagar con las mínimas.
+sidebar:
+  label: Cambio de monedas
+  order: 14
+requiere: [principio-de-optimalidad]
+area: Programación dinámica
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+
+## El problema
+
+Tenemos monedas de $k$ valores distintos, $c_1 < c_2 < \cdots < c_k$, tantas de cada una como queramos. **¿De cuántas formas se puede pagar una cantidad $n$?** El orden en que se entregan no importa: $2 + 1$ y $1 + 2$ son la misma forma. Dicho de otro modo, contamos las soluciones en enteros $a_i \ge 0$ de
+
+$$
+a_1 c_1 + a_2 c_2 + \cdots + a_k c_k = n
+$$
+
+donde $a_i$ es el número de monedas de valor $c_i$.
+
+Por ejemplo, con monedas de 1, 2 y 5 hay cuatro formas de pagar 5: $5$, $2 + 2 + 1$, $2 + 1 + 1 + 1$ y $1 + 1 + 1 + 1 + 1$.
+
+## Contar sin enumerar: una recurrencia
+
+Llamemos $W(i, m)$ al número de formas de pagar $m$ usando solo las $i$ primeras monedas. Entonces
+
+$$
+W(i, m) = W(i - 1, m) + W(i, m - c_i)
+$$
+
+donde el segundo término solo aparece si $m \ge c_i$. Los casos base son $W(i, 0) = 1$, porque hay una forma de pagar 0, no dar nada, y $W(0, m) = 0$ si $m > 0$.
+
+**Demostración.** Repartimos las formas de pagar $m$ en dos grupos. Las que **no** usan la moneda $c_i$ son formas de pagar $m$ con las $i - 1$ primeras: hay $W(i-1, m)$. Las que la usan **al menos una vez** se corresponden una a una con las formas de pagar $m - c_i$ con las $i$ primeras: basta con quitar o añadir una moneda de $c_i$. Hay $W(i, m - c_i)$.
+
+Con las monedas de 1, 2 y 5, para las cantidades del 0 al 10:
+
+| Monedas | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| solo 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 |
+| 1 y 2 | 1 | 1 | 2 | 2 | 3 | 3 | 4 | 4 | 5 | 5 | 6 |
+| 1, 2 y 5 | 1 | 1 | 2 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 10 |
+
+Cada casilla es la de encima más la que está $c_i$ columnas a su izquierda en la misma fila. Por ejemplo, $W(3, 10) = W(2, 10) + W(3, 5) = 6 + 4 = 10$.
+
+## Con una sola lista
+
+No hace falta guardar la tabla entera: basta con una fila, que se va actualizando moneda a moneda.
+
+```python
+def formas(monedas, n):
+    w = [1] + [0] * n
+    for c in monedas:
+        for m in range(c, n + 1):
+            w[m] += w[m - c]
+    return w[n]
+
+print(formas([1, 2, 5], 10))  # 10
+```
+
+Antes de procesar la moneda $c_i$, `w[m]` vale $W(i-1, m)$. Como las cantidades se recorren de menor a mayor, cuando se llega a `w[m]` la casilla `w[m - c]` ya se ha actualizado y vale $W(i, m - c_i)$, que es justo lo que pide la recurrencia. El coste es de $k \cdot n$ sumas: **$O(kn)$**.
+
+## El orden de los bucles importa
+
+Si se intercambian los bucles, primero las cantidades y dentro las monedas, el resultado cambia:
+
+```python
+def secuencias(monedas, n):
+    w = [1] + [0] * n
+    for m in range(1, n + 1):
+        w[m] = sum(w[m - c] for c in monedas if c <= m)
+    return w[n]
+```
+
+Ahora `w[m]` cuenta las **secuencias** de monedas que suman $m$: se elige cuál es la última moneda, y antes de ella cualquier secuencia que sume $m - c$. Así $1 + 2$ y $2 + 1$ cuentan como dos. Con monedas de 1 y 2 y $n = 4$, las formas son 3 ($1+1+1+1$, $1+1+2$ y $2+2$), pero las secuencias son 5, porque $1+1+2$ se puede ordenar de tres maneras.
+
+**Con monedas de 1 y 2, las secuencias son los números de Fibonacci**: la recurrencia queda $w_m = w_{m-1} + w_{m-2}$ con $w_0 = w_1 = 1$, así que $w_m = F_{m+1}$ (ver [la sucesión de Fibonacci](../fibonacci/)).
+
+## Funciones generatrices
+
+Hay una forma algebraica de ver todo esto. En el producto
+
+$$
+\frac{1}{1 - x^{c_1}} \cdot \frac{1}{1 - x^{c_2}} \cdots \frac{1}{1 - x^{c_k}} = \prod_{i=1}^{k} \left(1 + x^{c_i} + x^{2c_i} + x^{3c_i} + \cdots\right)
+$$
+
+cada forma de pagar $n$ corresponde a elegir el término $x^{a_i c_i}$ de cada factor, de modo que los exponentes sumen $n$. Por tanto, **el coeficiente de $x^n$ es el número de formas**. El algoritmo de la lista hace exactamente esto: multiplica las series factor a factor, quedándose solo con los términos hasta $x^n$.
+
+Con monedas de 1 y 2, por ejemplo, el coeficiente de $x^n$ en $\frac{1}{(1-x)(1-x^2)}$ es $\lfloor n/2 \rfloor + 1$, que es la segunda fila de la tabla. Y para cantidades grandes, el número de formas crece como
+
+$$
+\frac{n^{k-1}}{(k-1)!\; c_1 c_2 \cdots c_k}
+$$
+
+siempre que las monedas no tengan ningún divisor común mayor que 1.
+
+## Pagar con el menor número de monedas
+
+Otra pregunta distinta: **¿cuál es el mínimo número de monedas para pagar $n$?** Lo natural es el método **voraz**: dar siempre la moneda más grande que quepa. Con los euros, o con las monedas de 1, 2, 5, 10, 20, 50, 100 y 200, funciona. Pero no siempre: con monedas de 1, 3 y 4, para pagar 6 el voraz da $4 + 1 + 1$, tres monedas, y se puede con dos, $3 + 3$.
+
+La solución general es otra vez el [principio de optimalidad](../principio-de-optimalidad/): si un pago óptimo de $m$ usa una moneda $c$, el resto es un pago óptimo de $m - c$. Así que, con $C(0) = 0$,
+
+$$
+C(m) = 1 + \min_{c_i \le m} C(m - c_i)
+$$
+
+```python
+def menos_monedas(monedas, n):
+    infinito = float("inf")
+    c = [0] + [infinito] * n
+    for m in range(1, n + 1):
+        c[m] = 1 + min((c[m - x] for x in monedas if x <= m), default=infinito)
+    return c[n]
+
+print(menos_monedas([1, 3, 4], 6))  # 2
+```
+
+<Aside type="note" title="¿Cuándo funciona el voraz?">
+Los sistemas de monedas en los que el voraz siempre da el mínimo se llaman **canónicos**. Para saber si uno lo es no hace falta probar todas las cantidades: Kozen y Zaks demostraron en 1994 que, si el voraz falla alguna vez, ya falla en alguna cantidad menor que la suma de las dos monedas más grandes.
+</Aside>
+
+## Conceptos previos
+
+<Relaciones mostrar="requiere" />
+
+## Dónde aparece
+
+<Relaciones mostrar="aparece" />

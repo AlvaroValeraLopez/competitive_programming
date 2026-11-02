@@ -1,0 +1,131 @@
+---
+title: 'Problema 31: Sumas de monedas'
+description: Contar las formas de pagar 2 libras con monedas de 1, 2, 5, 10, 20, 50, 100 y 200 peniques sin enumerarlas, con una recurrencia que añade las monedas de una en una.
+sidebar:
+  label: '31 · Sumas de monedas'
+  order: 31
+temas: [Programación dinámica, Combinatoria]
+conceptos: [cambio-de-monedas]
+---
+
+import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+import solucion from '@soluciones/31_40/31_coinSums.js?raw';
+
+## El problema
+
+En el Reino Unido hay monedas de 1, 2, 5, 10, 20 y 50 peniques, de 1 libra (100 peniques) y de 2 libras (200 peniques). Se pueden pagar 2 libras, por ejemplo, así:
+
+$$
+1 \times 100 + 1 \times 50 + 2 \times 20 + 1 \times 5 + 1 \times 2 + 3 \times 1
+$$
+
+**¿De cuántas formas distintas se pueden pagar 2 libras, usando cualquier número de monedas?**
+
+[Enunciado original en Project Euler](https://projecteuler.net/problem=31)
+
+## La idea en una frase
+
+No hace falta enumerar las formas: el número de formas de pagar cada cantidad con las primeras monedas se obtiene sumando dos números ya calculados, así que basta con rellenar una lista de 201 casillas una vez por cada moneda.
+
+## Primer intento: enumerar
+
+Lo directo es probar cuántas monedas de cada tipo se usan, con un bucle por moneda, y contar las combinaciones que suman 200. Recursivamente, empezando por la moneda más grande:
+
+```js
+function contar(cantidad, monedas) {
+  if (monedas.length === 0) return cantidad === 0 ? 1 : 0;
+  const [mayor, ...resto] = monedas;
+  let formas = 0;
+  for (let usadas = 0; usadas * mayor <= cantidad; usadas++) {
+    formas += contar(cantidad - usadas * mayor, resto);
+  }
+  return formas;
+}
+
+console.log(contar(200, [200, 100, 50, 20, 10, 5, 2, 1]));
+```
+
+Con 200 peniques termina enseguida, pero **visita las formas una a una**, así que su coste es como mínimo el número de formas. Y ese número crece deprisa con la cantidad: como una potencia séptima de ella, porque hay ocho monedas (ver [cambio de monedas](../../conceptos/cambio-de-monedas/#funciones-generatrices)).
+
+## Desarrollo matemático
+
+Llamemos $c_1, \dots, c_8$ a las monedas, de menor a mayor: $1, 2, 5, 10, 20, 50, 100, 200$.
+
+### Paso 1: la recurrencia
+
+Sea $W(i, m)$ el número de formas de pagar $m$ peniques usando solo las $i$ primeras monedas. Las formas de pagar $m$ se reparten en las que **no usan** la moneda $c_i$, que son $W(i - 1, m)$, y las que la usan **al menos una vez**: quitándoles una moneda de $c_i$ quedan, una a una, las formas de pagar $m - c_i$ con las mismas monedas, $W(i, m - c_i)$. Así que
+
+$$
+W(i, m) = W(i - 1, m) + W(i, m - c_i)
+$$
+
+con el segundo término solo cuando $m \ge c_i$, y con $W(i, 0) = 1$ (pagar 0 es no dar nada) y $W(0, m) = 0$ para $m > 0$. La respuesta es $W(8, 200)$.
+
+### Paso 2: una tabla pequeña
+
+Para las cantidades del 0 al 10 solo intervienen las monedas de 1, 2, 5 y 10:
+
+| Monedas | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 |
+| 1 y 2 | 1 | 1 | 2 | 2 | 3 | 3 | 4 | 4 | 5 | 5 | 6 |
+| 1, 2 y 5 | 1 | 1 | 2 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 10 |
+| 1, 2, 5 y 10 | 1 | 1 | 2 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 11 |
+
+Cada casilla es la de encima más la que está $c_i$ columnas a su izquierda, en su misma fila. Por ejemplo, hay $W(4, 10) = W(3, 10) + W(4, 0) = 10 + 1 = 11$ formas de pagar 10 peniques: las diez sin la moneda de 10, más la propia moneda de 10. Y con las cantidades hasta 5, las cuatro formas de pagar 5 son $5$, $2 + 2 + 1$, $2 + 1 + 1 + 1$ y $1 + 1 + 1 + 1 + 1$.
+
+### Paso 3: con una sola lista
+
+No hace falta guardar la tabla: basta una lista `w` de 201 casillas, que se actualiza moneda a moneda. Para cada moneda $c$ se recorren las cantidades **de menor a mayor** haciendo `w[m] += w[m - c]`. Al llegar a `w[m]`, todavía vale $W(i - 1, m)$, la fila de encima, y `w[m - c]` ya vale $W(i, m - c)$, porque se acaba de actualizar. Es justo la recurrencia.
+
+**El orden de los bucles importa.** Si se recorrieran primero las cantidades y dentro las monedas, se contarían las secuencias ordenadas: $1 + 2$ y $2 + 1$ contarían como dos formas distintas, y el resultado sería mucho mayor.
+
+## El código
+
+<Tabs>
+<TabItem label="JavaScript (repositorio)">
+
+<Code code={solucion} lang="js" title="31_coinSums.js" />
+
+Es el paso 3: `ways[0] = 1` es el caso base, el bucle de fuera recorre las monedas y el de dentro las cantidades de menor a mayor. Al terminar, `ways[200]` es $W(8, 200)$.
+
+</TabItem>
+<TabItem label="Python">
+
+```python
+def formas(monedas, total):
+    w = [1] + [0] * total
+    for c in monedas:
+        for m in range(c, total + 1):
+            w[m] += w[m - c]
+    return w[total]
+
+print(formas([1, 2, 5, 10, 20, 50, 100, 200], 200))
+```
+
+Con `formas([1, 2, 5, 10], 10)` devuelve 11, la última casilla de la tabla del paso 2.
+
+</TabItem>
+</Tabs>
+
+## Complejidad
+
+| Método | Coste |
+| --- | --- |
+| Enumerar las formas | al menos tantas operaciones como formas haya |
+| Programación dinámica (repositorio) | $8 \times 200 = 1600$ sumas |
+
+En general, con $k$ monedas y una cantidad $n$, la programación dinámica hace $k \cdot n$ sumas y guarda $n + 1$ números. Si la cantidad fuera enorme, el número de formas también lo sería, y habría que usar [enteros de precisión arbitraria](../../conceptos/precision-arbitraria/) en la lista.
+
+## Para profundizar
+
+- **Con el menor número de monedas.** Para pagar con las mínimas monedas basta, con este sistema, con dar siempre la moneda más grande que quepa. No es así con cualquier sistema: con monedas de 1, 3 y 4, el voraz paga 6 como $4 + 1 + 1$ y se puede con $3 + 3$. El caso general se resuelve con otra recurrencia, explicada en [cambio de monedas](../../conceptos/cambio-de-monedas/#pagar-con-el-menor-número-de-monedas).
+
+## Conceptos utilizados
+
+<Relaciones mostrar="conceptos" />
+
+## Problemas relacionados
+
+<Relaciones mostrar="relacionados" />

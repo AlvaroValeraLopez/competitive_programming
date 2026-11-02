@@ -1,0 +1,89 @@
+---
+title: Enteros de precisión arbitraria
+description: Por qué un Number de JavaScript deja de ser exacto a partir de 2⁵³, cómo se guardan y se suman números de cualquier tamaño cifra a cifra, y cuánto cuestan las operaciones.
+sidebar:
+  label: Precisión arbitraria
+  order: 12
+area: Números grandes
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+
+## El límite de los números de coma flotante
+
+En JavaScript, todos los números normales (`Number`) son de **coma flotante de doble precisión**: se guardan como $m \cdot 2^e$, con una mantisa $m$ de 53 bits y un exponente $e$. Eso tiene dos consecuencias.
+
+- **Hasta $2^{53}$ todo es exacto.** Cualquier entero entre $-2^{53}$ y $2^{53} = 9\,007\,199\,254\,740\,992$ se representa sin error, y las sumas, restas y productos cuyo resultado se quede en ese rango también son exactos.
+- **Por encima, faltan enteros.** Entre $2^{53}$ y $2^{54}$ solo caben los números pares; entre $2^{54}$ y $2^{55}$, los múltiplos de 4; y así sucesivamente. En JavaScript, `2 ** 53 + 1 === 2 ** 53` es `true`: el $+1$ se pierde al redondear.
+
+Los números siguen pudiendo ser enormes, hasta unos $1{,}8 \cdot 10^{308}$, pero solo con unas 16 cifras significativas. Por ejemplo, $100!$ cabe en un `Number`, pero solo sus primeras cifras son correctas. Y a partir de $171!$ el resultado ya es `Infinity`.
+
+<Aside type="caution" title="Correcto por casualidad">
+`Math.pow(2, 1000)` da **exactamente** $2^{1000}$: una potencia de 2 es una mantisa de 1 con un exponente grande, y eso un `Number` lo guarda sin error. Por eso `BigInt(Math.pow(2, 1000))` da el número correcto, aunque el método sea incorrecto: con `Math.pow(3, 100)` el resultado ya está redondeado. Para calcular potencias exactas hay que operar con enteros grandes desde el principio: `2n ** 1000n`.
+</Aside>
+
+## Un número como una lista de cifras
+
+La solución es la de toda la vida: guardar el número cifra a cifra, como en un papel. Un entero $N \ge 0$ con cifras $d_{k-1} \dots d_1 d_0$ en base 10 vale
+
+$$
+N = \sum_{i=0}^{k-1} d_i \cdot 10^i, \qquad 0 \le d_i \le 9
+$$
+
+y se puede guardar como la lista $[d_0, d_1, \dots, d_{k-1}]$, empezando por las unidades. No hay límite de tamaño: la lista crece lo que haga falta. Su longitud, el número de cifras, es
+
+$$
+k = \lfloor \log_{10} N \rfloor + 1
+$$
+
+Por ejemplo, $2^{1000}$ tiene $\lfloor 1000 \log_{10} 2 \rfloor + 1 = \lfloor 301{,}03 \rfloor + 1 = 302$ cifras, y $100!$ tiene 158, porque $\log_{10} 100! = \log_{10} 1 + \log_{10} 2 + \cdots + \log_{10} 100 \approx 157{,}97$.
+
+## Sumar con llevadas
+
+Se suma como en el colegio: de derecha a izquierda, cifra a cifra, arrastrando la llevada.
+
+$$
+\begin{array}{r}
+4\,7\,5 \\
++\ 3\,8\,9 \\ \hline
+8\,6\,4
+\end{array}
+$$
+
+$5 + 9 = 14$: se escribe 4 y se lleva 1. $7 + 8 + 1 = 16$: se escribe 6 y se lleva 1. $4 + 3 + 1 = 8$. En general, en la columna $i$ se calcula $s = a_i + b_i + \text{llevada}$; la cifra del resultado es $s \bmod 10$ y la nueva llevada es $\lfloor s / 10 \rfloor$.
+
+**La llevada nunca pasa de 1.** Si la llevada que entra es 0 o 1, entonces $s \le 9 + 9 + 1 = 19$, y la que sale vuelve a ser 0 o 1. Al sumar dos números de $k$ cifras, el resultado tiene $k$ o $k + 1$ cifras, y el coste es de $k$ pasos: **$O(k)$**.
+
+**Sumando muchos números a la vez**, la llevada crece, pero poco. Si se suman $m$ números en la misma pasada, cada columna aporta como mucho $9m$. Con $m = 100$: si entra una llevada de como mucho 99, la columna suma como mucho $900 + 99 = 999$ y sale una llevada de como mucho 99. Por inducción, la llevada nunca pasa de 99.
+
+## Multiplicar
+
+**Por un número pequeño.** Para multiplicar $N$ por un entero $q$ pequeño, como al calcular un factorial, basta una pasada: en la columna $i$ se calcula $s = q \cdot d_i + \text{llevada}$, se escribe $s \bmod 10$ y se arrastra $\lfloor s / 10 \rfloor$. Cuesta $O(k)$, así que calcular $n!$ multiplicando por $2, 3, \dots, n$ cuesta del orden de $n$ veces el número de cifras de $n!$.
+
+**Dos números grandes.** El método del colegio multiplica cada cifra de uno por cada cifra del otro: $O(k \cdot l)$ para números de $k$ y $l$ cifras, es decir, $O(k^2)$ si son del mismo tamaño. Hay métodos más rápidos. El de **Karatsuba** parte cada número en dos mitades, $N = A \cdot 10^h + B$ y $M = C \cdot 10^h + D$, y aprovecha que
+
+$$
+N M = AC \cdot 10^{2h} + \big((A+B)(C+D) - AC - BD\big) \cdot 10^h + BD
+$$
+
+para hacer **tres** productos de la mitad de tamaño en lugar de cuatro. Aplicado recursivamente cuesta $O(k^{\log_2 3}) \approx O(k^{1{,}585})$.
+
+**Potencias.** Para calcular $a^n$ no hace falta multiplicar $n$ veces: con la **potenciación rápida**, $a^n = (a^{n/2})^2$ si $n$ es par y $a^n = a \cdot a^{n-1}$ si es impar, bastan unas $2 \log_2 n$ multiplicaciones.
+
+<Aside type="tip" title="Más de una cifra por casilla">
+Las implementaciones reales no guardan una cifra decimal por casilla, sino muchas: en base $10^7$, por ejemplo, el producto de dos casillas es menor que $10^{14}$ y sigue siendo exacto en un `Number`. Así las listas son siete veces más cortas. Los `int` de Python trabajan internamente en base $2^{30}$, y los `BigInt` de V8, el motor de Chrome y Node, en base $2^{64}$.
+</Aside>
+
+## En la práctica
+
+No hace falta programar nada de esto: casi todos los lenguajes traen enteros de precisión arbitraria.
+
+- **JavaScript** tiene `BigInt` desde 2020. Se escriben con una `n` al final (`123n`) o con `BigInt(123)`, y admiten `+`, `-`, `*`, `**`, `/` (que redondea hacia cero) y `%`. No se pueden mezclar con `Number` en la misma operación: `1n + 1` da un error.
+- **Python** usa enteros de precisión arbitraria siempre: `2 ** 1000` ya es exacto.
+
+Para sumar las cifras de un número grande lo más sencillo es pasarlo a texto: `[...String(n)]` en JavaScript, o `str(n)` en Python, da la lista de cifras.
+
+## Dónde aparece
+
+<Relaciones mostrar="aparece" />
