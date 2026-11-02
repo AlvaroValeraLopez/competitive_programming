@@ -1,11 +1,11 @@
 /**
  * Filtro de la lista de ejercicios, desde varias vistas a la vez: por texto,
- * por dificultad, por fuente, por track, por tema y por conceptos. Dentro de
- * un grupo basta con cumplir una de las opciones elegidas; entre grupos hay que
- * cumplirlos todos. Con conceptos elegidos, salen antes los ejercicios que usan
- * más de ellos.
+ * por dificultad, por tema (el área de sus conceptos: «Teoría de números»…),
+ * por conceptos y por fuente. Dentro de un grupo basta con cumplir una de las
+ * opciones elegidas; entre grupos hay que cumplirlos todos. Con conceptos
+ * elegidos, salen antes los ejercicios que usan más de ellos.
  *
- * El filtro se guarda en la dirección (`?dificultad=facil&conceptos=a,b&q=…`)
+ * El filtro se guarda en la dirección (`?dificultad=facil&tema=teoria-de-numeros&conceptos=a,b&q=…`)
  * para poder enlazar una selección, por ejemplo desde la página de cada concepto.
  *
  * Lógica pura, sin Astro ni DOM, para poder probarla con `node --test`. La
@@ -14,7 +14,7 @@
 import { normalizar } from './menu.ts';
 
 /** Los grupos de opciones del filtro; el nombre de cada uno es su parámetro en la dirección. */
-export const GRUPOS = ['dificultad', 'fuente', 'track', 'tema', 'conceptos'] as const;
+export const GRUPOS = ['dificultad', 'tema', 'conceptos', 'fuente'] as const;
 export type Grupo = (typeof GRUPOS)[number];
 
 /** «fuente»: por fuente y número, el orden de la página; «dificultad»: de la más fácil a la más difícil. */
@@ -24,7 +24,7 @@ export type Orden = (typeof ORDENES)[number];
 export interface Filtro {
 	/** Texto del buscador, tal cual lo escribió el usuario. */
 	consulta: string;
-	/** Las opciones elegidas en cada grupo: «facil», «project-euler», «suma-de-gauss»… */
+	/** Las opciones elegidas en cada grupo: «facil», «teoria-de-numeros», «suma-de-gauss», «project-euler»… */
 	seleccion: Record<Grupo, string[]>;
 	orden: Orden;
 }
@@ -81,6 +81,16 @@ export function puntuacion(candidato: Candidato, filtro: Filtro): number | null 
 		if (elegidas.length > 0 && !elegidas.some((o) => candidato.valores[grupo].includes(o))) return null;
 	}
 	return filtro.seleccion.conceptos.filter((c) => candidato.valores.conceptos.includes(c)).length;
+}
+
+/**
+ * Cuántos candidatos quedarían si en el grupo se eligiera solo esa opción (o
+ * ninguna), con el resto del filtro igual. Es el recuento que acompaña a cada
+ * opción: cambia al elegir otras, y si es 0 la opción no lleva a nada.
+ */
+export function recuento(candidatos: Candidato[], filtro: Filtro, grupo: Grupo, opcion?: string): number {
+	const probado = elegirSolo(filtro, grupo, opcion);
+	return candidatos.filter((c) => puntuacion(c, probado) !== null).length;
 }
 
 /** Los candidatos que encajan: primero los que usan más conceptos elegidos, y después según el orden elegido. */
@@ -142,7 +152,7 @@ export function elegirSolo(filtro: Filtro, grupo: Grupo, opcion?: string): Filtr
 	return { ...filtro, seleccion: { ...filtro.seleccion, [grupo]: opcion ? [opcion] : [] } };
 }
 
-/** Identificador de un tema para la dirección: «Números coprimos» → «numeros-coprimos». */
+/** Identificador de un tema para la dirección: «Teoría de números» → «teoria-de-numeros». */
 export function slugDeTema(tema: string): string {
 	return normalizar(tema)
 		.replace(/[^a-z0-9]+/g, '-')
