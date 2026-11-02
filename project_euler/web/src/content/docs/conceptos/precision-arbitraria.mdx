@@ -18,7 +18,7 @@ En JavaScript, todos los números normales (`Number`) son de **coma flotante de 
 - **Hasta $2^{53}$ todo es exacto.** Cualquier entero entre $-2^{53}$ y $2^{53} = 9\,007\,199\,254\,740\,992$ se representa sin error, y las sumas, restas y productos cuyo resultado se quede en ese rango también son exactos.
 - **Por encima, faltan enteros.** Entre $2^{53}$ y $2^{54}$ solo caben los números pares; entre $2^{54}$ y $2^{55}$, los múltiplos de 4; y así sucesivamente. En JavaScript, `2 ** 53 + 1 === 2 ** 53` es `true`: el $+1$ se pierde al redondear.
 
-Los números siguen pudiendo ser enormes, hasta unos $1{,}8 \cdot 10^{308}$, pero solo con unas 16 cifras significativas. Por ejemplo, $100!$ cabe en un `Number`, pero solo sus primeras cifras son correctas. Y a partir de $171!$ el resultado ya es `Infinity`.
+Los números siguen pudiendo ser enormes, hasta unos $1{,}8 \cdot 10^{308}$, pero solo con unas 16 cifras significativas. Por ejemplo, $100!$ cabe en un `Number`, pero solo sus primeras cifras son correctas. Y $170!$ es el mayor factorial que cabe: el siguiente ya da `Infinity`.
 
 <Aside type="caution" title="Correcto por casualidad">
 `Math.pow(2, 1000)` da **exactamente** $2^{1000}$: una potencia de 2 es una mantisa de 1 con un exponente grande, y eso un `Number` lo guarda sin error. Por eso `BigInt(Math.pow(2, 1000))` da el número correcto, aunque el método sea incorrecto: con `Math.pow(3, 100)` el resultado ya está redondeado. Para calcular potencias exactas hay que operar con enteros grandes desde el principio: `2n ** 1000n`.
