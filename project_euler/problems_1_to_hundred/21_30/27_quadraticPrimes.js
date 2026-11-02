@@ -14,9 +14,9 @@ function findQuadraticPrimes(range) {
 
 	for (let a = -range + 1; a < range; a++) {
 		for (let b = -range; b <= range; b++) {
-			if (!isPrime(Math.abs(b))) continue; // b must be prime when n = 0
+			if (!isPrime(b)) continue; // b must be prime when n = 0
 			let n = 0;
-			while (isPrime(Math.abs(n * n + a * n + b))) {
+			while (isPrime(n * n + a * n + b)) {
 				n++;
 			}
 			if (n > maxNumOfPrimes) {

@@ -1,8 +1,10 @@
 const fs = require('fs');
+const path = require('path');
 
-fs.readFile('67_triangle.txt', 'utf8', (err, data) => {
+fs.readFile(path.join(__dirname, '67_triangle.txt'), 'utf8', (err, data) => {
   if (err) {
     console.error(err);
+    process.exitCode = 1;
     return;
   }
 

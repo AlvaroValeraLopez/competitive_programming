@@ -1,0 +1,196 @@
+---
+title: 'Problema 23: Sumas no abundantes'
+description: Sumar los enteros que no son suma de dos números abundantes, listando los abundantes con la suma de divisores y marcando todas sus sumas por parejas.
+sidebar:
+  label: '23 · Sumas no abundantes'
+  order: 23
+temas: [Divisores, Números abundantes]
+conceptos: [funcion-divisor]
+---
+
+import { Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+import solucion from '@soluciones/21_30/23_nonAbundantSums.js?raw';
+
+## El problema
+
+Un número es **perfecto** si la suma de sus divisores propios (los menores que él) es igual al propio número. Por ejemplo, 28 es perfecto porque $1 + 2 + 4 + 7 + 14 = 28$. Si la suma es menor que el número, se dice que es **deficiente**, y si es mayor, **abundante**.
+
+El menor número abundante es 12, ya que $1 + 2 + 3 + 4 + 6 = 16 > 12$, así que el menor número que se puede escribir como suma de dos abundantes es $12 + 12 = 24$. Se puede demostrar que **todo entero mayor que 28123** es suma de dos abundantes. El mayor entero que no lo es está por debajo de ese límite, pero el análisis matemático no consigue rebajarlo más.
+
+**¿Cuánto suman todos los enteros positivos que no se pueden escribir como suma de dos números abundantes?**
+
+[Enunciado original en Project Euler](https://projecteuler.net/problem=23)
+
+## La idea en una frase
+
+Se listan los 6965 números abundantes hasta 28123, se marcan en una tabla todas las sumas de dos de ellos y se suman los números que quedan sin marcar.
+
+## Primer intento: fuerza bruta
+
+Para cada $n$ hasta el límite, probar todas las formas de partirlo en $x + (n - x)$ con $x \le n / 2$, y comprobar si las dos partes son abundantes sumando sus divisores cada vez:
+
+```js
+function esAbundante(m) {
+  let suma = 1;
+  for (let i = 2; i * i <= m; i++) {
+    if (m % i === 0) suma += i === m / i ? i : i + m / i;
+  }
+  return suma > m;
+}
+
+function sumaNoAbundantesBruta(limite) {
+  let total = 0;
+  for (let n = 1; n <= limite; n++) {
+    let esSuma = false;
+    for (let x = 1; 2 * x <= n && !esSuma; x++) {
+      esSuma = esAbundante(x) && esAbundante(n - x);
+    }
+    if (!esSuma) total += n;
+  }
+  return total;
+}
+```
+
+Aunque se detiene en cuanto encuentra una descomposición, el bucle de divisores da en total unas $10^9$ vueltas, porque comprueba si un mismo número es abundante una y otra vez. Basta con averiguarlo **una sola vez** para cada número.
+
+## Desarrollo matemático
+
+Llamemos $L = 28\,123$ al límite. Usamos la notación de la [función divisor](../../conceptos/funcion-divisor/#la-suma-de-divisores-σn): $\sigma(n)$ es la suma de **todos** los divisores de $n$ y $s(n) = \sigma(n) - n$ la de los divisores propios.
+
+### Paso 1: abundante, en términos de σ
+
+Como $s(n) = \sigma(n) - n$, comparar $s(n)$ con $n$ es comparar $\sigma(n)$ con $2n$:
+
+$$
+n \text{ es abundante} \iff s(n) > n \iff \sigma(n) > 2n
+$$
+
+y del mismo modo $n$ es perfecto si $\sigma(n) = 2n$, y deficiente si $\sigma(n) < 2n$. Con los ejemplos del enunciado: $\sigma(12) = 1 + 2 + 3 + 4 + 6 + 12 = 28 > 24$, así que 12 es abundante, y $\sigma(28) = 56 = 2 \cdot 28$, así que 28 es perfecto.
+
+Los primeros abundantes son
+
+$$
+12,\ 18,\ 20,\ 24,\ 30,\ 36,\ 40,\ 42,\ 48,\ 54,\ \dots
+$$
+
+### Paso 2: la lista de abundantes
+
+Calculamos $s(n)$ para cada $n \le L$ y nos quedamos con los que cumplen $s(n) > n$. Hay dos maneras, las mismas del [problema 21](../021-numeros-amigos/):
+
+- **Divisores hasta la raíz.** Para cada $n$ se prueban los $i \le \sqrt{n}$ y se suman $i$ y $n / i$. Cuesta del orden de $L\sqrt{L}$: unas $3{,}1 \cdot 10^6$ divisiones.
+- **Criba aditiva.** Para cada $i \le L/2$ se suma $i$ a todos sus múltiplos $2i, 3i, \dots$ Cuesta del orden de $L \ln L$: unas $2{,}6 \cdot 10^5$ sumas.
+
+Resultado: hay $A = 6965$ números abundantes entre 1 y 28123, casi exactamente **la cuarta parte** de los números. Esa proporción no es casualidad: la densidad de los números abundantes tiende a una constante que vale aproximadamente $0{,}2476$.
+
+### Paso 3: marcar todas las sumas
+
+Con la lista ordenada $a_1 < a_2 < \cdots < a_A$, preparamos una tabla de booleanos `esSuma[0..L]`, toda a `false`, y marcamos cada suma de dos abundantes:
+
+```text
+para i = 1, ..., A:
+    para j = i, i+1, ..., A:
+        si a_i + a_j > L: salir del bucle de j
+        esSuma[a_i + a_j] = true
+```
+
+Tres detalles:
+
+- **Basta con $j \ge i$**, porque $a_i + a_j = a_j + a_i$.
+- **Pero $j$ empieza en $i$, no en $i + 1$**: los dos sumandos pueden ser el mismo número. Sin eso, $24 = 12 + 12$ no quedaría marcado.
+- **El corte es seguro** porque la lista está ordenada: si $a_i + a_j > L$, todas las sumas siguientes con el mismo $i$ son aún mayores.
+
+Al terminar, la respuesta es la suma de los $n$ entre 1 y $L$ con `esSuma[n]` a `false`. Los números mayores que $L$ no hace falta mirarlos: el enunciado garantiza que todos son suma de dos abundantes.
+
+### Paso 4: comprobarlo con números pequeños
+
+Ningún número menor que 24 queda marcado, porque el menor abundante es 12. Algunos casos:
+
+| $n$ | Descomposición | ¿Marcado? |
+| --- | --- | --- |
+| 24 | $12 + 12$ | sí |
+| 30 | $12 + 18$ | sí |
+| 32 | $12 + 20$ | sí |
+| 46 | ninguna | no |
+
+Para 46, el sumando menor tendría que ser un abundante $x \le 23$, es decir, 12, 18 o 20. Pero $46 - 12 = 34$ tiene $s(34) = 1 + 2 + 17 = 20$, $46 - 18 = 28$ es perfecto y $46 - 20 = 26$ tiene $s(26) = 1 + 2 + 13 = 16$: ninguno de los tres es abundante.
+
+### Paso 5: cuánto cuesta marcar las sumas
+
+Con $A$ abundantes hay $A(A+1)/2$ parejas con $i \le j$. Para $A = 6965$ son unos $2{,}4 \cdot 10^7$, pero gracias al corte del paso 3 solo se recorren unas $1{,}2 \cdot 10^7$, las que suman como mucho $L$.
+
+El coste es $O(A^2)$. Como $A \approx L / 4$, en el fondo es $O(L^2)$, pero con una constante pequeña: $A^2 / 2 \approx L^2 / 32$. Esta fase es la más cara del algoritmo, muy por encima de calcular la lista del paso 2.
+
+### Aparte: el mayor número que no es suma de dos abundantes
+
+El enunciado dice que el mayor número que no es suma de dos abundantes está por debajo de 28123, pero no dice cuál es. Con la tabla del paso 3 basta con buscar el mayor $n \le L$ sin marcar: es **20161**. Como todos los números mayores que $L$ son sumas, 20161 es el mayor entero positivo que no es suma de dos abundantes. (Repitiendo el cálculo hasta 40000, sin usar la garantía del enunciado, tampoco aparece ninguno más allá de 20161.)
+
+## El código
+
+<Tabs>
+<TabItem label="JavaScript (repositorio)">
+
+<Code code={solucion} lang="js" title="23_nonAbundantSums.js" />
+
+`sumOfDivisors` calcula $s(n)$ con los divisores hasta la raíz, igual que en el problema 21, y `findAbundantNumbers` hace el paso 2 empezando en 12, el menor abundante. `findAllSumsOfTwoAbundantNumbers` es el paso 3: el bucle interno empieza en `j = i` y hace `break` cuando la suma pasa de `LIMIT`. Por último, `findNonAbundantSums` suma los números que no han quedado marcados.
+
+</TabItem>
+<TabItem label="Python">
+
+```python
+LIMITE = 28123
+
+# Paso 2: s(n) para todo n <= LIMITE con la criba aditiva
+s = [0] * (LIMITE + 1)
+for i in range(1, LIMITE // 2 + 1):
+    for multiplo in range(2 * i, LIMITE + 1, i):
+        s[multiplo] += i
+
+abundantes = [n for n in range(1, LIMITE + 1) if s[n] > n]
+
+# Paso 3: marcar todas las sumas x + y con x <= y, sin pasar del límite
+es_suma = [False] * (LIMITE + 1)
+for i in range(len(abundantes)):
+    x = abundantes[i]
+    for j in range(i, len(abundantes)):
+        if x + abundantes[j] > LIMITE:
+            break
+        es_suma[x + abundantes[j]] = True
+
+print(sum(n for n in range(1, LIMITE + 1) if not es_suma[n]))
+```
+
+`len(abundantes)` vale 6965, y `max(n for n in range(1, LIMITE + 1) if not es_suma[n])` da el 20161 del aparte.
+
+</TabItem>
+</Tabs>
+
+## Complejidad
+
+| Fase | Método | Coste | Operaciones para $L = 28\,123$ |
+| --- | --- | --- | --- |
+| Todo | Fuerza bruta (recalcular cada vez) | $O(L^2\sqrt{L})$ | ~$10^9$ |
+| Lista de abundantes | Divisores hasta la raíz (repositorio) | $O(L\sqrt{L})$ | ~$3{,}1 \cdot 10^6$ |
+| Lista de abundantes | Criba aditiva | $O(L \log L)$ | ~$2{,}6 \cdot 10^5$ |
+| Marcar sumas | Parejas con corte (repositorio) | $O(A^2)$ | ~$1{,}2 \cdot 10^7$ |
+
+Como la fase de marcar domina, cambiar las divisiones por la criba apenas se nota en el total.
+
+## Mejoras posibles
+
+- **Preguntar en vez de marcar.** Para cada $n$, recorrer los abundantes $x \le n/2$ y mirar en una tabla si $n - x$ también lo es, parando en cuanto se encuentra uno. Casi todos los números encuentran una descomposición enseguida, y solo los que no son suma recorren la lista entera: en total son unas $4 \cdot 10^6$ consultas, la tercera parte que marcar las parejas.
+- **Tablas compactas.** `esSuma` cabe en un `Uint8Array` de 28124 bytes, y la tabla de $s(n)$ en un `Int32Array`.
+
+## Para profundizar
+
+- **Los múltiplos de un abundante son abundantes.** Si $n$ es abundante y $k \ge 2$, cada divisor $d$ de $n$ da un divisor $kd$ de $kn$, todos distintos, así que $\sigma(kn) \ge k\,\sigma(n) > k \cdot 2n = 2(kn)$. Por ejemplo, $6k$ es abundante para todo $k \ge 2$, porque $6k$ tiene los divisores propios distintos $1, k, 2k, 3k$, que ya suman $6k + 1$.
+- **Todo par mayor o igual que 48 es suma de dos abundantes.** Usamos los abundantes 12, 20 y 40 según el resto de $n$ al dividir entre 6: si el resto es 0, $n = 12 + (n - 12)$; si es 2, $n = 20 + (n - 20)$; y si es 4, $n = 40 + (n - 40)$. El segundo sumando es siempre un múltiplo de 6, y es mayor o igual que 12 porque los menores pares de cada caso son 48, 50 y 52. Por el punto anterior, es abundante. El 46 se queda justo fuera: deja resto 4 y $46 - 40 = 6$ no es abundante, y ya vimos en el paso 4 que no es suma de ninguna otra forma.
+- **Los impares son el problema.** Una suma impar necesita un sumando impar, y los abundantes impares son rarísimos: el menor es $945 = 3^3 \cdot 5 \cdot 7$, y hasta 28123 solo hay 62. Por eso ningún impar menor que $945 + 12 = 957$ es suma de dos abundantes, y los impares que no son suma llegan hasta 20161.
+
+## Conceptos utilizados
+
+<Relaciones mostrar="conceptos" />
+
+## Problemas relacionados
+
+<Relaciones mostrar="relacionados" />

@@ -1,5 +1,5 @@
 function sumOfDigits(base, exponent) {
-	const NUMBER = BigInt(Math.pow(base, exponent)).toString();
+	const NUMBER = (BigInt(base) ** BigInt(exponent)).toString();
 	return [...NUMBER].reduce((acc, digit) => acc + parseInt(digit), 0);
 }
 

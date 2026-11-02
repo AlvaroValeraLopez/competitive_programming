@@ -1,0 +1,156 @@
+---
+title: La criba de Eratóstenes
+description: Cómo obtener todos los primos hasta un límite tachando múltiplos, por qué basta con empezar en p² y por qué cuesta O(N log log N).
+sidebar:
+  label: Criba de Eratóstenes
+  order: 7
+requiere: [test-de-primalidad]
+area: Teoría de números
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+
+## La idea
+
+Si hay que encontrar **todos** los primos hasta un límite $N$, aplicar el [test de primalidad](../test-de-primalidad/) a cada número por separado es desperdiciar trabajo: cada test puede costar hasta $\sqrt{N}$ divisiones. La criba de Eratóstenes le da la vuelta al problema. En lugar de preguntar a cada número si tiene divisores, **cada primo tacha a sus múltiplos**:
+
+1. Escribimos los números del 2 al $N$, todos sin tachar.
+2. Tomamos el menor número $p$ que no esté tachado. Es primo.
+3. Tachamos sus múltiplos a partir de $p^2$: $p^2,\ p^2 + p,\ p^2 + 2p,\ \dots$ hasta $N$.
+4. Repetimos los pasos 2 y 3 mientras $p^2 \le N$. Los números que quedan sin tachar son exactamente los primos.
+
+No hay ni una división: solo sumas para ir saltando de un múltiplo al siguiente.
+
+## Ejemplo hasta 30
+
+| $p$ | Tacha (desde $p^2$) | Tachados por primera vez |
+| --- | --- | --- |
+| 2 | 4, 6, 8, …, 30 | 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30 |
+| 3 | 9, 12, 15, 18, 21, 24, 27, 30 | 9, 15, 21, 27 |
+| 5 | 25, 30 | 25 |
+| 7 | — | se para: $7^2 = 49 > 30$ |
+
+Quedan sin tachar
+
+$$
+2,\ 3,\ 5,\ 7,\ 11,\ 13,\ 17,\ 19,\ 23,\ 29,
+$$
+
+los 10 primos que hay hasta 30. Solo han hecho falta tres primos, 2, 3 y 5, porque $\sqrt{30} \approx 5{,}48$.
+
+La tabla también enseña dónde se pierde algo de tiempo: los números con varios factores primos se tachan varias veces. El 30 lo tachan el 2, el 3 y el 5.
+
+## Por qué empezar en p² y parar en √N
+
+**Empezar en $p^2$.** Los múltiplos de $p$ menores que $p^2$ son de la forma $k \cdot p$ con $2 \le k < p$. Cualquier factor primo de $k$ es menor que $p$, así que $k \cdot p$ ya lo tachó ese primo más pequeño. En el ejemplo, cuando llega el 5, sus múltiplos 10, 15 y 20 ya estaban tachados por el 2 y el 3; el primero nuevo es el 25.
+
+**Parar en $\sqrt{N}$.** Si $p^2 > N$, no queda nada que tachar a partir de $p^2$. Dicho de otra forma: todo compuesto $c \le N$ tiene un factor primo $q \le \sqrt{c} \le \sqrt{N}$ (es lo que se demuestra en el [test de primalidad](../test-de-primalidad/#basta-con-probar-hasta-la-raíz-cuadrada)), y además $c \ge q^2$, porque su otro factor $c / q$ no puede ser menor que $q$. Así que el primo $q$ lo tacha. Cuando se han procesado los primos hasta $\sqrt{N}$, no queda ningún compuesto sin tachar.
+
+**El menor número sin tachar es primo.** Por el mismo argumento: si fuera compuesto, lo habría tachado su menor factor primo, que es más pequeño que él.
+
+## En código
+
+```python
+def criba(N):
+    es_primo = [True] * (N + 1)
+    es_primo[0] = es_primo[1] = False
+    p = 2
+    while p * p <= N:
+        if es_primo[p]:
+            for m in range(p * p, N + 1, p):
+                es_primo[m] = False
+        p += 1
+    return [i for i in range(N + 1) if es_primo[i]]
+
+print(criba(30))          # [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
+print(len(criba(10**6)))  # 78498
+```
+
+Además de la lista de primos, la tabla `es_primo` sirve después para responder en un solo paso si cualquier número hasta $N$ es primo.
+
+## Solo los impares
+
+El 2 es el único primo par, así que se puede guardar solo la información de los impares: la posición $i$ de la tabla representa al número $2i + 1$. Se ahorran dos cosas:
+
+- **la mitad de la memoria**, porque la tabla tiene la mitad de casillas;
+- **todo el trabajo del 2**, que es el primo que más tacha: unos $N/2$ números.
+
+Para un primo impar $p$, el número $p^2$ es impar, pero $p^2 + p$ es par, $p^2 + 2p$ es impar, y así alternando. Los múltiplos impares van, por tanto, de $2p$ en $2p$: $p^2,\ p^2 + 2p,\ p^2 + 4p,\ \dots$ En la tabla, avanzar $2p$ en el valor es avanzar $p$ posiciones, y $p^2$ está en la posición $(p^2 - 1)/2$:
+
+```python
+def criba_impares(N):
+    # es[i] indica si 2i + 1 es primo, para 2i + 1 <= N
+    if N < 2:
+        return []
+    M = (N - 1) // 2
+    es = [True] * (M + 1)
+    es[0] = False                  # el 1 no es primo
+    i = 1
+    while (2 * i + 1) ** 2 <= N:
+        if es[i]:
+            p = 2 * i + 1
+            for j in range((p * p - 1) // 2, M + 1, p):
+                es[j] = False
+        i += 1
+    return [2] + [2 * i + 1 for i in range(1, M + 1) if es[i]]
+
+print(criba_impares(30))  # [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
+```
+
+Con $N = 10^6$, la criba normal tacha 2 122 048 veces y esta, 811 068: menos de la mitad.
+
+## Coste: O(N log log N)
+
+Cada primo $p \le \sqrt{N}$ tacha unos $N / p$ números. En total,
+
+$$
+\sum_{p \le \sqrt{N}} \frac{N}{p} \;=\; N \sum_{p \le \sqrt{N}} \frac{1}{p}.
+$$
+
+Todo depende, por tanto, de cómo crece la suma de los inversos de los primos. Mertens demostró en 1874 que crece como un doble logaritmo:
+
+$$
+\sum_{p \le x} \frac{1}{p} = \ln \ln x + M + \varepsilon(x), \qquad M \approx 0{,}2615,
+$$
+
+donde el error $\varepsilon(x)$ tiende a 0. Comparando con los valores reales:
+
+| $x$ | $\sum_{p \le x} 1/p$ | $\ln \ln x + 0{,}2615$ |
+| --- | --- | --- |
+| $10^2$ | 1,8028 | 1,7887 |
+| $10^4$ | 2,4831 | 2,4818 |
+| $10^6$ | 2,8873 | 2,8873 |
+
+Como $\ln \ln \sqrt{N} = \ln \ln N - \ln 2$, el total de tachaduras es del orden de $N \ln \ln N$, es decir, $O(N \log \log N)$.
+
+**De dónde sale el doble logaritmo.** Por el [teorema de los números primos](../test-de-primalidad/#cuántos-primos-hay-hasta-x), cerca de $t$ uno de cada $\ln t$ números es primo. Sumar $1/p$ sobre los primos es, más o menos, sumar $1/t$ sobre todos los números pero con un peso $1 / \ln t$:
+
+$$
+\sum_{p \le x} \frac{1}{p} \;\approx\; \int_2^x \frac{dt}{t \ln t} = \ln \ln x - \ln \ln 2.
+$$
+
+Si se sumaran los inversos de **todos** los números, saldría $\ln x$ (la serie armónica). Que los primos se vayan haciendo más escasos añade un segundo logaritmo.
+
+**En la práctica es casi lineal.** $\ln \ln N$ crece con una lentitud extrema: vale 3,03 para $N = 10^9$ y 3,72 para $N = 10^{18}$. Con $N = 10^6$ la criba tacha unos 2,1 millones de veces (2,12 por número) y con $N = 10^7$, unos 22,9 millones (2,29 por número).
+
+## Memoria y criba segmentada
+
+La criba necesita una casilla por número, así que la memoria es $O(N)$, y suele acabar antes la memoria que el tiempo.
+
+- Con un byte por casilla (`bytearray` en Python, `Uint8Array` en JavaScript), $N = 10^8$ ocupa unos 100 MB; solo con los impares, 50 MB; y si además se usa un bit por casilla en lugar de un byte, unos 6 MB.
+- Ojo con las listas de Python: cada elemento es una referencia de 8 bytes, así que `[True] * 10**6` ocupa unos 8 MB, frente a 1 MB de `bytearray(10**6)`.
+
+Cuando $N$ es demasiado grande para tenerlo entero en memoria se usa la **criba segmentada**. Primero se criban los primos hasta $\sqrt{N}$, que son pocos. Después se recorre el intervalo $[2, N]$ por bloques de tamaño fijo, y en cada bloque cada uno de esos primos tacha sus múltiplos, empezando por el primero que cae dentro del bloque. El trabajo total es el mismo, pero la memoria baja a $O(\sqrt{N})$ más el tamaño de un bloque, y como cada bloque cabe en la caché del procesador, en la práctica suele ir incluso más rápido. La misma idea sirve para encontrar los primos de un intervalo $[A, B]$ lejano sin cribar desde 0.
+
+<Aside type="tip" title="Dónde se usa">
+La criba es la herramienta adecuada cuando hacen falta muchos primos a la vez, como en el [problema 10](../../problemas/010-suma-de-primos/), que suma todos los primos por debajo de dos millones, o cuando hay que comprobar si son primos muchos números pequeños.
+</Aside>
+
+## Conceptos previos
+
+<Relaciones mostrar="requiere" />
+
+## Dónde aparece
+
+<Relaciones mostrar="aparece" />

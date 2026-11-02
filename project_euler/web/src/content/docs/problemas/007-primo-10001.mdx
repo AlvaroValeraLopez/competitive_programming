@@ -1,0 +1,191 @@
+---
+title: 'Problema 7: El primo número 10 001'
+description: Encontrar el primo número 10 001 probando cada impar solo contra los primos ya encontrados hasta su raíz, y cómo cambiarlo por una criba gracias a una cota superior del n-ésimo primo.
+sidebar:
+  label: '7 · El primo número 10 001'
+  order: 7
+temas: [Primos, Criba]
+conceptos: [test-de-primalidad, criba-de-eratostenes]
+---
+
+import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+import solucion from '@soluciones/1_10/7_10001stPrime.js?raw';
+
+## El problema
+
+Si escribimos los seis primeros números primos, 2, 3, 5, 7, 11 y 13, vemos que el sexto es 13. **¿Cuál es el primo número 10 001?**
+
+[Enunciado original en Project Euler](https://projecteuler.net/problem=7)
+
+## La idea en una frase
+
+Para saber si un número es primo basta con dividirlo entre los primos que no pasan de su raíz cuadrada, y esos primos ya los tenemos: son los que hemos ido encontrando por el camino.
+
+## Primer intento: fuerza bruta
+
+Recorrer los números $2, 3, 4, \dots$, comprobar cada uno probando **todos** los divisores posibles y contar los primos hasta llegar al que buscamos:
+
+```js
+function esPrimoBruto(m) {
+  for (let d = 2; d < m; d++) {
+    if (m % d === 0) return false;
+  }
+  return m > 1;
+}
+
+function primoNBruto(n) {
+  let cuenta = 0;
+  for (let m = 2; ; m++) {
+    if (esPrimoBruto(m)) {
+      cuenta++;
+      if (cuenta === n) return m;
+    }
+  }
+}
+```
+
+Con `primoNBruto(6)` devuelve 13. Para $n = 10\,001$ hace **unos 500 millones de divisiones**, casi todas con los primos: para confirmar que $p$ es primo hay que probar los $p - 2$ candidatos.
+
+## Desarrollo matemático
+
+Llamemos $p_n$ al primo número $n$ ($p_1 = 2$, $p_2 = 3$, …, $p_6 = 13$).
+
+### Paso 1: basta con llegar a la raíz cuadrada
+
+Si $m$ es compuesto, $m = ab$ con $1 < a \le b$, y entonces $a^2 \le ab = m$, es decir, $a \le \sqrt{m}$. Por tanto, si ningún $d$ con $2 \le d \le \sqrt{m}$ divide a $m$, entonces $m$ es primo. Es el [test de primalidad](../../conceptos/test-de-primalidad/) por división.
+
+### Paso 2: basta con probar primos
+
+Si algún $d \le \sqrt{m}$ divide a $m$, su menor factor primo $q$ también divide a $m$, y $q \le d \le \sqrt{m}$. Así que para $m \ge 2$:
+
+$$
+m \text{ es primo} \iff \text{ningún primo } p \le \sqrt{m} \text{ divide a } m
+$$
+
+### Paso 3: los primos necesarios ya están en la lista
+
+Si recorremos los candidatos en orden creciente, cuando llegamos a $m$ ya hemos encontrado todos los primos menores que $m$. Los que hacen falta, los $p \le \sqrt{m}$, son menores que $m$, así que están en la lista, y además en orden: basta con recorrerla desde el principio y parar en cuanto $p^2 > m$.
+
+Dos detalles más:
+
+- **Solo impares.** El único primo par es 2, así que la lista empieza con él y se prueban solo $3, 5, 7, \dots$
+- **La lista nunca se queda corta.** Mientras buscamos el primo siguiente a $p_k$, los candidatos son menores que $2p_k$ (el postulado de Bertrand garantiza un primo entre $p_k$ y $2p_k$), y $2p_k \le p_k^2$. Así que siempre hay en la lista un primo cuyo cuadrado supera al candidato, y el bucle para antes de llegar al final.
+
+### Paso 4: comprobarlo con el ejemplo
+
+Con $n = 6$, empezando con la lista $[2]$:
+
+| $m$ | Primos de la lista con $p^2 \le m$ | ¿Primo? | Lista después |
+| --- | --- | --- | --- |
+| 3 | ninguno ($2^2 = 4 > 3$) | sí | 2, 3 |
+| 5 | 2 | sí | 2, 3, 5 |
+| 7 | 2 | sí | 2, 3, 5, 7 |
+| 9 | 2, 3 | no: 3 divide a 9 | 2, 3, 5, 7 |
+| 11 | 2, 3 | sí | 2, 3, 5, 7, 11 |
+| 13 | 2, 3 | sí | 2, 3, 5, 7, 11, 13 |
+
+La lista llega a seis elementos con $p_6 = 13$, como dice el enunciado. Con 11 y 13 bastan dos divisiones, cuando la fuerza bruta necesitaba 9 y 11.
+
+### Paso 5: una criba, si sabemos hasta dónde llegar
+
+La [criba de Eratóstenes](../../conceptos/criba-de-eratostenes/) obtiene todos los primos hasta un límite $L$ de una vez, sin ninguna división y con un coste de $O(L \log \log L)$. El problema es que aquí no nos dan un límite, sino una posición: necesitamos una cota superior de $p_n$. El teorema de los números primos dice que $p_n$ se parece a $n \ln n$, y hay una versión con cota explícita (Rosser y Schoenfeld, 1962):
+
+$$
+p_n < n\,(\ln n + \ln \ln n) \qquad \text{para todo } n \ge 6
+$$
+
+Comprobación con el ejemplo: para $n = 6$ la cota vale $6\,(\ln 6 + \ln \ln 6) \approx 6\,(1{,}792 + 0{,}583) \approx 14{,}25$, y en efecto $p_6 = 13 < 14{,}25$. La condición $n \ge 6$ es necesaria: para $n = 5$ la cota da $\approx 10{,}43$, menos que $p_5 = 11$.
+
+Para $n = 10\,001$:
+
+$$
+10\,001\,(\ln 10\,001 + \ln \ln 10\,001) \approx 10\,001\,(9{,}2104 + 2{,}2203) \approx 114\,319{,}2
+$$
+
+Así que basta con cribar hasta $L = 114\,320$ y contar primos hasta llegar al número 10 001. (Hemos comprobado la cota para todos los primos menores que dos millones.)
+
+## El código
+
+<Tabs>
+<TabItem label="JavaScript (repositorio)">
+
+<Code code={solucion} lang="js" title="7_10001stPrime.js" />
+
+`findNthPrime` es el paso 3: empieza con la lista `[2]`, prueba `num = 3, 5, 7, …` (sumando 2 cada vez) y añade a la lista los que resultan primos, hasta tener `n`. `isPrime(num, primes)` es la combinación de los pasos 1 y 2: recorre los primos ya encontrados mientras `primes[i] * primes[i] <= num` y devuelve `false` en cuanto uno divide a `num`. La única división de más es la del 2, que se prueba con cada impar aunque nunca lo divida.
+
+</TabItem>
+<TabItem label="Python">
+
+```python
+def es_primo(m, primos):
+    for p in primos:
+        if p * p > m:
+            return True
+        if m % p == 0:
+            return False
+    return True
+
+def primo_n(n):
+    primos = [2]
+    m = 3
+    while len(primos) < n:
+        if es_primo(m, primos):
+            primos.append(m)
+        m += 2
+    return primos[n - 1]
+
+print(primo_n(10001))
+```
+
+Es la misma idea que la versión del repositorio. Con `primo_n(6)` devuelve 13, el ejemplo del enunciado.
+
+</TabItem>
+<TabItem label="JavaScript (criba)">
+
+```js
+function primoN(n) {
+  if (n < 6) return [2, 3, 5, 7, 11][n - 1];
+  const limite = Math.ceil(n * (Math.log(n) + Math.log(Math.log(n))));
+  const compuesto = new Uint8Array(limite + 1);
+  let cuenta = 0;
+  for (let p = 2; p <= limite; p++) {
+    if (compuesto[p]) continue;
+    cuenta++;
+    if (cuenta === n) return p;
+    for (let m = p * p; m <= limite; m += p) compuesto[m] = 1;
+  }
+}
+
+console.log(primoN(10001));
+```
+
+Es el paso 5: criba hasta la cota y cuenta los primos según aparecen. Los cinco primeros primos van en una tabla porque la cota solo vale desde $n = 6$.
+
+</TabItem>
+</Tabs>
+
+## Complejidad
+
+Llamemos $P = p_n$ al primo buscado. Las cifras son el número de divisiones (o de tachados, en la criba) para $n = 10\,001$:
+
+| Método | Coste | Para $n = 10\,001$ |
+| --- | --- | --- |
+| Fuerza bruta: todos los $d < m$ | $O(P^2 / \log P)$ | ~$5 \cdot 10^8$ divisiones |
+| Divisores hasta $\sqrt{m}$ | $O(P^{3/2} / \log P)$ | ~$2{,}9 \cdot 10^6$ divisiones |
+| Solo primos hasta $\sqrt{m}$ (repositorio) | $O(P^{3/2} / \log^2 P)$ | ~$7{,}4 \cdot 10^5$ divisiones |
+| Criba hasta la cota | $O(P \log \log P)$ | ~$2{,}2 \cdot 10^5$ tachados |
+
+En los tres primeros métodos casi todo el coste se va en los primos, que son los que obligan a probar todos los candidatos. Con divisores hasta $\sqrt{m}$, cada primo $p$ cuesta unas $\sqrt{p}$ divisiones; probando solo primos, unas $\pi(\sqrt{p}) \approx 2\sqrt{p} / \ln p$. La criba, en cambio, no divide nada: recorre las 114 320 posiciones y tacha cada compuesto $m$ una vez por cada factor primo $p$ suyo con $p^2 \le m$.
+
+<Aside type="tip" title="Cuándo compensa cada método">
+Para $n = 10\,001$ cualquiera de los tres últimos termina al instante. La diferencia se nota con $n$ del orden de millones: salvo logaritmos, la versión del repositorio crece como $P^{3/2}$ y la criba como $P$. A cambio, la criba necesita memoria para $L$ posiciones y una cota de antemano, mientras que la división por primos solo guarda la lista de primos encontrados.
+</Aside>
+
+## Conceptos utilizados
+
+<Relaciones mostrar="conceptos" />
+
+## Problemas relacionados
+
+<Relaciones mostrar="relacionados" />

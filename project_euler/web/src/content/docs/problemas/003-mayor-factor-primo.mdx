@@ -1,0 +1,175 @@
+---
+title: 'Problema 3: Mayor factor primo'
+description: Encontrar el mayor factor primo de un número de doce cifras dividiendo cada factor en cuanto aparece, para que el número, y con él la raíz hasta la que hay que probar, se encoja.
+sidebar:
+  label: '3 · Mayor factor primo'
+  order: 3
+temas: [Primos, Factorización]
+conceptos: [factorizacion-en-primos]
+---
+
+import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+import solucion from '@soluciones/1_10/3_largestPrimeFactor.js?raw';
+
+## El problema
+
+Los factores primos de 13 195 son 5, 7, 13 y 29. **¿Cuál es el mayor factor primo del número 600 851 475 143?**
+
+[Enunciado original en Project Euler](https://projecteuler.net/problem=3)
+
+## La idea en una frase
+
+Probamos divisores de menor a mayor y, cada vez que uno divide, lo quitamos del número todas las veces que haga falta: el número se va haciendo más pequeño, la raíz cuadrada hasta la que hay que probar también, y lo que queda al final es el mayor factor primo.
+
+## Primer intento: fuerza bruta
+
+Lo más directo es recorrer todos los candidatos y quedarse con el último que divide al número y es primo:
+
+```js
+function esPrimo(m) {
+  for (let d = 2; d * d <= m; d++) {
+    if (m % d === 0) return false;
+  }
+  return m > 1;
+}
+
+function mayorFactorPrimoBruto(n) {
+  let mayor = 1;
+  for (let d = 2; d <= n; d++) {
+    if (n % d === 0 && esPrimo(d)) mayor = d;
+  }
+  return mayor;
+}
+```
+
+Con 13 195 devuelve 29 al instante. Pero con $N \approx 6 \cdot 10^{11}$ el bucle da unas $6 \cdot 10^{11}$ vueltas: a mil millones por segundo son **unos diez minutos**, sin contar las comprobaciones de primalidad. Y cuesta lo mismo encontrar un factor grande que uno pequeño, porque el bucle no aprovecha lo que va descubriendo.
+
+## Desarrollo matemático
+
+Llamemos $N$ al número (aquí, $N = 600\,851\,475\,143$).
+
+### Paso 1: la factorización existe y es única
+
+Por el teorema fundamental de la aritmética (ver [factorización en primos](../../conceptos/factorizacion-en-primos/)), todo entero $N > 1$ se escribe de una única forma como
+
+$$
+N = p_1^{e_1}\, p_2^{e_2} \cdots p_r^{e_r}, \qquad p_1 < p_2 < \cdots < p_r \text{ primos},\ e_i \ge 1
+$$
+
+Lo que buscamos es $p_r$. En el ejemplo, $13\,195 = 5 \cdot 7 \cdot 13 \cdot 29$, así que $p_r = 29$.
+
+### Paso 2: dividir en cuanto aparece un factor
+
+Partimos de $n = N$ y probamos $d = 2, 3, 4, \dots$ en orden. Mientras $d$ divida a $n$, anotamos $d$ y sustituimos $n$ por $n / d$.
+
+Este proceso cumple una propiedad que lo justifica todo:
+
+> **Invariante.** Cuando empezamos a probar $d$, el número $n$ que queda no tiene ningún factor primo menor que $d$.
+
+Es cierto porque cada primo $q < d$ ya se probó antes, y en ese momento se dividió $n$ entre $q$ hasta que dejó de ser divisible.
+
+**Consecuencia: todo $d$ que divide a $n$ es primo.** Si $d$ fuera compuesto, tendría un factor primo $q < d$, y como $q \mid d$ y $d \mid n$, también $q \mid n$, en contra del invariante. Por ejemplo, cuando llega el turno de $d = 9$ ya no queda ningún 3 en $n$, así que 9 no puede dividirlo. Los factores salen, por tanto, primos, en orden creciente y repetidos tantas veces como aparezcan en $N$.
+
+### Paso 3: cuándo parar
+
+> Si el siguiente candidato cumple $d^2 > n$, lo que queda de $n$ es 1 o un número primo.
+
+**Demostración.** Supongamos que $n$ es compuesto, $n = ab$ con $1 < a \le b$. Entonces $a^2 \le ab = n < d^2$, luego $a < d$. Cualquier factor primo $q$ de $a$ cumple $q \le a < d$ y divide a $n$, lo que contradice el invariante.
+
+Además, si queda $n > 1$, **es el mayor factor primo**: no tiene factores primos menores que $d$, así que $n \ge d$, y todos los factores anotados son menores que $d$.
+
+### Paso 4: la cota se encoge
+
+La condición de parada compara $d$ con el $n$ **actual**, no con $N$. Cada vez que dividimos, $n$ baja y su raíz cuadrada también. Con una cota fija habría que probar hasta $\sqrt{N} \approx 775\,146$; con la cota que se encoge, el bucle se detiene mucho antes casi siempre.
+
+¿Hasta dónde llega? Supongamos que $N$ tiene al menos dos primos distintos y que el mayor, $p_r$, aparece una sola vez. Mientras no se haya quitado el penúltimo, $p_{r-1}$, queda $n \ge p_{r-1}\, p_r > p_{r-1}^2$, así que el bucle no puede parar antes de llegar a $p_{r-1}$. Después de quitarlo queda $n = p_r$, y el bucle para en cuanto $d^2 > p_r$. En resumen, el último candidato probado es aproximadamente
+
+$$
+\max\left(p_{r-1},\ \sqrt{p_r}\right)
+$$
+
+que solo se acerca a $\sqrt{N}$ cuando $N$ es primo o es el producto de dos primos de tamaño parecido.
+
+### Paso 5: saltarse los pares
+
+Después de quitar todos los factores 2, el $n$ que queda es impar y ningún $d$ par puede dividirlo. Basta con probar $3, 5, 7, 9, \dots$, la mitad de candidatos.
+
+### Paso 6: comprobarlo con el ejemplo
+
+Con $N = 13\,195$:
+
+| $d$ | ¿Divide a $n$? | $n$ después | $\sqrt{n}$ |
+| --- | --- | --- | --- |
+| 2 | no | 13 195 | 114,9 |
+| 3 | no | 13 195 | 114,9 |
+| 5 | sí | 2 639 | 51,4 |
+| 7 | sí | 377 | 19,4 |
+| 9 | no | 377 | 19,4 |
+| 11 | no | 377 | 19,4 |
+| 13 | sí | 29 | 5,4 |
+
+El siguiente candidato es 15, y $15^2 = 225 > 29$: paramos. Lo que queda, 29, es primo por el paso 3 y es el mayor factor, como dice el enunciado. Se han probado 6 impares (del 3 al 13), frente a los 56 que hay entre 3 y $\sqrt{13\,195} \approx 114{,}9$.
+
+## El código
+
+<Tabs>
+<TabItem label="JavaScript (repositorio)">
+
+<Code code={solucion} lang="js" title="3_largestPrimeFactor.js" />
+
+El primer `while` quita los factores 2 (paso 5). El `for` prueba los impares `i` hasta `sqrtN`, y el `while` de dentro es el paso 2: divide mientras puede. Recalcular `sqrtN = Math.sqrt(n)` después de cada división es el paso 4, la cota que se encoge. El `if (n > 2)` final es el paso 3: como $n$ ya es impar, $n > 2$ equivale a $n > 1$. La función devuelve la lista completa de factores primos en orden creciente, así que el último es el mayor.
+
+</TabItem>
+<TabItem label="Python">
+
+```python
+def mayor_factor_primo(n):
+    mayor = 1
+    while n % 2 == 0:
+        mayor = 2
+        n //= 2
+    d = 3
+    while d * d <= n:
+        while n % d == 0:
+            mayor = d
+            n //= d
+        d += 2
+    if n > 1:
+        mayor = n
+    return mayor
+
+print(mayor_factor_primo(600851475143))
+```
+
+Con `mayor_factor_primo(13195)` devuelve 29, el ejemplo del enunciado. Comparar `d * d <= n` en lugar de calcular la raíz evita los números decimales, y sirve igual para números de cualquier tamaño.
+
+</TabItem>
+</Tabs>
+
+<Aside type="note" title="¿Es seguro usar Number?">
+Sí. $N \approx 6 \cdot 10^{11}$ está muy por debajo de $2^{53} \approx 9 \cdot 10^{15}$, el mayor entero que un `Number` representa con exactitud, y $n$ solo disminuye. Las divisiones `n / i` son exactas porque solo se hacen cuando `i` divide a `n`, y `%` es exacto con enteros de ese tamaño. Tampoco la raíz da problemas: `Math.sqrt` redondea correctamente y nunca devuelve menos de un entero `i` que cumpla $i \le \sqrt{n}$, así que el bucle no se corta antes de tiempo. Por encima de $2^{53}$ habría que pasar a `BigInt` y usar la comparación `i * i <= n`.
+</Aside>
+
+## Complejidad
+
+| Método | Coste | Divisiones para $N = 600\,851\,475\,143$ |
+| --- | --- | --- |
+| Fuerza bruta | $O(N)$ | ~$6 \cdot 10^{11}$ |
+| Cota fija $\sqrt{N}$, solo impares | $O(\sqrt{N})$ | ~390 000 |
+| Cota que se encoge (repositorio) | $O\big(\max(p_{r-1}, \sqrt{p_r})\big)$ | menos de 1 000 |
+
+El peor caso de la cota que se encoge sigue siendo $O(\sqrt{N})$, cuando $N$ es primo. Pero es raro: en una muestra de 3 000 números al azar entre $10^{11}$ y $10^{12}$, la mitad necesitó menos del 2 % de las iteraciones de la cota fija, y solo un 7 % necesitó más de la mitad.
+
+## Para profundizar
+
+- **Cuánto mide el mayor factor primo.** Para un número al azar $n$, el cociente $\ln p_r / \ln n$ (la fracción de cifras de $n$ que tiene su mayor factor primo) vale de media $\lambda \approx 0{,}6243$, la constante de Golomb–Dickman. En la muestra anterior salió 0,64. Como el bucle solo tiene que llegar a la raíz del factor mayor, o al penúltimo factor si es más grande, suele quedarse muy por debajo de $\sqrt{N}$.
+- **Números mucho más grandes.** Si $N$ tiene 30 cifras y es producto de dos primos de 15 cifras, la división por tentativa tendría que llegar hasta el menor de ellos: del orden de $10^{14}$ pasos. Ahí se usan un [test de primalidad](../../conceptos/test-de-primalidad/) probabilístico, como Miller–Rabin, para saber si lo que queda es primo, y el método rho de Pollard, que encuentra un factor $p$ en unos $\sqrt{p}$ pasos.
+
+## Conceptos utilizados
+
+<Relaciones mostrar="conceptos" />
+
+## Problemas relacionados
+
+<Relaciones mostrar="relacionados" />

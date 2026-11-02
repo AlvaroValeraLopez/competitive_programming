@@ -1,0 +1,228 @@
+---
+title: 'Problema 5: Menor múltiplo común'
+description: El menor número divisible por todos los enteros del 1 al 20 es su mínimo común múltiplo, y se calcula acumulando mcm de dos en dos con el algoritmo de Euclides.
+sidebar:
+  label: '5 · Menor múltiplo común'
+  order: 5
+temas: [Divisibilidad, Mínimo común múltiplo]
+conceptos: [mcd-y-mcm, factorizacion-en-primos]
+---
+
+import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+import solucion from '@soluciones/1_10/5_smallestMultiple.js?raw';
+
+## El problema
+
+2520 es el menor número que se puede dividir entre cada uno de los números del 1 al 10 sin que sobre nada. **¿Cuál es el menor número positivo que es divisible entre todos los números del 1 al 20?**
+
+[Enunciado original en Project Euler](https://projecteuler.net/problem=5)
+
+## La idea en una frase
+
+Lo que piden es, por definición, el mínimo común múltiplo de $1, 2, \dots, 20$, y se calcula acumulando $\operatorname{mcm}(\operatorname{mcm}(\dots), k)$ de uno en uno, sacando cada mcm del máximo común divisor con el algoritmo de Euclides.
+
+## Primer intento: fuerza bruta
+
+El resultado tiene que ser múltiplo de $n$, así que basta con probar $n, 2n, 3n, \dots$ hasta dar con uno divisible entre todos:
+
+```js
+function menorMultiploBruto(n) {
+  for (let m = n; ; m += n) {
+    let divisible = true;
+    for (let k = 2; k <= n; k++) {
+      if (m % k !== 0) {
+        divisible = false;
+        break;
+      }
+    }
+    if (divisible) return m;
+  }
+}
+```
+
+Para $n = 10$ prueba 252 candidatos hasta llegar a 2520. El problema es que el resultado crece **exponencialmente** con $n$ (lo vemos en la [complejidad](#complejidad)): para $n = 20$ ya son millones de candidatos, y para $n = 40$ serían más de $10^{14}$.
+
+## Desarrollo matemático
+
+Llamemos $L_n$ al resultado para el rango $1, \dots, n$.
+
+### Paso 1: lo que piden es un mínimo común múltiplo
+
+Un número divisible entre $1, 2, \dots, n$ es un múltiplo común de todos ellos, y el menor positivo es, por definición, su [mínimo común múltiplo](../../conceptos/mcd-y-mcm/):
+
+$$
+L_n = \operatorname{mcm}(1, 2, \dots, n)
+$$
+
+El enunciado nos dice que $L_{10} = 2520$.
+
+### Paso 2: el mcm a través de la factorización
+
+Escribamos $a$ y $b$ con su [factorización en primos](../../conceptos/factorizacion-en-primos/), $a = \prod_p p^{\alpha_p}$ y $b = \prod_p p^{\beta_p}$ (con exponente 0 para los primos que no aparecen). Un número divide a otro exactamente cuando cada exponente del primero es menor o igual que el del segundo. Por eso un múltiplo común de $a$ y $b$ necesita, en cada primo, un exponente de al menos $\max(\alpha_p, \beta_p)$, y el menor es el que lo tiene exactamente. Con el mcd ocurre lo mismo con el mínimo:
+
+$$
+\operatorname{mcm}(a, b) = \prod_p p^{\max(\alpha_p,\, \beta_p)}, \qquad
+\operatorname{mcd}(a, b) = \prod_p p^{\min(\alpha_p,\, \beta_p)}
+$$
+
+Como $\min(\alpha, \beta) + \max(\alpha, \beta) = \alpha + \beta$, al multiplicar las dos fórmulas sale $ab$:
+
+$$
+\operatorname{mcd}(a, b) \cdot \operatorname{mcm}(a, b) = a\,b
+\quad\Longrightarrow\quad
+\operatorname{mcm}(a, b) = \frac{a\,b}{\operatorname{mcd}(a, b)}
+$$
+
+Por ejemplo, $12 = 2^2 \cdot 3$ y $18 = 2 \cdot 3^2$ dan $\operatorname{mcd} = 2 \cdot 3 = 6$ y $\operatorname{mcm} = 2^2 \cdot 3^2 = 36$, y efectivamente $\frac{12 \cdot 18}{6} = \frac{216}{6} = 36$.
+
+### Paso 3: acumular de uno en uno
+
+El máximo es asociativo, $\max(\alpha, \beta, \gamma) = \max(\max(\alpha, \beta), \gamma)$, así que por el paso 2 el mcm también lo es: $\operatorname{mcm}(a, b, c) = \operatorname{mcm}(\operatorname{mcm}(a, b), c)$. Eso permite calcular $L_n$ con $n - 1$ mcm de dos números:
+
+$$
+L_1 = 1, \qquad L_k = \operatorname{mcm}(L_{k-1},\, k) = \frac{L_{k-1} \cdot k}{\operatorname{mcd}(L_{k-1},\, k)}
+$$
+
+### Paso 4: el mcd con el algoritmo de Euclides
+
+Falta calcular el mcd sin factorizar. El **algoritmo de Euclides** se basa en que
+
+$$
+\operatorname{mcd}(a, b) = \operatorname{mcd}(b,\, a \bmod b), \qquad \operatorname{mcd}(a, 0) = a
+$$
+
+**Demostración.** Si $a = qb + r$ con $r = a \bmod b$, todo divisor común de $a$ y $b$ divide a $r = a - qb$, y todo divisor común de $b$ y $r$ divide a $a = qb + r$. Los dos pares tienen los mismos divisores comunes y, por tanto, el mismo máximo.
+
+Por ejemplo, $\operatorname{mcd}(840, 9)$: como $840 = 93 \cdot 9 + 3$, pasamos a $\operatorname{mcd}(9, 3)$; como $9 = 3 \cdot 3 + 0$, pasamos a $\operatorname{mcd}(3, 0) = 3$.
+
+Es muy rápido: si $r = a \bmod b$ con $b \le a$, entonces $r < a / 2$ (si $b \le a/2$, porque $r < b$; si $b > a/2$, porque $r = a - b$). Así que cada dos pasos el primer número se reduce al menos a la mitad, y el número de pasos es $O(\log \min(a, b))$. En nuestro caso el segundo número es $k \le n$, de modo que cada mcd cuesta $O(\log n)$ pasos.
+
+### Paso 5: comprobarlo con el ejemplo
+
+Con $n = 10$:
+
+| $k$ | $\operatorname{mcd}(L_{k-1}, k)$ | $L_k$ |
+| --- | --- | --- |
+| 1 | — | 1 |
+| 2 | 1 | 2 |
+| 3 | 1 | 6 |
+| 4 | 2 | 12 |
+| 5 | 1 | 60 |
+| 6 | 6 | 60 |
+| 7 | 1 | 420 |
+| 8 | 4 | 840 |
+| 9 | 3 | 2520 |
+| 10 | 10 | 2520 |
+
+$L_{10} = 2520$, que coincide con el enunciado. Fíjate en que $L_k$ solo cambia cuando $k$ es potencia de un primo (2, 3, 4, 5, 7, 8 y 9), y entonces se multiplica por ese primo. Con 6 y 10 no cambia: sus factores ya estaban.
+
+### Paso 6: otra forma, con potencias de primos
+
+Esa observación da una fórmula directa. Por el paso 2, el exponente de un primo $p$ en $L_n$ es el mayor exponente con el que $p$ aparece en algún $k \le n$. Ese $k$ es la mayor potencia $p^a$ que no pasa de $n$, es decir, $a = \lfloor \log_p n \rfloor$. Por tanto
+
+$$
+L_n = \prod_{p \le n \text{ primo}} p^{\lfloor \log_p n \rfloor}
+$$
+
+Con $n = 10$, los primos son 2, 3, 5 y 7, y sus mayores potencias hasta 10 son $2^3 = 8$ (porque $2^4 = 16 > 10$), $3^2 = 9$ (porque $3^3 = 27 > 10$), $5$ y $7$:
+
+$$
+L_{10} = 2^3 \cdot 3^2 \cdot 5 \cdot 7 = 8 \cdot 9 \cdot 5 \cdot 7 = 2520
+$$
+
+Para $n = 20$ el cálculo es igual de corto; es un buen ejercicio hacerlo a mano.
+
+<Aside type="caution" title="No calcules el exponente con logaritmos decimales">
+En JavaScript, `Math.floor(Math.log(4913) / Math.log(17))` da 2, no 3, aunque $4913 = 17^3$: la división da $2{,}9999999999999996$. Es más seguro ir multiplicando por $p$ mientras el resultado no pase de $n$, como en la pestaña «JavaScript (potencias de primos)» del código.
+</Aside>
+
+## El código
+
+<Tabs>
+<TabItem label="JavaScript (repositorio)">
+
+<Code code={solucion} lang="js" title="5_smallestMultiple.js" />
+
+`gcd` es el algoritmo de Euclides del paso 4, en versión iterativa: en cada vuelta el par `(a, b)` pasa a ser `(b, a % b)`, y cuando `b` llega a 0 el resultado es `a`. `lcm` es la fórmula del paso 2 (el `Math.abs` solo importaría con números negativos). `lcmOfArray` es el paso 3: recorre la lista `[1, 2, …, MAX]` acumulando el mcm.
+
+</TabItem>
+<TabItem label="Python">
+
+```python
+from math import gcd
+
+def mcm(a, b):
+    return a // gcd(a, b) * b
+
+def mcm_hasta(n):
+    resultado = 1
+    for k in range(2, n + 1):
+        resultado = mcm(resultado, k)
+    return resultado
+
+print(mcm_hasta(20))
+```
+
+Con `mcm_hasta(10)` devuelve 2520. Desde Python 3.9 también existe `math.lcm`, que admite varios argumentos: `math.lcm(*range(1, 21))`.
+
+</TabItem>
+<TabItem label="JavaScript (potencias de primos)">
+
+```js
+function menorMultiplo(n) {
+  let resultado = 1;
+  for (let p = 2; p <= n; p++) {
+    let esPrimo = true;
+    for (let d = 2; d * d <= p; d++) {
+      if (p % d === 0) {
+        esPrimo = false;
+        break;
+      }
+    }
+    if (!esPrimo) continue;
+    let potencia = p; // la mayor potencia de p que no pasa de n
+    while (potencia * p <= n) potencia *= p;
+    resultado *= potencia;
+  }
+  return resultado;
+}
+
+console.log(menorMultiplo(20));
+```
+
+Es la fórmula del paso 6. El resultado solo se multiplica por factores suyos, así que ningún valor intermedio lo supera.
+
+</TabItem>
+</Tabs>
+
+<Aside type="caution" title="Cuidado con el producto a * b">
+`lcm` calcula primero `a * b` y luego divide, y ese producto, $L_{k-1} \cdot k$, puede ser mucho mayor que el resultado. Con $n = 20$ todos los productos quedan muy por debajo de $2^{53} \approx 9{,}01 \cdot 10^{15}$, el mayor entero que un `Number` representa con exactitud. Pero el primer $n$ en el que se pasa es **$n = 38$**: el último paso multiplica $L_{37} \approx 5{,}34 \cdot 10^{15}$ por 38 y obtiene unos $2{,}03 \cdot 10^{17}$, aunque el resultado, $L_{38} = L_{37}$, todavía cabe. Desde ahí la exactitud ya no está garantizada (el código sigue acertando hasta $n = 42$ por suerte: esos productos son múltiplos de potencias de 2 grandes y se representan sin error).
+
+La solución es dividir antes de multiplicar, `a / gcd(a, b) * b`. Como el mcd divide a `a`, la división es exacta, y el producto es ya el resultado, así que ningún paso intermedio lo supera. Así el cálculo es exacto mientras $L_n \le 2^{53}$, es decir, hasta $n = 40$ (con $n = 41$, $L_{41} = 41 \cdot L_{40} \approx 2{,}19 \cdot 10^{17}$ ya no cabe). Para ir más allá hay que usar `BigInt` o Python.
+</Aside>
+
+## Complejidad
+
+| Método | Coste | $n = 10$ | $n = 40$ |
+| --- | --- | --- | --- |
+| Fuerza bruta | $O(L_n)$, exponencial en $n$ | 252 candidatos | más de $10^{14}$ candidatos |
+| mcm acumulado (repositorio) | $O(n \log n)$ | 20 restos en total | 77 restos en total |
+
+Los «restos» son las operaciones `%` de todas las llamadas a `gcd`.
+
+¿Por qué la fuerza bruta es exponencial? Tomando logaritmos en la fórmula del paso 6,
+
+$$
+\ln L_n = \sum_{p \le n} \lfloor \log_p n \rfloor \ln p = \sum_{p^a \le n} \ln p = \psi(n)
+$$
+
+que es la función de Chebyshev $\psi$. El teorema de los números primos equivale a $\psi(n) \sim n$, así que $L_n$ crece aproximadamente como $e^n$. Por ejemplo, $\ln L_{10} = \ln 2520 \approx 7{,}83$ y $\ln L_{40} \approx 36{,}2$. La fuerza bruta prueba $L_n / n$ candidatos, mientras que el mcm acumulado hace $n - 1$ pasos, cada uno con un mcd de $O(\log n)$ restos.
+
+## Conceptos utilizados
+
+<Relaciones mostrar="conceptos" />
+
+## Problemas relacionados
+
+<Relaciones mostrar="relacionados" />

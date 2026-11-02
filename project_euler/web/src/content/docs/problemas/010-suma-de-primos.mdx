@@ -1,0 +1,208 @@
+---
+title: 'Problema 10: Suma de primos'
+description: Sumar todos los primos menores que dos millones con una criba de Eratóstenes que solo recorre los impares y tacha de 2p en 2p empezando en p².
+sidebar:
+  label: '10 · Suma de primos'
+  order: 10
+temas: [Primos, Criba]
+conceptos: [criba-de-eratostenes]
+---
+
+import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+import solucion from '@soluciones/1_10/10_summationOfPrimes.js?raw';
+
+## El problema
+
+La suma de los primos menores que 10 es $2 + 3 + 5 + 7 = 17$. **¿Cuánto suman todos los primos menores que dos millones?**
+
+[Enunciado original en Project Euler](https://projecteuler.net/problem=10)
+
+## La idea en una frase
+
+En lugar de preguntar a cada número si es primo, la criba de Eratóstenes tacha los múltiplos de cada primo; tachando solo impares, desde $p^2$ y de $2p$ en $2p$, no hace falta ninguna división y cada compuesto se tacha muy pocas veces.
+
+## Primer intento: fuerza bruta
+
+Comprobar cada número por división, con el test hasta la raíz cuadrada y saltando los divisores pares:
+
+```js
+function esPrimo(m) {
+  if (m < 2) return false;
+  if (m % 2 === 0) return m === 2;
+  for (let d = 3; d * d <= m; d += 2) {
+    if (m % d === 0) return false;
+  }
+  return true;
+}
+
+function sumaPrimosBruta(limite) {
+  let suma = 0;
+  for (let m = 2; m < limite; m++) {
+    if (esPrimo(m)) suma += m;
+  }
+  return suma;
+}
+```
+
+Con `sumaPrimosBruta(10)` devuelve 17. Para $N = 2 \cdot 10^6$ funciona, pero hace **unos 91 millones de divisiones**: hay 148 933 primos por debajo de dos millones, y cada primo $p$ obliga a probar todos los impares hasta $\sqrt{p}$, que para los primos más grandes son unos 700.
+
+## Desarrollo matemático
+
+Llamemos $N$ al límite (aquí, $N = 2\,000\,000$); buscamos los primos $p < N$.
+
+### Paso 1: tachar en vez de dividir
+
+La idea de la [criba de Eratóstenes](../../conceptos/criba-de-eratostenes/): escribimos los números $2, 3, \dots, N - 1$, tomamos el primero sin tachar, que es primo, tachamos todos sus múltiplos, y repetimos con el siguiente sin tachar. Un número que nunca se tacha es primo: si fuera compuesto, su menor factor primo $q$ es menor que él, y al procesar $q$ lo habríamos tachado.
+
+### Paso 2: empezar en el cuadrado
+
+Al procesar un primo $p$, sus múltiplos $k \cdot p$ con $k < p$ **ya están tachados**: $k$ tiene un factor primo $q \le k < p$, y $k \cdot p$ se tachó al procesar $q$. Así que basta con empezar en $p^2$.
+
+Consecuencia: un primo con $p^2 \ge N$ no tacha nada. Solo trabajan los primos hasta $\sqrt{N} \approx 1414$.
+
+### Paso 3: olvidarse de los pares
+
+El 2 es el único primo par, así que lo sumamos aparte y en la criba solo miramos impares. Para un primo impar $p$, el múltiplo $k \cdot p$ es impar exactamente cuando $k$ es impar. Empezando en $k = p$, que es impar, los siguientes impares son $k = p + 2, p + 4, \dots$, así que los múltiplos que interesan son
+
+$$
+p^2,\quad p^2 + 2p,\quad p^2 + 4p,\quad \dots
+$$
+
+Por eso **el paso es $2p$ y no $p$**: con paso $p$, uno de cada dos números visitados sería $p^2 + p = p(p + 1)$, $p^2 + 3p$…, todos pares, y tacharlos sería trabajo perdido, porque los pares nunca se consultan.
+
+Por ejemplo, con $N = 50$, el 3 tacha $9, 15, 21, 27, 33, 39, 45$; el 5 tacha $25, 35, 45$; y el 7 tacha $49$. Los impares que quedan entre 3 y 49 son $3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47$: justo los primos impares menores que 50. El 45 se tacha dos veces, una por el 3 y otra por el 5.
+
+### Paso 4: sumar mientras se criba
+
+Si recorremos los impares $3, 5, 7, \dots$ en orden y cribamos con cada primo en cuanto aparece, cuando llegamos a $m$ ya se han procesado todos los primos menores que $m$. Si $m$ fuera compuesto, su menor factor primo $q$ cumpliría $q^2 \le m$ y $m = q \cdot k$ con $k \ge q$ impar, así que $m$ estaría en la lista $q^2, q^2 + 2q, \dots$ y ya estaría tachado. Por tanto, **si $m$ no está tachado al llegar a él, es primo** y se puede sumar en ese momento.
+
+### Paso 5: comprobarlo con el ejemplo
+
+Con $N = 10$ empezamos con la suma en 2:
+
+| $m$ | ¿Tachado? | Suma | Tacha |
+| --- | --- | --- | --- |
+| 3 | no | 5 | 9 (el siguiente, 15, ya no es menor que 10) |
+| 5 | no | 10 | nada ($5^2 = 25 \ge 10$) |
+| 7 | no | 17 | nada |
+| 9 | sí | 17 | — |
+
+La suma es 17, como dice el enunciado.
+
+### Paso 6: cuánto se tacha
+
+Un primo impar $p \le \sqrt{N}$ tacha unos $\frac{N - p^2}{2p} < \frac{N}{2p}$ números, así que en total se tachan menos de
+
+$$
+\frac{N}{2} \sum_{p \le \sqrt{N}} \frac{1}{p} = O(N \log \log N)
+$$
+
+porque la suma de los inversos de los primos hasta $x$ crece como $\ln \ln x$ (Mertens). Para $N = 2 \cdot 10^6$ son 1 673 938 tachados, más las 999 999 vueltas del bucle que recorre los impares. La criba clásica, que recorre todos los números y tacha de $p$ en $p$, haría 4 347 776 tachados.
+
+### Paso 7: ¿cabe la suma en un Number?
+
+Una cota sencilla: la suma de los primos menores que $N$ no pasa de $2$ más la suma de todos los impares menores que $N$. Hay $N / 2 = 10^6$ impares, y la suma de los $k$ primeros impares es $k^2$:
+
+$$
+\sum_{p < N} p \;\le\; 2 + (1 + 3 + 5 + \cdots + 1\,999\,999) = 2 + 10^{12}
+$$
+
+Eso está muy por debajo de $2^{53} \approx 9 \cdot 10^{15}$, el mayor entero que un `Number` representa con exactitud. Como todas las sumas parciales son enteros por debajo de esa cota, cada suma es exacta. Una estimación más fina, con el teorema de los números primos, es $\sum_{p < N} p \approx \frac{N^2}{2 \ln N}$, y el resultado es del orden de $10^{11}$. También es seguro el producto `num * num` del código: como mucho vale $(2 \cdot 10^6)^2 = 4 \cdot 10^{12}$.
+
+## El código
+
+<Tabs>
+<TabItem label="JavaScript (repositorio)">
+
+<Code code={solucion} lang="js" title="10_summationOfPrimes.js" />
+
+`sumPrimes = 2` suma el 2 aparte (paso 3). El bucle exterior recorre los impares `num = 3, 5, 7, …` y, si `sieve[num]` sigue a `true`, el número es primo y se suma en el acto (paso 4). El bucle interior tacha empezando en `num * num` (paso 2) y avanzando de `2 * num` en `2 * num` (paso 3). El bucle exterior llega hasta `LIMIT` y no solo hasta $\sqrt{N}$ porque también va sumando; para `num` mayor que $\sqrt{N}$ el bucle interior no hace nada, porque `num * num` ya no es menor que `LIMIT`.
+
+</TabItem>
+<TabItem label="Python">
+
+```python
+from math import isqrt
+
+def suma_primos_menores(n):
+    if n <= 2:
+        return 0
+    # La posición i representa al impar 2i + 1, para los impares menores que n
+    tam = n // 2
+    criba = bytearray([1]) * tam
+    criba[0] = 0  # el 1 no es primo
+    for i in range(1, (isqrt(n - 1) - 1) // 2 + 1):
+        if criba[i]:
+            p = 2 * i + 1
+            inicio = p * p // 2  # posición de p²
+            # Avanzar 2p en los números es avanzar p en las posiciones
+            criba[inicio::p] = bytes(len(range(inicio, tam, p)))
+    return 2 + sum(2 * i + 1 for i in range(tam) if criba[i])
+
+print(suma_primos_menores(2_000_000))
+```
+
+Guarda solo los impares, así que la criba ocupa la mitad. Con `suma_primos_menores(10)` devuelve 17, el ejemplo del enunciado.
+
+</TabItem>
+<TabItem label="JavaScript (solo impares)">
+
+```js
+function sumaPrimosMenores(n) {
+  if (n <= 2) return 0;
+  const tam = Math.floor(n / 2); // la posición i representa al impar 2i + 1
+  const compuesto = new Uint8Array(tam);
+  compuesto[0] = 1; // el 1 no es primo
+  let suma = 2;
+  for (let i = 1; i < tam; i++) {
+    if (compuesto[i]) continue;
+    const p = 2 * i + 1;
+    suma += p;
+    for (let j = (p * p - 1) / 2; j < tam; j += p) compuesto[j] = 1;
+  }
+  return suma;
+}
+
+console.log(sumaPrimosMenores(2_000_000));
+```
+
+El mismo algoritmo que el del repositorio, pero con un `Uint8Array` de $N / 2$ posiciones: 1 MB en lugar de 16 MB.
+
+</TabItem>
+</Tabs>
+
+## Complejidad
+
+| Método | Coste | Operaciones para $N = 2 \cdot 10^6$ |
+| --- | --- | --- |
+| División hasta $\sqrt{m}$, solo divisores impares | $O(N^{3/2} / \log N)$ | ~$9{,}1 \cdot 10^7$ divisiones |
+| Criba clásica, todos los números, paso $p$ | $O(N \log \log N)$ | ~$4{,}3 \cdot 10^6$ tachados |
+| Criba de impares, paso $2p$ (repositorio) | $O(N \log \log N)$ | ~$1{,}7 \cdot 10^6$ tachados + $10^6$ vueltas |
+
+La división cuesta unas $\sqrt{p} / 2$ operaciones por cada primo $p$, y sumando sobre los primos menores que $N$ sale del orden de $N^{3/2} / \ln N$. La criba cambia esa raíz por el factor $\log \log N$, que para $N = 2 \cdot 10^6$ vale apenas $\ln \ln N \approx 2{,}67$. Además, tachar es solo escribir en memoria, mientras que dividir es de las operaciones más lentas del procesador.
+
+### Memoria
+
+La criba paga esa velocidad con memoria: necesita una posición por número, cuando la división no guarda nada. El repositorio usa `new Array(LIMIT).fill(true)`, un array genérico de JavaScript con dos millones de posiciones. En Node cada posición ocupa 8 bytes (medido: unos 16 MB), y la mitad, las de los pares, no se usa nunca. Hay formas mucho más compactas:
+
+| Representación | Memoria para $N = 2 \cdot 10^6$ |
+| --- | --- |
+| `Array` de booleanos, todas las posiciones (repositorio) | ~16 MB |
+| `Uint8Array`, todas las posiciones | 2 MB |
+| `Uint8Array`, solo impares | 1 MB |
+| Un bit por impar | 125 KB |
+
+## Mejoras posibles
+
+- **Guardar solo los impares** en un `Uint8Array`, como en las pestañas «Python» y «JavaScript (solo impares)»: el mismo número de operaciones con 16 veces menos memoria. Empaquetando 8 impares por byte se baja a 125 KB.
+- **Criba segmentada.** Para límites mucho mayores, como $10^{10}$, ni siquiera un bit por número cabe con comodidad. Se calculan los primos hasta $\sqrt{N}$ y se criba el rango por bloques de tamaño fijo, reutilizando la misma memoria: $O(\sqrt{N})$ en total.
+- **No listar los primos.** Si solo interesa la suma, hay algoritmos que no recorren los primos uno a uno. El más conocido en Project Euler, que se suele atribuir al usuario Lucy\_Hedgehog, calcula la suma de los primos hasta $N$ en $O(N^{3/4})$ operaciones con una recurrencia sobre los valores $\lfloor N / k \rfloor$, parecida a la que se usa para contar primos sin listarlos.
+
+## Conceptos utilizados
+
+<Relaciones mostrar="conceptos" />
+
+## Problemas relacionados
+
+<Relaciones mostrar="relacionados" />

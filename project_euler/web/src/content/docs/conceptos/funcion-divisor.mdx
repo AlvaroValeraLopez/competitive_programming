@@ -1,9 +1,10 @@
 ---
 title: La función divisor
-description: Cuántos divisores tiene un número, cómo calcularlo a partir de su factorización y por qué es una función multiplicativa.
+description: Cuántos divisores tiene un número y cuánto suman (σ), cómo calcularlos a partir de su factorización y por qué son funciones multiplicativas.
 sidebar:
   label: Función divisor
-  order: 3
+  order: 9
+requiere: [factorizacion-en-primos]
 area: Teoría de números
 ---
 
@@ -69,6 +70,109 @@ $$
 Sin ella la fórmula falla: $d(2 \cdot 2) = d(4) = 3$, pero $d(2) \cdot d(2) = 4$. El divisor 2 se contaría dos veces.
 </Aside>
 
+## La suma de divisores σ(n)
+
+Además de contar los divisores, a menudo hace falta **sumarlos**. La **suma de divisores** $\sigma(n)$ es la suma de todos los divisores positivos de $n$, incluido el propio $n$:
+
+$$
+\sigma(n) = \sum_{d \,\mid\, n} d
+$$
+
+| $n$ | Divisores | $\sigma(n)$ |
+| --- | --- | --- |
+| 6 | 1, 2, 3, 6 | 12 |
+| 12 | 1, 2, 3, 4, 6, 12 | 28 |
+| 28 | 1, 2, 4, 7, 14, 28 | 56 |
+| 36 | 1, 2, 3, 4, 6, 9, 12, 18, 36 | 91 |
+
+Las dos funciones son de la misma familia: $\sigma_k(n)$ suma las potencias $k$-ésimas de los divisores, de modo que $d(n) = \sigma_0(n)$ y $\sigma(n) = \sigma_1(n)$.
+
+### Potencias de un primo
+
+Los divisores de $p^e$ son $1, p, p^2, \dots, p^e$, así que su suma es una progresión geométrica:
+
+$$
+\sigma(p^e) = 1 + p + p^2 + \cdots + p^e = \frac{p^{e+1} - 1}{p - 1}
+$$
+
+**Por qué.** Si $S = 1 + p + \cdots + p^e$, al multiplicar por $p$ se obtiene $p\,S = p + p^2 + \cdots + p^{e+1}$. Restando, casi todos los términos se cancelan: $p\,S - S = p^{e+1} - 1$, y se despeja $S$. Por ejemplo, $\sigma(2^3) = 1 + 2 + 4 + 8 = \frac{2^4 - 1}{2 - 1} = 15$ y $\sigma(3^2) = 1 + 3 + 9 = \frac{3^3 - 1}{3 - 1} = 13$.
+
+### También es multiplicativa
+
+Igual que $d$, si $\operatorname{mcd}(a, b) = 1$:
+
+$$
+\sigma(a \cdot b) = \sigma(a) \cdot \sigma(b)
+$$
+
+**Por qué.** Como $a$ y $b$ no comparten primos, cada divisor de $ab$ se escribe **de una única forma** como $d_1 \cdot d_2$, con $d_1$ divisor de $a$ y $d_2$ divisor de $b$: $d_1$ se queda con los primos de $a$ y $d_2$ con los de $b$. Al desarrollar el producto
+
+$$
+\sigma(a)\,\sigma(b) = \Big(\sum_{d_1 \mid a} d_1\Big) \Big(\sum_{d_2 \mid b} d_2\Big) = \sum_{d_1 \mid a}\ \sum_{d_2 \mid b} d_1\, d_2
+$$
+
+aparece cada divisor de $ab$ exactamente una vez. Es la tabla de divisores de 12 de más arriba: sus casillas suman $(1 + 2 + 4)(1 + 3) = 7 \cdot 4 = 28 = \sigma(12)$.
+
+Juntando las dos cosas, si $n = p_1^{e_1} \cdots p_r^{e_r}$,
+
+$$
+\sigma(n) = \frac{p_1^{e_1+1} - 1}{p_1 - 1} \cdots \frac{p_r^{e_r+1} - 1}{p_r - 1}.
+$$
+
+**Ejemplo.** $72 = 2^3 \cdot 3^2$, luego $\sigma(72) = 15 \cdot 13 = 195$. La misma condición de antes es necesaria: $\sigma(4) = 1 + 2 + 4 = 7$, pero $\sigma(2) \cdot \sigma(2) = 9$.
+
+### Números perfectos, abundantes y deficientes
+
+Muchas veces interesa la suma de los **divisores propios**, los menores que $n$. La escribiremos $s(n)$:
+
+$$
+s(n) = \sigma(n) - n
+$$
+
+Por ejemplo, $s(12) = 1 + 2 + 3 + 4 + 6 = 16$, $s(p) = 1$ si $p$ es primo y $s(1) = 0$. Comparando $s(n)$ con $n$, los números se clasifican en tres tipos:
+
+- **Perfectos**, si $s(n) = n$, o lo que es lo mismo, $\sigma(n) = 2n$. Por ejemplo, $28 = 1 + 2 + 4 + 7 + 14$. Por debajo de 10 000 solo hay cuatro: 6, 28, 496 y 8128.
+- **Abundantes**, si $s(n) > n$. El menor es el 12, porque $s(12) = 16 > 12$. Le siguen 18, 20, 24, 30, 36, 40… El primero impar es el 945.
+- **Deficientes**, si $s(n) < n$. Lo son el 1, todos los primos, porque $s(p) = 1$, y todas las potencias de 2, porque $s(2^k) = 2^k - 1$.
+
+La fórmula de $\sigma$ explica de dónde salen los perfectos pares. Si $q = 2^k - 1$ es primo y $n = 2^{k-1} q$, como $2^{k-1}$ y $q$ son coprimos,
+
+$$
+\sigma(n) = \sigma(2^{k-1})\, \sigma(q) = (2^k - 1)(q + 1) = q \cdot 2^k = 2n,
+$$
+
+así que $n$ es perfecto. Con $k = 2, 3, 5, 7$ salen 6, 28, 496 y 8128. Esta construcción ya la conocía Euclides; Euler demostró que todos los perfectos pares son de esta forma, y todavía no se sabe si existe algún perfecto impar.
+
+Los [números amigos](../../problemas/021-numeros-amigos/) son parejas $a \ne b$ con $s(a) = b$ y $s(b) = a$, como 220 y 284, y el [problema 23](../../problemas/023-sumas-no-abundantes/) trabaja con los abundantes.
+
+<Aside type="caution" title="Cuidado con la notación">
+Algunos textos, entre ellos el enunciado del problema 21 de Project Euler, llaman $d(n)$ a la suma de los divisores propios. En esta web, $d(n)$ **cuenta** los divisores y $s(n)$ es la suma de los divisores propios.
+</Aside>
+
+### Calcular σ de todos los números hasta N
+
+Si hace falta $\sigma(n)$ para todos los $n$ hasta un límite $N$, factorizar cada uno es desperdiciar trabajo. Es mejor darle la vuelta, como en la [criba de Eratóstenes](../criba-de-eratostenes/): en lugar de buscar los divisores de cada número, **cada posible divisor $i$ se suma a todos sus múltiplos**.
+
+```python
+def sumas_de_divisores(N):
+    sigma = [0] * (N + 1)
+    for i in range(1, N + 1):
+        for j in range(i, N + 1, i):
+            sigma[j] += i
+    return sigma
+
+print(sumas_de_divisores(12)[1:])
+# [1, 3, 4, 7, 6, 12, 8, 15, 13, 18, 12, 28]
+```
+
+Cada $i$ hace $\lfloor N / i \rfloor$ sumas, así que en total se hacen
+
+$$
+\sum_{i=1}^{N} \left\lfloor \frac{N}{i} \right\rfloor \;\le\; N \left(1 + \frac{1}{2} + \cdots + \frac{1}{N}\right) \approx N \ln N
+$$
+
+sumas: el coste es $O(N \log N)$. Para $N = 10^6$ son 13 970 034 sumas, muy cerca de $N \ln N \approx 13\,815\,511$. Para obtener directamente $s(n)$ basta con empezar el bucle interior en $j = 2i$, de modo que ningún número se sume a sí mismo. Y si en lugar de $i$ se suma 1, se obtiene $d(n)$ para todos los números a la vez.
+
 ## Contar divisores sin factorizar
 
 Los divisores van **por parejas**: si $i$ divide a $n$, también lo hace $n / i$. En cada pareja, el menor de los dos es como mucho $\sqrt{n}$, porque si los dos fueran mayores su producto superaría a $n$.
@@ -91,6 +195,10 @@ $$
 $$
 
 donde $\gamma \approx 0{,}5772$ es la constante de Euler-Mascheroni. Los enteros hasta un millón tienen, de media, unos 14 divisores. Los números con muchísimos divisores necesitan muchos factores primos pequeños y son raros: Ramanujan los estudió con el nombre de **números altamente compuestos**.
+
+## Conceptos previos
+
+<Relaciones mostrar="requiere" />
 
 ## Dónde aparece
 

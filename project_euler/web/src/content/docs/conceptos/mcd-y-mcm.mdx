@@ -1,0 +1,216 @@
+---
+title: Máximo común divisor y mínimo común múltiplo
+description: El algoritmo de Euclides y por qué es tan rápido, la relación mcm(a, b) = ab / mcd(a, b), el mcm de 1 a n y cómo simplificar fracciones.
+sidebar:
+  label: mcd y mcm
+  order: 8
+requiere: [factorizacion-en-primos]
+area: Teoría de números
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+
+## Definiciones
+
+Dados dos enteros positivos $a$ y $b$:
+
+- su **máximo común divisor**, $\operatorname{mcd}(a, b)$, es el mayor entero que divide a los dos;
+- su **mínimo común múltiplo**, $\operatorname{mcm}(a, b)$, es el menor entero positivo que es múltiplo de los dos.
+
+**Ejemplo.** Los divisores de 12 son 1, 2, 3, 4, 6 y 12, y los de 18 son 1, 2, 3, 6, 9 y 18. Los comunes son 1, 2, 3 y 6, así que $\operatorname{mcd}(12, 18) = 6$. Los múltiplos de 12 son 12, 24, 36…, y los de 18 son 18, 36…: el primero común es el 36, así que $\operatorname{mcm}(12, 18) = 36$.
+
+Cuando $\operatorname{mcd}(a, b) = 1$ se dice que $a$ y $b$ son **coprimos** (o primos entre sí): no comparten ningún factor primo. Por convenio, $\operatorname{mcd}(a, 0) = a$, porque todo número divide a 0. En inglés se escriben *gcd* y *lcm*, y así se llaman en Python: `math.gcd` y `math.lcm`.
+
+## El algoritmo de Euclides
+
+Buscar todos los divisores, como en el ejemplo, es lentísimo para números grandes. El algoritmo de Euclides se basa en una sola propiedad: si $b > 0$,
+
+$$
+\operatorname{mcd}(a, b) = \operatorname{mcd}(b,\ a \bmod b),
+$$
+
+donde $a \bmod b$ es el resto de dividir $a$ entre $b$.
+
+**Demostración.** Dividimos: $a = q\,b + r$, con $r = a \bmod b$. Veamos que los dos pares tienen **exactamente los mismos divisores comunes**:
+
+- si $d$ divide a $a$ y a $b$, divide a $a - q\,b = r$;
+- si $d$ divide a $b$ y a $r$, divide a $q\,b + r = a$.
+
+Si los divisores comunes son los mismos, el mayor de ellos también. $\blacksquare$
+
+El algoritmo aplica la propiedad hasta que el segundo número es 0, y entonces el mcd es el primero, por el convenio $\operatorname{mcd}(a, 0) = a$. Siempre termina, porque el segundo número disminuye en cada paso: el resto cumple $0 \le r < b$.
+
+**Ejemplo: 1071 y 462.**
+
+$$
+\begin{aligned}
+1071 &= 2 \cdot 462 + 147 \\
+462 &= 3 \cdot 147 + 21 \\
+147 &= 7 \cdot 21 + 0
+\end{aligned}
+$$
+
+Por tanto,
+
+$$
+\operatorname{mcd}(1071, 462) = \operatorname{mcd}(462, 147) = \operatorname{mcd}(147, 21) = \operatorname{mcd}(21, 0) = 21.
+$$
+
+Se puede comprobar con las factorizaciones: $1071 = 3^2 \cdot 7 \cdot 17$ y $462 = 2 \cdot 3 \cdot 7 \cdot 11$ comparten exactamente $3 \cdot 7 = 21$.
+
+```python
+def mcd(a, b):
+    while b != 0:
+        a, b = b, a % b
+    return a
+
+print(mcd(1071, 462))  # 21
+```
+
+Si $a < b$ no hace falta ordenarlos: en la primera vuelta $a \bmod b = a$ y los dos números simplemente se intercambian.
+
+## Cuántos pasos da
+
+**Una cota sencilla.** Si $b \le a$, entonces $a \bmod b < a / 2$:
+
+- si $b \le a/2$, el resto es menor que $b$, luego menor que $a/2$;
+- si $b > a/2$, el cociente es 1 y el resto es $a - b < a/2$.
+
+Tras dos pasos, el par $(a, b)$ se convierte en $(a \bmod b,\ \dots)$, así que **cada dos pasos el primer número se reduce a menos de la mitad**. El número de divisiones es como mucho del orden de $2 \log_2 a$: el coste es logarítmico, $O(\log a)$.
+
+**El teorema de Lamé.** Gabriel Lamé afinó la cota en 1844: el número de divisiones nunca supera **5 veces el número de cifras decimales del menor de los dos números**. El peor caso son dos números de Fibonacci consecutivos ($F_1 = F_2 = 1$, $F_{k+2} = F_{k+1} + F_k$), en los que el cociente es 1 en cada paso salvo el último:
+
+$$
+\begin{aligned}
+13 &= 1 \cdot 8 + 5 \\
+8 &= 1 \cdot 5 + 3 \\
+5 &= 1 \cdot 3 + 2 \\
+3 &= 1 \cdot 2 + 1 \\
+2 &= 2 \cdot 1 + 0
+\end{aligned}
+$$
+
+**Idea de la demostración.** Si el algoritmo da $k$ divisiones con $a > b$, leyendo las divisiones de abajo arriba cada número es como mínimo la suma de los dos siguientes, porque $r_{i-1} = q_i\, r_i + r_{i+1} \ge r_i + r_{i+1}$. Así que los números crecen al menos como los de Fibonacci: $b \ge F_{k+1}$ y $a \ge F_{k+2}$. Como $F_k$ crece como $\varphi^k$, con $\varphi = \frac{1 + \sqrt{5}}{2} \approx 1{,}618$, y $\log_\varphi 10 \approx 4{,}785 < 5$, cada cifra decimal más permite menos de 5 divisiones más.
+
+En números concretos: con $b < a \le 10^{18}$ el algoritmo nunca da más de **85 divisiones**. Se alcanzan con $F_{87} \approx 6{,}8 \cdot 10^{17}$ y $F_{86}$, los dos Fibonacci consecutivos más grandes por debajo de $10^{18}$.
+
+## El mcm a partir del mcd
+
+$$
+\operatorname{mcm}(a, b) = \frac{a \cdot b}{\operatorname{mcd}(a, b)}
+$$
+
+**Demostración con exponentes.** Escribimos las [factorizaciones en primos](../factorizacion-en-primos/) de $a$ y $b$ con los mismos primos, poniendo exponente 0 a los que falten:
+
+$$
+a = \prod_p p^{\alpha_p}, \qquad b = \prod_p p^{\beta_p}.
+$$
+
+Por la unicidad de la factorización, un número divide a $a$ si y solo si, para cada primo, su exponente no pasa de $\alpha_p$; y es múltiplo de $a$ si y solo si su exponente es al menos $\alpha_p$. Por tanto, para cada primo, el mcd se queda con el **menor** exponente y el mcm con el **mayor**:
+
+$$
+\operatorname{mcd}(a, b) = \prod_p p^{\min(\alpha_p,\, \beta_p)}, \qquad \operatorname{mcm}(a, b) = \prod_p p^{\max(\alpha_p,\, \beta_p)}.
+$$
+
+Como $\min(x, y) + \max(x, y) = x + y$ para cualquier par de números,
+
+$$
+\operatorname{mcd}(a, b) \cdot \operatorname{mcm}(a, b) = \prod_p p^{\alpha_p + \beta_p} = a \cdot b. \qquad \blacksquare
+$$
+
+**Ejemplo.** Con $12 = 2^2 \cdot 3$ y $18 = 2 \cdot 3^2$: el mcd es $2^1 \cdot 3^1 = 6$, el mcm es $2^2 \cdot 3^2 = 36$, y $6 \cdot 36 = 216 = 12 \cdot 18$.
+
+La fórmula es la forma práctica de calcular el mcm: el mcd sale con el algoritmo de Euclides, **sin factorizar**. Por ejemplo, $\operatorname{mcm}(1071, 462) = 1071 \cdot 462 / 21 = 23562$. De la demostración salen además dos hechos útiles:
+
+- si $a$ y $b$ son coprimos, $\operatorname{mcm}(a, b) = a \cdot b$;
+- todo múltiplo común de $a$ y $b$ es múltiplo de $\operatorname{mcm}(a, b)$, porque sus exponentes son, para cada primo, al menos el mayor de los dos.
+
+## El mcm de varios números
+
+Para más de dos números se va acumulando:
+
+$$
+\operatorname{mcm}(a_1, a_2, \dots, a_k) = \operatorname{mcm}\big(\operatorname{mcm}(a_1, \dots, a_{k-1}),\ a_k\big).
+$$
+
+Funciona porque, en los exponentes, el máximo de una lista se puede calcular igual: $\max(x_1, \dots, x_k) = \max\big(\max(x_1, \dots, x_{k-1}),\ x_k\big)$.
+
+```python
+from functools import reduce
+
+def mcm(a, b):
+    return a // mcd(a, b) * b
+
+def mcm_hasta(n):
+    return reduce(mcm, range(1, n + 1), 1)
+
+print(mcm_hasta(10))  # 2520
+```
+
+(Usa la función `mcd` de antes.)
+
+<Aside type="caution" title="Dividir antes de multiplicar">
+Conviene calcular `a // mcd(a, b) * b` y no `a * b // mcd(a, b)`. La división es exacta, porque el mcd divide a $a$, y así ningún resultado intermedio supera al mcm. En cambio, $a \cdot b$ es $\operatorname{mcd}(a, b)$ veces mayor que el mcm y puede desbordarse aunque el mcm quepa de sobra. En Python los enteros no tienen límite y solo se gana velocidad, pero en JavaScript un `Number` solo representa enteros exactos hasta $2^{53} \approx 9 \cdot 10^{15}$, y en C o Java un entero de 64 bits llega hasta unos $9{,}2 \cdot 10^{18}$.
+</Aside>
+
+Un ejemplo en JavaScript, con $a = 3\,000\,000\,003$ y $b = 5\,000\,000\,005$, cuyo mcd es $1\,000\,000\,001$:
+
+```js
+const mcd = (a, b) => { while (b !== 0) [a, b] = [b, a % b]; return a; };
+const a = 3000000003, b = 5000000005;
+console.log((a * b) / mcd(a, b)); // 15000000015.000002
+console.log((a / mcd(a, b)) * b); // 15000000015
+```
+
+El producto $a \cdot b \approx 1{,}5 \cdot 10^{19}$ pasa de $2^{53}$, se redondea, y el resultado ni siquiera es entero.
+
+## El mcm de 1, 2, …, n
+
+$$
+\operatorname{mcm}(1, 2, \dots, n) = \prod_{p \le n} p^{\lfloor \log_p n \rfloor}
+$$
+
+donde el producto recorre los primos $p \le n$.
+
+**Demostración.** Por lo visto antes, el exponente de cada primo $p$ en el mcm es el **mayor** exponente con el que $p$ aparece en alguno de los números $1, 2, \dots, n$. Sea $p^k$ la mayor potencia de $p$ que no pasa de $n$, es decir, $k = \lfloor \log_p n \rfloor$. Esa potencia está en la lista, así que el exponente es al menos $k$; y ningún número de la lista puede tener exponente $k + 1$ o más, porque sería al menos $p^{k+1} > n$. Los primos mayores que $n$ no dividen a ninguno de los números.
+
+**Ejemplo con $n = 10$.** Los primos hasta 10 son 2, 3, 5 y 7, y sus mayores potencias que no pasan de 10 son $2^3 = 8$, $3^2 = 9$, $5$ y $7$:
+
+$$
+\operatorname{mcm}(1, \dots, 10) = 2^3 \cdot 3^2 \cdot 5 \cdot 7 = 8 \cdot 9 \cdot 5 \cdot 7 = 2520.
+$$
+
+Calculándolo de forma acumulada se ve lo mismo: el mcm solo cambia cuando $k$ es una potencia de un primo $p$, y entonces se multiplica por $p$.
+
+| $k$ | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| $\operatorname{mcm}(1, \dots, k)$ | 1 | 2 | 6 | 12 | 60 | 60 | 420 | 840 | 2520 | 2520 |
+
+Es justo lo que pide el [problema 5](../../problemas/005-menor-multiplo-comun/), con un $n$ algo mayor.
+
+<Aside type="caution" title="Cuidado con el logaritmo en coma flotante">
+Calcular $\lfloor \log_p n \rfloor$ como `Math.floor(Math.log(n) / Math.log(p))` puede fallar por redondeo: `Math.log(1000) / Math.log(10)` da `2.9999999999999996`, y el suelo sería 2 en vez de 3. Es más seguro multiplicar por $p$ mientras el resultado no pase de $n$.
+</Aside>
+
+## Simplificar fracciones
+
+Una fracción $a/b$ es **irreducible** cuando $\operatorname{mcd}(a, b) = 1$. Para simplificarla basta con dividir el numerador y el denominador entre $g = \operatorname{mcd}(a, b)$:
+
+$$
+\frac{a}{b} = \frac{a / g}{b / g}.
+$$
+
+**El resultado ya no se puede simplificar más.** Si un $d > 1$ dividiera a $a/g$ y a $b/g$, entonces $d \cdot g$ dividiría a $a$ y a $b$, y sería un divisor común mayor que $g$. Imposible, porque $g$ es el máximo.
+
+**Ejemplos.** Con el mcd calculado antes, $\frac{1071}{462} = \frac{1071 / 21}{462 / 21} = \frac{51}{22}$. Y como $\operatorname{mcd}(49, 98) = 49$, la fracción del enunciado del [problema 33](../../problemas/033-fracciones-que-cancelan-cifras/) es $\frac{49}{98} = \frac{1}{2}$.
+
+Para saber si dos fracciones son iguales, ni siquiera hace falta simplificarlas: $\frac{a}{b} = \frac{c}{d}$ si y solo si $a \cdot d = b \cdot c$, una comparación entre enteros sin decimales ni redondeos.
+
+## Conceptos previos
+
+<Relaciones mostrar="requiere" />
+
+## Dónde aparece
+
+<Relaciones mostrar="aparece" />
