@@ -248,11 +248,55 @@ h1#_top,
 }
 
 /* ---------- Tablas ---------- */
-.sl-markdown-content table {
+/* Cada tabla va dentro de un div.tabla (lo añade src/lib/tablas.ts): el
+   contenedor es la tarjeta y, en pantallas estrechas, se desplaza en
+   horizontal; la tabla ocupa todo el ancho de la columna de texto. */
+.sl-markdown-content .tabla {
+	overflow-x: auto;
+	border: 1px solid var(--sl-color-gray-6);
 	border-radius: var(--euler-radio);
+	background: var(--sl-color-black);
+	box-shadow: var(--euler-sombra);
 }
 
-.sl-markdown-content th {
-	background-color: var(--sl-color-gray-7);
+.sl-markdown-content .tabla table {
+	display: table;
+	width: 100%;
+	border-collapse: collapse;
+	font-variant-numeric: tabular-nums;
+}
+
+.sl-markdown-content .tabla :is(th, td) {
+	padding: 0.7rem 1.25rem;
+	border-bottom: 1px solid var(--sl-color-gray-6);
+	text-align: start;
+	vertical-align: baseline;
+}
+
+/* Cabecera en lavanda. Sin mayúsculas forzadas: cambiarían las letras de las fórmulas. */
+.sl-markdown-content .tabla th {
+	background: var(--sl-color-accent-low);
+	color: var(--sl-color-white);
+	font-size: var(--sl-text-sm);
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+/* Filas alternas y resaltado al pasar el ratón, para seguir una fila con la vista. */
+.sl-markdown-content .tabla tbody tr:nth-child(even) {
+	background: var(--sl-color-gray-7);
+}
+
+.sl-markdown-content .tabla tbody tr:hover {
+	background: var(--sl-color-gray-6);
+}
+
+.sl-markdown-content .tabla tbody tr:last-child td {
+	border-bottom: 0;
+}
+
+/* La primera columna suele ser la clave de la fila (n, k, el método…). */
+.sl-markdown-content .tabla td:first-child {
+	color: var(--sl-color-white);
 	font-weight: 600;
 }

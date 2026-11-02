@@ -8,8 +8,3 @@
 .katex {
 	font-size: 1.1em;
 }
-
-/* Tablas de ejemplos numéricos: cifras alineadas. */
-.sl-markdown-content table td {
-	font-variant-numeric: tabular-nums;
-}

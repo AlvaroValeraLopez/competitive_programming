@@ -5,6 +5,7 @@ import starlight from '@astrojs/starlight';
 import { unified } from '@astrojs/markdown-remark';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import { envolverTablas } from './src/lib/tablas.ts';
 
 // Las soluciones viven fuera de la web (en ../problems_1_to_hundred) y las
 // páginas las importan con `?raw`, así el código nunca se duplica.
@@ -14,11 +15,12 @@ const solutionsDir = fileURLToPath(new URL('../problems_1_to_hundred', import.me
 export default defineConfig({
 	// Fórmulas en LaTeX ($...$ y $$...$$) renderizadas con KaTeX al compilar.
 	// Sätteri, el procesador por defecto de Astro 7, no trae KaTeX, así que
-	// usamos el procesador unified con remark-math y rehype-katex.
+	// usamos el procesador unified con remark-math y rehype-katex. Las tablas
+	// se envuelven en un contenedor para darles marco (src/lib/tablas.ts).
 	markdown: {
 		processor: unified({
 			remarkPlugins: [remarkMath],
-			rehypePlugins: [rehypeKatex],
+			rehypePlugins: [rehypeKatex, envolverTablas],
 		}),
 	},
 	vite: {
