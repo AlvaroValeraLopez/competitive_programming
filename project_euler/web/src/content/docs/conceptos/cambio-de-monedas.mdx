@@ -10,6 +10,7 @@ area: Programación dinámica
 
 import { Aside } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
+import Video from '../../../components/Video.astro';
 
 ## El problema
 
@@ -44,6 +45,12 @@ Con las monedas de 1, 2 y 5, para las cantidades del 0 al 10:
 | 1, 2 y 5 | 1 | 1 | 2 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 10 |
 
 Cada casilla es la de encima más la que está $c_i$ columnas a su izquierda en la misma fila. Por ejemplo, $W(3, 10) = W(2, 10) + W(3, 5) = 6 + 4 = 10$.
+
+<Video
+	archivo="cambio-de-monedas.mp4"
+	titulo="Las cuatro formas de pagar 5 con monedas de 1, 2 y 5, repartidas en una que usa la moneda de 5 (quitándola queda pagar 0) y tres que no la usan (pagar 5 con 1 y 2): 4 = 3 + 1. Después, la tabla de formas para las cantidades de 0 a 10 se rellena fila a fila, sumando a cada casilla la de encima y la que está tantas columnas a su izquierda como vale la moneda, hasta W(3, 10) = 6 + 4 = 10."
+	pie="Vídeo generado con código (Manim). Antes de renderizarlo se comprueba la tabla contra el recuento por fuerza bruta de todas las formas, para varios sistemas de monedas."
+/>
 
 ## Con una sola lista
 

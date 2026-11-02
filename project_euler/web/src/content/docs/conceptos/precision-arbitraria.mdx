@@ -9,6 +9,7 @@ area: Números grandes
 
 import { Aside } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
+import Video from '../../../components/Video.astro';
 
 ## El límite de los números de coma flotante
 
@@ -56,6 +57,12 @@ $5 + 9 = 14$: se escribe 4 y se lleva 1. $7 + 8 + 1 = 16$: se escribe 6 y se lle
 **La llevada nunca pasa de 1.** Si la llevada que entra es 0 o 1, entonces $s \le 9 + 9 + 1 = 19$, y la que sale vuelve a ser 0 o 1. Al sumar dos números de $k$ cifras, el resultado tiene $k$ o $k + 1$ cifras, y el coste es de $k$ pasos: **$O(k)$**.
 
 **Sumando muchos números a la vez**, la llevada crece, pero poco. Si se suman $m$ números en la misma pasada, cada columna aporta como mucho $9m$. Con $m = 100$: si entra una llevada de como mucho 99, la columna suma como mucho $900 + 99 = 999$ y sale una llevada de como mucho 99. Por inducción, la llevada nunca pasa de 99.
+
+<Video
+	archivo="precision-arbitraria.mp4"
+	titulo="Una recta con los enteros de 2⁵³ − 2 a 2⁵³ + 6: hasta 2⁵³ todos caben en un Number; por encima solo los pares, y los impares se redondean al par vecino, así que 2 ** 53 + 1 === 2 ** 53. Después, 2⁶³ + 2⁶³ sumado columna a columna, de derecha a izquierda, escribiendo cada cifra y arrastrando la llevada, que nunca pasa de 1: el resultado es 2⁶⁴ = 18 446 744 073 709 551 616."
+	pie="Vídeo generado con código (Manim). Antes de renderizarlo se comprueba qué enteros guarda un Number sin redondear y que la suma columna a columna coincide con la suma exacta, con llevadas de 0 o 1."
+/>
 
 ## Multiplicar
 

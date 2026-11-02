@@ -313,3 +313,93 @@ def casillas_pitagoras(a: int, b: int, c: int) -> tuple[list[Celda], list[Celda]
     hueco = [celda for capa in capas_en_l(c)[b:] for celda in capa]
     assert len(origen) == len(hueco), "a² no es c² − b²"
     return origen, hueco, [(f, col) for f in range(b) for col in range(b)]
+
+
+# --- Precisión arbitraria ---
+
+
+def suma_con_llevadas(a: int, b: int) -> list[tuple[int, int, int, int, int]]:
+    """Las columnas de a + b, de derecha a izquierda, como en el colegio.
+
+    Cada columna es (cifra de a, cifra de b, llevada que entra, cifra que se escribe,
+    llevada que sale); las cifras que faltan cuentan como 0. Si al final queda una
+    llevada, se añade una última columna que solo la escribe.
+    """
+    ca, cb = str(a)[::-1], str(b)[::-1]
+    columnas = []
+    llevada = 0
+    for i in range(max(len(ca), len(cb))):
+        x = int(ca[i]) if i < len(ca) else 0
+        y = int(cb[i]) if i < len(cb) else 0
+        s = x + y + llevada
+        columnas.append((x, y, llevada, s % 10, s // 10))
+        llevada = s // 10
+    if llevada:
+        columnas.append((0, 0, llevada, llevada, 0))
+    return columnas
+
+
+def como_doble(n: int) -> int:
+    """El entero que queda al guardar n en coma flotante de doble precisión (un Number)."""
+    return int(float(n))
+
+
+# --- Programación dinámica ---
+
+
+def mejor_desde_cada_casilla(triangulo: list[list[int]]) -> list[list[int]]:
+    """M(i, j): la mayor suma desde la casilla (i, j) hasta la última fila, de abajo arriba."""
+    m = [list(fila) for fila in triangulo]
+    for i in range(len(m) - 2, -1, -1):
+        for j in range(len(m[i])):
+            m[i][j] += max(m[i + 1][j], m[i + 1][j + 1])
+    return m
+
+
+def mejor_camino(triangulo: list[list[int]]) -> list[int]:
+    """La posición en cada fila del mejor camino, bajando siempre hacia la casilla con mayor M."""
+    m = mejor_desde_cada_casilla(triangulo)
+    camino = [0]
+    for i in range(1, len(triangulo)):
+        j = camino[-1]
+        camino.append(j if m[i][j] >= m[i][j + 1] else j + 1)
+    return camino
+
+
+def camino_voraz(triangulo: list[list[int]]) -> list[int]:
+    """La posición en cada fila del camino que baja siempre hacia el número más grande."""
+    camino = [0]
+    for i in range(1, len(triangulo)):
+        j = camino[-1]
+        camino.append(j if triangulo[i][j] >= triangulo[i][j + 1] else j + 1)
+    return camino
+
+
+# --- Cambio de monedas ---
+
+
+def tabla_cambio(monedas: list[int], n: int) -> list[list[int]]:
+    """W(i, m) para i = 1, …, k y m = 0, …, n: formas de pagar m con las i primeras monedas."""
+    filas = []
+    anterior = [1] + [0] * n
+    for c in monedas:
+        fila = []
+        for m in range(n + 1):
+            fila.append(anterior[m] + (fila[m - c] if m >= c else 0))
+        filas.append(fila)
+        anterior = fila
+    return filas
+
+
+def formas_de_pagar(monedas: list[int], n: int) -> list[tuple[int, ...]]:
+    """Todas las formas de pagar n, cada una con sus monedas de mayor a menor."""
+    if n == 0:
+        return [()]
+    if not monedas:
+        return []
+    mayor, resto = max(monedas), [c for c in monedas if c != max(monedas)]
+    formas = []
+    for usadas in range(n // mayor, -1, -1):
+        for forma in formas_de_pagar(resto, n - usadas * mayor):
+            formas.append((mayor,) * usadas + forma)
+    return formas

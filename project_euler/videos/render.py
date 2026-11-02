@@ -29,6 +29,9 @@ VIDEOS = {
     "suma-de-cuadrados": ("escenas/suma_cuadrados.py", "SumaCuadrados"),
     "fibonacci": ("escenas/fibonacci.py", "Fibonacci"),
     "ternas-pitagoricas": ("escenas/ternas_pitagoricas.py", "TernasPitagoricas"),
+    "precision-arbitraria": ("escenas/precision.py", "PrecisionArbitraria"),
+    "principio-de-optimalidad": ("escenas/optimalidad.py", "PrincipioOptimalidad"),
+    "cambio-de-monedas": ("escenas/monedas.py", "CambioMonedas"),
 }
 
 CALIDADES = {"baja": "l", "media": "m", "alta": "h"}
