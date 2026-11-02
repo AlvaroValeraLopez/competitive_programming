@@ -6,13 +6,15 @@ sidebar:
   order: 5
 fuente: project-euler
 numero: 5
+soluciones:
+  - archivo: 'project_euler/problems_1_to_hundred/1_10/5_smallestMultiple.js'
 temas: [Divisibilidad, Mínimo común múltiplo]
 conceptos: [mcd-y-mcm, factorizacion-en-primos]
 ---
 
-import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
-import solucion from '@soluciones/1_10/5_smallestMultiple.js?raw';
+import Solucion from '../../../components/Solucion.astro';
 
 ## El problema
 
@@ -144,7 +146,7 @@ En JavaScript, `Math.floor(Math.log(4913) / Math.log(17))` da 2, no 3, aunque $4
 <Tabs>
 <TabItem label="JavaScript (repositorio)">
 
-<Code code={solucion} lang="js" title="5_smallestMultiple.js" />
+<Solucion />
 
 `gcd` es el algoritmo de Euclides del paso 4, en versión iterativa: en cada vuelta el par `(a, b)` pasa a ser `(b, a % b)`, y cuando `b` llega a 0 el resultado es `a`. `lcm` es la fórmula del paso 2 (el `Math.abs` solo importaría con números negativos). `lcmOfArray` es el paso 3: recorre la lista `[1, 2, …, MAX]` acumulando el mcm.
 

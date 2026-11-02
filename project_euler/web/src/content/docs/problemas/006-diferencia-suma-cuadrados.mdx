@@ -6,13 +6,15 @@ sidebar:
   order: 6
 fuente: project-euler
 numero: 6
+soluciones:
+  - archivo: 'project_euler/problems_1_to_hundred/1_10/6_ sumSquareDifference.js'
 temas: [Sumas, Fórmulas cerradas]
 conceptos: [suma-de-gauss, suma-de-cuadrados]
 ---
 
-import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
-import solucion from '@soluciones/1_10/6_ sumSquareDifference.js?raw';
+import Solucion from '../../../components/Solucion.astro';
 
 ## El problema
 
@@ -108,7 +110,7 @@ Las tres coinciden con el enunciado.
 <Tabs>
 <TabItem label="JavaScript (repositorio)">
 
-<Code code={solucion} lang="js" title="6_ sumSquareDifference.js" />
+<Solucion />
 
 Es exactamente el desarrollo: `squareOfTheSum` es el paso 1 y `sumOfSquares` el paso 2. Las dos divisiones son exactas: $n(n+1)$ siempre es par, y $n(n+1)(2n+1)$ siempre es múltiplo de 6.
 

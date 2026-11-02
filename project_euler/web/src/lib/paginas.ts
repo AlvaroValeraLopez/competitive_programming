@@ -2,6 +2,7 @@
 // usan el menú lateral, los catálogos, la portada y el mapa.
 import { getCollection, type CollectionEntry } from 'astro:content';
 import { dominioDe } from './menu';
+import { lenguajeDe } from './soluciones';
 
 export interface PaginaContenido {
 	id: string;
@@ -13,6 +14,8 @@ export interface PaginaContenido {
 	fuente?: string;
 	/** Ejercicios de una fuente numerada: su número en ella. */
 	numero?: number;
+	/** Ejercicios: los lenguajes de sus soluciones, sin repetir. */
+	lenguajes: string[];
 	/** Conceptos: su área y el dominio al que pertenece. */
 	area?: string;
 	dominio?: string;
@@ -38,6 +41,7 @@ function aPagina(entrada: CollectionEntry<'docs'>): PaginaContenido {
 		descripcion: data.description,
 		fuente: data.fuente,
 		numero: data.numero,
+		lenguajes: [...new Set((data.soluciones ?? []).map((s) => lenguajeDe(s.archivo).nombre))],
 		area: data.area,
 		dominio: dominioDe(data.area),
 		orden: data.sidebar.order,

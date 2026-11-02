@@ -6,13 +6,15 @@ sidebar:
   order: 20
 fuente: project-euler
 numero: 20
+soluciones:
+  - archivo: 'project_euler/problems_1_to_hundred/11_20/20_factorialDigitSum.js'
 temas: [Números grandes, Factorial]
 conceptos: [precision-arbitraria, factorizacion-en-primos]
 ---
 
-import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
-import solucion from '@soluciones/11_20/20_factorialDigitSum.js?raw';
+import Solucion from '../../../components/Solucion.astro';
 
 ## El problema
 
@@ -72,7 +74,7 @@ Para $10!$, la fórmula de Legendre da $\lfloor 10/5 \rfloor = 2$ ceros, y en ef
 <Tabs>
 <TabItem label="JavaScript (repositorio)">
 
-<Code code={solucion} lang="js" title="20_factorialDigitSum.js" />
+<Solucion />
 
 `factorial` multiplica con `BigInt` todos los números del 2 al `n`, y `sumOfDigits` convierte el resultado en texto y suma sus cifras.
 

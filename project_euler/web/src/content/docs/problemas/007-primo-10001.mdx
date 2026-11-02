@@ -6,13 +6,15 @@ sidebar:
   order: 7
 fuente: project-euler
 numero: 7
+soluciones:
+  - archivo: 'project_euler/problems_1_to_hundred/1_10/7_10001stPrime.js'
 temas: [Primos, Criba]
 conceptos: [test-de-primalidad, criba-de-eratostenes]
 ---
 
-import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
-import solucion from '@soluciones/1_10/7_10001stPrime.js?raw';
+import Solucion from '../../../components/Solucion.astro';
 
 ## El problema
 
@@ -112,7 +114,7 @@ Así que basta con cribar hasta $L = 114\,320$ y contar primos hasta llegar al n
 <Tabs>
 <TabItem label="JavaScript (repositorio)">
 
-<Code code={solucion} lang="js" title="7_10001stPrime.js" />
+<Solucion />
 
 `findNthPrime` es el paso 3: empieza con la lista `[2]`, prueba `num = 3, 5, 7, …` (sumando 2 cada vez) y añade a la lista los que resultan primos, hasta tener `n`. `isPrime(num, primes)` es la combinación de los pasos 1 y 2: recorre los primos ya encontrados mientras `primes[i] * primes[i] <= num` y devuelve `false` en cuanto uno divide a `num`. La única división de más es la del 2, que se prueba con cada impar aunque nunca lo divida.
 

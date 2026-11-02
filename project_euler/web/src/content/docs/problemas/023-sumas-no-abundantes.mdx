@@ -6,13 +6,15 @@ sidebar:
   order: 23
 fuente: project-euler
 numero: 23
+soluciones:
+  - archivo: 'project_euler/problems_1_to_hundred/21_30/23_nonAbundantSums.js'
 temas: [Divisores, Números abundantes]
 conceptos: [funcion-divisor]
 ---
 
-import { Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import { TabItem, Tabs } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
-import solucion from '@soluciones/21_30/23_nonAbundantSums.js?raw';
+import Solucion from '../../../components/Solucion.astro';
 
 ## El problema
 
@@ -132,7 +134,7 @@ El enunciado dice que el mayor número que no es suma de dos abundantes está po
 <Tabs>
 <TabItem label="JavaScript (repositorio)">
 
-<Code code={solucion} lang="js" title="23_nonAbundantSums.js" />
+<Solucion />
 
 `sumOfDivisors` calcula $s(n)$ con los divisores hasta la raíz, igual que en el problema 21, y `findAbundantNumbers` hace el paso 2 empezando en 12, el menor abundante. `findAllSumsOfTwoAbundantNumbers` es el paso 3: el bucle interno empieza en `j = i` y hace `break` cuando la suma pasa de `LIMIT`. Por último, `findNonAbundantSums` suma los números que no han quedado marcados.
 

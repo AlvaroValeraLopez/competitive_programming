@@ -6,13 +6,15 @@ sidebar:
   order: 16
 fuente: project-euler
 numero: 16
+soluciones:
+  - archivo: 'project_euler/problems_1_to_hundred/11_20/16_powerDigitSum.js'
 temas: [Números grandes, Potencias]
 conceptos: [precision-arbitraria]
 ---
 
-import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
-import solucion from '@soluciones/11_20/16_powerDigitSum.js?raw';
+import Solucion from '../../../components/Solucion.astro';
 
 ## El problema
 
@@ -75,7 +77,7 @@ Sirve para detectar errores. Con el ejemplo: $26$ deja resto 8 al dividirlo entr
 <Tabs>
 <TabItem label="JavaScript (repositorio)">
 
-<Code code={solucion} lang="js" title="16_powerDigitSum.js" />
+<Solucion />
 
 Calcula la potencia con `BigInt(base) ** BigInt(exponent)`, que es exacta, la convierte en texto y suma sus cifras con `reduce`. Cómo calcula la potencia por dentro depende del motor de JavaScript.
 

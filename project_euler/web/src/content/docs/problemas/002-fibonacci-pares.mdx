@@ -6,13 +6,15 @@ sidebar:
   order: 2
 fuente: project-euler
 numero: 2
+soluciones:
+  - archivo: 'project_euler/problems_1_to_hundred/1_10/2_evenFibonacciNumbers.js'
 temas: [Fibonacci, Paridad]
 conceptos: [fibonacci]
 ---
 
-import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
-import solucion from '@soluciones/1_10/2_evenFibonacciNumbers.js?raw';
+import Solucion from '../../../components/Solucion.astro';
 
 ## El problema
 
@@ -116,7 +118,7 @@ $$
 <Tabs>
 <TabItem label="JavaScript (repositorio)">
 
-<Code code={solucion} lang="js" title="2_evenFibonacciNumbers.js" />
+<Solucion />
 
 El código guarda tres términos seguidos, `a`, `b` y `c`, y empieza con $F_1, F_2, F_3 = 1, 1, 2$. En cada vuelta avanza **tres posiciones de golpe**: `a = b + c` es el siguiente término, `b = a + c` el de después y `c = a + b` el tercero. Así `c` siempre es un término par (paso 1), y el código lo suma sin comprobar la paridad.
 

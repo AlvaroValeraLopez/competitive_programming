@@ -6,13 +6,15 @@ sidebar:
   order: 10
 fuente: project-euler
 numero: 10
+soluciones:
+  - archivo: 'project_euler/problems_1_to_hundred/1_10/10_summationOfPrimes.js'
 temas: [Primos, Criba]
 conceptos: [criba-de-eratostenes]
 ---
 
-import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
-import solucion from '@soluciones/1_10/10_summationOfPrimes.js?raw';
+import Solucion from '../../../components/Solucion.astro';
 
 ## El problema
 
@@ -117,7 +119,7 @@ Eso está muy por debajo de $2^{53} \approx 9 \cdot 10^{15}$, el mayor entero qu
 <Tabs>
 <TabItem label="JavaScript (repositorio)">
 
-<Code code={solucion} lang="js" title="10_summationOfPrimes.js" />
+<Solucion />
 
 `sumPrimes = 2` suma el 2 aparte (paso 3). El bucle exterior recorre los impares `num = 3, 5, 7, …` y, si `sieve[num]` sigue a `true`, el número es primo y se suma en el acto (paso 4). El bucle interior tacha empezando en `num * num` (paso 2) y avanzando de `2 * num` en `2 * num` (paso 3). El bucle exterior llega hasta `LIMIT` y no solo hasta $\sqrt{N}$ porque también va sumando; para `num` mayor que $\sqrt{N}$ el bucle interior no hace nada, porque `num * num` ya no es menor que `LIMIT`.
 
