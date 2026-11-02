@@ -1,0 +1,206 @@
+---
+// Sustituye a la cabecera de Starlight. La web no tiene menú lateral: la
+// navegación son unas pocas secciones en la cabecera (src/lib/secciones.ts), al
+// estilo de Exercism, con el buscador y el selector de tema a la derecha. En
+// pantallas estrechas, las secciones pasan a un menú desplegable.
+import { Icon } from '@astrojs/starlight/components';
+import Search from '@astrojs/starlight/components/Search.astro';
+import SiteTitle from '@astrojs/starlight/components/SiteTitle.astro';
+import SocialIcons from '@astrojs/starlight/components/SocialIcons.astro';
+import SelectorTema from './SelectorTema.astro';
+import { SECCIONES, seccionDe } from '../lib/secciones';
+
+const actual = seccionDe(Astro.locals.starlightRoute.entry.id);
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const enlaces = SECCIONES.map((s) => ({ ...s, href: `${base}/${s.ruta}/`, actual: s === actual }));
+---
+
+<div class="cabecera">
+	<div class="titulo">
+		<SiteTitle />
+	</div>
+
+	<nav class="secciones" aria-label="Secciones">
+		<ul>
+			{
+				enlaces.map((s) => (
+					<li>
+						<a href={s.href} aria-current={s.actual ? 'page' : undefined}>
+							{s.nombre}
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</nav>
+
+	<div class="herramientas print:hidden">
+		<Search />
+		<div class="solo-ancho">
+			<SocialIcons />
+			<SelectorTema />
+		</div>
+		<details class="menu-movil">
+			<summary aria-label="Menú">
+				<Icon name="bars" size="1.25rem" />
+			</summary>
+			<div class="desplegable">
+				<ul>
+					{
+						enlaces.map((s) => (
+							<li>
+								<a href={s.href} aria-current={s.actual ? 'page' : undefined}>
+									{s.nombre}
+								</a>
+							</li>
+						))
+					}
+				</ul>
+				<div class="tema-movil">
+					<span>Tema</span>
+					<SelectorTema />
+				</div>
+			</div>
+		</details>
+	</div>
+</div>
+
+<script>
+	// El menú desplegable se cierra al pulsar fuera de él o con Escape.
+	const abiertos = () => document.querySelectorAll<HTMLDetailsElement>('details.menu-movil[open]');
+	document.addEventListener('click', (evento) => {
+		for (const menu of abiertos()) if (!menu.contains(evento.target as Node)) menu.open = false;
+	});
+	document.addEventListener('keydown', (evento) => {
+		if (evento.key !== 'Escape') return;
+		for (const menu of abiertos()) {
+			menu.open = false;
+			menu.querySelector('summary')?.focus();
+		}
+	});
+</script>
+
+<style>
+	.cabecera {
+		display: flex;
+		gap: 2rem;
+		align-items: center;
+		height: 100%;
+	}
+	.titulo {
+		flex-shrink: 0;
+		min-width: 0;
+		overflow: clip;
+		padding: 0.25rem;
+		margin: -0.25rem;
+	}
+
+	.secciones {
+		flex: 1;
+		min-width: 0;
+	}
+	.secciones ul,
+	.desplegable ul {
+		display: flex;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+	.secciones ul {
+		gap: 0.5rem;
+	}
+	.secciones a,
+	.desplegable a {
+		display: block;
+		padding: 0.45rem 0.85rem;
+		border-radius: var(--euler-radio);
+		color: var(--sl-color-gray-2);
+		font-weight: 600;
+		text-decoration: none;
+	}
+	.secciones a:hover,
+	.desplegable a:hover {
+		color: var(--sl-color-white);
+		background: var(--sl-color-gray-6);
+	}
+	.secciones a[aria-current='page'],
+	.desplegable a[aria-current='page'] {
+		color: var(--sl-color-accent-high);
+		background: var(--sl-color-accent-low);
+	}
+
+	.herramientas {
+		display: flex;
+		gap: 1rem;
+		align-items: center;
+		margin-inline-start: auto;
+	}
+	.solo-ancho {
+		display: flex;
+		gap: 1rem;
+		align-items: center;
+	}
+
+	/* Menú desplegable para pantallas estrechas. */
+	.menu-movil {
+		position: relative;
+		display: none;
+	}
+	.menu-movil summary {
+		display: grid;
+		place-items: center;
+		width: 2.25rem;
+		height: 2.25rem;
+		border-radius: var(--euler-radio);
+		color: var(--sl-color-gray-2);
+		cursor: pointer;
+		list-style: none;
+	}
+	.menu-movil summary::-webkit-details-marker {
+		display: none;
+	}
+	.menu-movil[open] summary {
+		background: var(--sl-color-gray-6);
+		color: var(--sl-color-white);
+	}
+	.desplegable {
+		position: absolute;
+		inset-inline-end: 0;
+		top: calc(100% + 0.5rem);
+		z-index: 10;
+		display: grid;
+		gap: 0.5rem;
+		min-width: 13rem;
+		padding: 0.6rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: var(--euler-radio);
+		background: var(--sl-color-bg-nav);
+		box-shadow: var(--euler-sombra);
+	}
+	.desplegable ul {
+		flex-direction: column;
+		gap: 0.15rem;
+	}
+	.tema-movil {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0.5rem 0.85rem 0.25rem;
+		border-top: 1px solid var(--sl-color-gray-6);
+		color: var(--sl-color-gray-3);
+		font-size: var(--sl-text-sm);
+	}
+
+	@media (max-width: 50rem) {
+		.cabecera {
+			gap: 0.75rem;
+		}
+		.secciones,
+		.solo-ancho {
+			display: none;
+		}
+		.menu-movil {
+			display: block;
+		}
+	}
+</style>

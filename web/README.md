@@ -15,6 +15,7 @@ npm run build    # genera la web estática en dist/
 ```
 src/
 ├── components/
+│   ├── Cabecera.astro       # Sustituye a la cabecera de Starlight: secciones, buscador y tema
 │   ├── Heroe.astro          # Sustituye al Hero de Starlight (portada)
 │   ├── TituloPagina.astro   # Título de página con las etiquetas de `temas`
 │   ├── Solucion.astro       # Muestra una solución del repositorio (ver «Soluciones»)
@@ -27,11 +28,12 @@ src/
 │   └── conceptos/           # index.mdx (catálogo) y la teoría reutilizable entre ejercicios
 ├── lib/                     # Lógica pura con tests y lectura del contenido
 │   ├── fuentes.ts           # De dónde vienen los ejercicios y cómo se nombran
-│   ├── menu.ts              # Dominios y áreas de los conceptos; agrupación del menú
+│   ├── menu.ts              # Dominios y áreas de los conceptos; agrupación de los catálogos
+│   ├── secciones.ts         # Las secciones de la cabecera y a cuál pertenece cada página
 │   ├── soluciones.ts        # Lenguajes y lectura de las soluciones del repositorio
 │   ├── grafo.ts             # Relaciones entre páginas y disposición del mapa
 │   └── filtro.ts            # Filtro por conceptos de la lista de problemas
-├── menu-lateral.ts          # Genera el menú lateral a partir del frontmatter
+├── navegacion.ts            # Quita el menú lateral de Starlight en todas las páginas
 └── styles/
     ├── tema.css             # Colores, tipografía y formas (estética de Exercism)
     └── custom.css           # Ajustes de fórmulas y tablas
@@ -89,13 +91,11 @@ soluciones:
 
 Y la página los muestra con `<Solucion />` (la primera) o `<Solucion indice={1} />` (la segunda…). El lenguaje se deduce de la extensión (JavaScript, TypeScript, Python, C, C++, Java) y el título del bloque es el nombre del archivo. Si un archivo no existe, la compilación falla diciendo cuál.
 
-## Menú lateral y catálogos
+## Navegación y catálogos
 
-El menú no se escribe a mano: `src/menu-lateral.ts` (un *route middleware* de Starlight) lo genera en cada página a partir del frontmatter, para que siga siendo manejable con cientos de ejercicios.
+La web no tiene menú lateral, para dejar todo el ancho al contenido. La navegación son unas pocas secciones en la cabecera (`src/components/Cabecera.astro`), definidas en `src/lib/secciones.ts`; la sección de la página actual se resalta. En pantallas estrechas, las secciones pasan a un menú desplegable. `src/navegacion.ts`, un *route middleware* de Starlight, quita el menú lateral en todas las páginas; la lista `sidebar` de `astro.config.mjs` solo fija el orden de la paginación «Anterior / Siguiente».
 
-- **Problemas**, agrupados por fuente y, en las fuentes numeradas, por decenas (1–10, 11–20…), con un contador de los explicados en cada una («2/10»). Solo aparecen los grupos que tienen algún ejercicio.
-- **Conceptos**, agrupados por dominio y área.
-- Todos los grupos van plegados, salvo el que contiene la página actual.
+Las páginas de lectura (las que tienen índice a la derecha) usan una columna de unos 48rem, centrada; la portada, los catálogos y el mapa usan todo el ancho.
 
 Cada sección tiene su catálogo completo, con buscador sin que importen las tildes. La portada solo muestra las primeras tarjetas y enlaza a ellos.
 
