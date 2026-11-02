@@ -37,7 +37,7 @@ const textoDe = (p: PaginaContenido) =>
 				<h2 class="titulo-dominio">{dominio.titulo}</h2>
 				<div class="tablero">
 					{dominio.grupos.map((grupo) => (
-						<section class="columna" data-grupo>
+						<section class="area" data-grupo>
 							<h3>
 								{grupo.titulo}
 								<span class="cuenta">{grupo.cuenta}</span>
@@ -143,16 +143,15 @@ const textoDe = (p: PaginaContenido) =>
 		font-weight: 700;
 		color: var(--sl-color-white);
 	}
-	/* Tablero: una columna por área, una al lado de otra mientras quepan. Al añadir
-	   conceptos las columnas crecen hacia abajo; al añadir áreas, pasan a otra fila. */
+	/* Tablero: una fila por área, a todo el ancho, con sus tarjetas una al lado de
+	   otra (cuatro en escritorio). Al añadir conceptos, las tarjetas pasan a la
+	   línea siguiente; al añadir áreas, aparecen más filas debajo. */
 	.tablero {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
 		gap: 1.25rem;
-		align-items: start;
 		margin-top: 1rem;
 	}
-	.columna {
+	.area {
 		display: grid;
 		gap: 1rem;
 		padding: 1.25rem;
@@ -160,14 +159,13 @@ const textoDe = (p: PaginaContenido) =>
 		border-radius: calc(var(--euler-radio) * 1.5);
 		background: var(--sl-color-gray-7);
 	}
-	.columna[hidden] {
+	.area[hidden] {
 		display: none;
 	}
 	h3 {
 		display: flex;
 		gap: 0.75rem;
 		align-items: baseline;
-		justify-content: space-between;
 		margin: 0;
 		font-size: var(--sl-text-lg);
 		font-weight: 700;
@@ -180,7 +178,8 @@ const textoDe = (p: PaginaContenido) =>
 	}
 	.lista {
 		display: grid;
-		gap: 0.75rem;
+		grid-template-columns: repeat(auto-fill, minmax(min(100%, 15.5rem), 1fr));
+		gap: 1rem;
 		margin: 0;
 		padding: 0;
 		list-style: none;
