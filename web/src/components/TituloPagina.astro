@@ -1,23 +1,50 @@
 ---
 // Título de página de Starlight con los temas de la página (frontmatter `temas`)
 // como etiquetas debajo, al estilo de las etiquetas de los ejercicios de Exercism.
-// En los conceptos añade además un botón para practicarlos: la lista de
-// problemas filtrada por ese concepto.
+// En los ejercicios añade una ficha con su dificultad, su fuente y los conceptos
+// que aplica, separados por dominio. En los conceptos añade un botón para
+// practicarlos: la lista de ejercicios filtrada por ese concepto.
 import Default from '@astrojs/starlight/components/PageTitle.astro';
 import { LinkButton } from '@astrojs/starlight/components';
+import Dificultad from './Dificultad.astro';
+import { FUENTES } from '../lib/fuentes';
+import { DOMINIOS } from '../lib/menu';
 import { obtenerGrafo, urlDe } from '../lib/relaciones';
+import { trackDeDominio } from '../lib/tracks';
 
 const { id, data } = Astro.locals.starlightRoute.entry;
 const temas = data.temas ?? [];
 
 let practicar: { href: string; texto: string } | undefined;
-if (id.startsWith('conceptos/')) {
+let ficha:
+	| {
+			dificultad?: typeof data.dificultad;
+			fuente?: string;
+			grupos: { dominio: string; track?: string; conceptos: { href: string; etiqueta: string }[] }[];
+	  }
+	| undefined;
+
+if (id.startsWith('conceptos/') || (id.startsWith('problemas/') && data.fuente)) {
 	const grafo = await obtenerGrafo();
-	const problemas = (grafo.nodos.get(id)?.hijos ?? []).filter((h) => grafo.nodos.get(h)?.tipo === 'problema');
-	if (problemas.length > 0) {
-		practicar = {
-			href: `${urlDe('problemas')}?conceptos=${id.replace(/^conceptos\//, '')}`,
-			texto: `Practicar: ${problemas.length} ${problemas.length === 1 ? 'problema' : 'problemas'}`,
+	const nodo = grafo.nodos.get(id);
+	if (id.startsWith('conceptos/')) {
+		const ejercicios = (nodo?.hijos ?? []).filter((h) => grafo.nodos.get(h)?.tipo === 'problema');
+		if (ejercicios.length > 0) {
+			practicar = {
+				href: `${urlDe('problemas')}?conceptos=${id.replace(/^conceptos\//, '')}`,
+				texto: `Practicar: ${ejercicios.length} ${ejercicios.length === 1 ? 'ejercicio' : 'ejercicios'}`,
+			};
+		}
+	} else {
+		const conceptos = (nodo?.padres ?? []).map((c) => grafo.nodos.get(c)!);
+		ficha = {
+			dificultad: data.dificultad,
+			fuente: data.fuente ? FUENTES[data.fuente].nombre : undefined,
+			grupos: DOMINIOS.map((d) => ({
+				dominio: d.nombre,
+				track: trackDeDominio(d.nombre)?.slug,
+				conceptos: conceptos.filter((c) => c.dominio === d.nombre).map((c) => ({ href: urlDe(c.id), etiqueta: c.etiqueta })),
+			})).filter((g) => g.conceptos.length > 0),
 		};
 	}
 }
@@ -31,6 +58,40 @@ if (id.startsWith('conceptos/')) {
 				<li>{tema}</li>
 			))}
 		</ul>
+	)
+}
+{
+	ficha && (
+		<dl class="ficha">
+			{ficha.dificultad && (
+				<div class="fila">
+					<dt>Dificultad</dt>
+					<dd>
+						<Dificultad dificultad={ficha.dificultad} />
+					</dd>
+				</div>
+			)}
+			{ficha.fuente && (
+				<div class="fila">
+					<dt>Fuente</dt>
+					<dd>{ficha.fuente}</dd>
+				</div>
+			)}
+			{ficha.grupos.map((g) => (
+				<div class="fila" data-track={g.track}>
+					<dt>{g.dominio}</dt>
+					<dd>
+						<ul class="conceptos" aria-label={`Conceptos de ${g.dominio.toLowerCase()} que aplica`}>
+							{g.conceptos.map((c) => (
+								<li>
+									<a href={c.href}>{c.etiqueta}</a>
+								</li>
+							))}
+						</ul>
+					</dd>
+				</div>
+			))}
+		</dl>
 	)
 }
 {
@@ -52,7 +113,7 @@ if (id.startsWith('conceptos/')) {
 		padding: 0;
 		list-style: none;
 	}
-	li {
+	.temas li {
 		padding: 0.2rem 0.75rem;
 		border: 1px solid var(--sl-color-gray-5);
 		border-radius: 999rem;
@@ -61,6 +122,78 @@ if (id.startsWith('conceptos/')) {
 		font-size: var(--sl-text-xs);
 		font-weight: 500;
 	}
+
+	.ficha {
+		display: grid;
+		grid-template-columns: max-content 1fr;
+		gap: 0.6rem 1.5rem;
+		margin: 1.25rem 0 0;
+		padding: 1rem 1.25rem;
+		border: 1px solid var(--sl-color-gray-6);
+		border-radius: var(--euler-radio);
+		background: var(--sl-color-gray-7);
+	}
+	.fila {
+		display: grid;
+		grid-column: 1 / -1;
+		grid-template-columns: subgrid;
+		align-items: center;
+	}
+	dt {
+		font-size: var(--sl-text-xs);
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: var(--sl-color-gray-2);
+	}
+	dd {
+		margin: 0;
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-white);
+	}
+	.conceptos {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+	.conceptos a {
+		display: inline-flex;
+		gap: 0.4rem;
+		align-items: center;
+		padding: 0.15rem 0.7rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 999rem;
+		background: var(--sl-color-black);
+		color: var(--sl-color-gray-1);
+		font-size: var(--sl-text-xs);
+		font-weight: 500;
+		text-decoration: none;
+	}
+	/* El punto con el color del dominio. */
+	.conceptos a::before {
+		width: 0.5rem;
+		height: 0.5rem;
+		border-radius: 50%;
+		background: var(--dominio);
+		content: '';
+	}
+	.conceptos a:hover {
+		border-color: var(--dominio);
+		color: var(--dominio-texto);
+	}
+	@media (max-width: 30rem) {
+		.ficha,
+		.fila {
+			grid-template-columns: 1fr;
+		}
+		.fila {
+			gap: 0.3rem;
+		}
+	}
+
 	.practicar {
 		margin-top: 1rem;
 	}

@@ -151,6 +151,74 @@ h1#_top,
 	color: var(--euler-boton-secundario-texto);
 }
 
+/* ---------- Colores de los dominios ---------- */
+/* Cada track tiene su color: el árbol de conceptos, las etiquetas de concepto de
+   los ejercicios… Se aplica a cualquier elemento con `data-track="<slug>"`. */
+[data-track='matematicas'] {
+	--dominio: #604fcd;
+	--dominio-suave: #f2f0fc;
+	--dominio-texto: #3b2a93;
+}
+[data-track='algoritmia'] {
+	--dominio: #0e8a7a;
+	--dominio-suave: #e0f4f0;
+	--dominio-texto: #0a5c52;
+}
+[data-track='implementacion'] {
+	--dominio: #c4560f;
+	--dominio-suave: #fcede2;
+	--dominio-texto: #8a3a07;
+}
+[data-theme='dark'] [data-track='matematicas'] {
+	--dominio: #8b7cf0;
+	--dominio-suave: #2b2650;
+	--dominio-texto: #cbc4f6;
+}
+[data-theme='dark'] [data-track='algoritmia'] {
+	--dominio: #2fb5a3;
+	--dominio-suave: #11322e;
+	--dominio-texto: #8fe0d4;
+}
+[data-theme='dark'] [data-track='implementacion'] {
+	--dominio: #f08d4f;
+	--dominio-suave: #3a2416;
+	--dominio-texto: #f7c39f;
+}
+
+/* ---------- Colores de las dificultades ---------- */
+/* Verde, ámbar y rojo, como en Exercism. Se aplican a cualquier elemento con
+   `data-dificultad="facil | media | dificil"`. */
+[data-dificultad='facil'] {
+	--dificultad-texto: #1d7a3a;
+	--dificultad-fondo: #e4f6e9;
+	--dificultad-borde: #a3d9b3;
+}
+[data-dificultad='media'] {
+	--dificultad-texto: #8a5800;
+	--dificultad-fondo: #fdf3da;
+	--dificultad-borde: #efcd7f;
+}
+[data-dificultad='dificil'] {
+	--dificultad-texto: #b42318;
+	--dificultad-fondo: #fde9e7;
+	--dificultad-borde: #f2aaa3;
+}
+[data-theme='dark'] [data-dificultad='facil'] {
+	--dificultad-texto: #7fe0a1;
+	--dificultad-fondo: #12301f;
+	--dificultad-borde: #2b6a44;
+}
+[data-theme='dark'] [data-dificultad='media'] {
+	--dificultad-texto: #f4c867;
+	--dificultad-fondo: #36290c;
+	--dificultad-borde: #77591c;
+}
+[data-theme='dark'] [data-dificultad='dificil'] {
+	--dificultad-texto: #ff9c91;
+	--dificultad-fondo: #3b1613;
+	--dificultad-borde: #83302a;
+}
+
 /* ---------- Páginas de catálogo ---------- */
 /* Los catálogos de conceptos y de problemas, y los árboles de conceptos, usan el
    ancho disponible en vez de la columna de lectura de 45rem; los párrafos

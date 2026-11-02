@@ -1,14 +1,20 @@
 ---
-// Página de problemas al estilo de la lista de ejercicios de Exercism: tarjetas
-// con el número, el título, la descripción y los conceptos que usa cada
-// problema, con buscador y filtro por conceptos. El filtro se guarda en la
-// dirección (`?conceptos=a,b&q=…`), así que una selección de conceptos es una
+// Lista de ejercicios al estilo de la de Exercism: tarjetas con la fuente, el
+// número, el título, la dificultad, la descripción y los conceptos que usa cada
+// ejercicio, con colores por dominio. Se filtra desde varias vistas a la vez
+// (dificultad, track, fuente, conceptos, temas y texto) y se ordena por fuente
+// o por dificultad. El filtro se guarda en la dirección
+// (`?dificultad=facil&conceptos=a,b&q=…`), así que cualquier selección es una
 // página que se puede enlazar.
 import { Icon } from '@astrojs/starlight/components';
-import { prefijoDeEjercicio } from '../lib/fuentes';
+import Dificultad from './Dificultad.astro';
+import { DIFICULTADES, rangoDeDificultad } from '../lib/dificultad';
+import { slugDeTema, type Grupo } from '../lib/filtro';
+import { FUENTES, ID_FUENTES, prefijoDeEjercicio } from '../lib/fuentes';
 import { agruparConceptos, agruparEjercicios, normalizar } from '../lib/menu';
-import { obtenerPaginas } from '../lib/paginas';
+import { obtenerPaginas, type PaginaContenido } from '../lib/paginas';
 import { obtenerGrafo } from '../lib/relaciones';
+import { TRACKS, trackDeDominio } from '../lib/tracks';
 
 interface Props {
 	/** En la página de un track: solo los ejercicios que usan conceptos de su
@@ -21,70 +27,194 @@ const todo = await obtenerPaginas();
 const grafo = await obtenerGrafo();
 
 const slug = (id: string) => id.replace(/^conceptos\//, '');
-const etiquetaDe = new Map(todo.conceptos.map((c) => [c.id, c.etiqueta]));
+const conceptoPorId = new Map(todo.conceptos.map((c) => [c.id, c]));
+const trackDe = (concepto: string) => trackDeDominio(conceptoPorId.get(concepto)?.dominio)?.slug;
 const conceptosDe = (id: string) => grafo.nodos.get(id)?.padres ?? [];
 const conceptos = dominio ? todo.conceptos.filter((c) => c.dominio === dominio) : todo.conceptos;
 const delDominio = new Set(conceptos.map((c) => c.id));
 const problemas = dominio ? todo.problemas.filter((p) => conceptosDe(p.id).some((c) => delDominio.has(c))) : todo.problemas;
-const usos = (concepto: string) => problemas.filter((p) => conceptosDe(p.id).includes(concepto)).length;
+const total = problemas.length;
 
-// Solo se ofrecen como filtro los conceptos que usa algún problema, agrupados por
-// dominio y área.
+// Las opciones de cada grupo que cumple cada ejercicio.
+const valoresDe = (p: PaginaContenido): Record<Grupo, string[]> => ({
+	dificultad: p.dificultad ? [p.dificultad] : [],
+	fuente: p.fuente ? [p.fuente] : [],
+	track: [...new Set(conceptosDe(p.id).map(trackDe).filter((t): t is string => t !== undefined))],
+	tema: p.temas.map(slugDeTema),
+	conceptos: conceptosDe(p.id).map(slug),
+});
+const valores = new Map(problemas.map((p) => [p.id, valoresDe(p)]));
+const cuantos = (grupo: Grupo, opcion: string) => problemas.filter((p) => valores.get(p.id)![grupo].includes(opcion)).length;
+
+// Las opciones de cada grupo, con cuántos ejercicios las cumplen. Un grupo con
+// una sola opción no filtra nada, así que no se muestra.
+const dificultades = DIFICULTADES.map((d) => ({ ...d, cuenta: cuantos('dificultad', d.id) }));
+const tracks = dominio
+	? []
+	: TRACKS.map((t) => ({ id: t.slug, nombre: t.dominio, cuenta: cuantos('track', t.slug) })).filter((o) => o.cuenta > 0);
+const fuentes = ID_FUENTES.map((id) => ({ id, nombre: FUENTES[id].nombre, cuenta: cuantos('fuente', id) })).filter(
+	(o) => o.cuenta > 0,
+);
+const temas = [...new Map(problemas.flatMap((p) => p.temas).map((t) => [slugDeTema(t), t]))]
+	.map(([id, nombre]) => ({ id, nombre, cuenta: cuantos('tema', id) }))
+	.sort((a, b) => b.cuenta - a.cuenta || a.nombre.localeCompare(b.nombre, 'es'));
+
+// Los conceptos que usa algún ejercicio, agrupados por dominio y área.
 const dominios = agruparConceptos(conceptos)
 	.map((d) => ({
 		dominio: d.dominio,
+		track: trackDeDominio(d.dominio)?.slug,
 		areas: d.areas
-			.map((g) => ({ area: g.area, conceptos: g.conceptos.filter((c) => usos(c.id) > 0) }))
+			.map((g) => ({ area: g.area, conceptos: g.conceptos.filter((c) => cuantos('conceptos', slug(c.id)) > 0) }))
 			.filter((g) => g.conceptos.length > 0),
 	}))
 	.filter((d) => d.areas.length > 0);
 
-// Los problemas, por fuente; las fuentes numeradas, además, por decenas.
+const vistas = [
+	tracks.length > 1 && 'track',
+	fuentes.length > 1 && 'fuente',
+	dominios.length > 0 && 'concepto',
+	temas.length > 0 && 'tema',
+].filter((v): v is string => Boolean(v));
+const resumenPanel = `Filtrar por ${vistas.slice(0, -1).join(', ')}${vistas.length > 1 ? ' o ' : ''}${vistas.at(-1) ?? ''}`;
+
+// Los ejercicios, por fuente; las fuentes numeradas, además, por decenas.
 const bloques = agruparEjercicios(problemas).flatMap((f) =>
 	f.decenas
 		? f.decenas.map((d) => ({ titulo: `${f.nombre} · ${d.etiqueta}`, detalle: `${d.problemas.length} de 10`, problemas: d.problemas }))
 		: [{ titulo: f.nombre, detalle: `${f.ejercicios.length}`, problemas: f.ejercicios }],
 );
-const total = problemas.length;
+const posicion = new Map(bloques.flatMap((b) => b.problemas).map((p, i) => [p.id, i]));
 ---
 
 <lista-problemas class="ejercicios not-content">
 	<div class="barra">
 		<label class="buscador">
 			<Icon name="magnifier" size="1.1rem" />
-			<span class="sr-only">Buscar problemas</span>
-			<input type="search" placeholder="Buscar por número o título" autocomplete="off" data-buscador />
+			<span class="sr-only">Buscar ejercicios</span>
+			<input type="search" placeholder="Buscar por número, título o tema" autocomplete="off" data-buscador />
 		</label>
-		<p class="recuento" aria-live="polite" data-recuento>{total} problemas</p>
+		<label class="orden">
+			<span>Ordenar</span>
+			<select data-orden>
+				<option value="fuente">Por fuente y número</option>
+				<option value="dificultad">Por dificultad</option>
+			</select>
+		</label>
 	</div>
 
-	<fieldset class="filtro-conceptos">
-		<legend>Practicar por conceptos</legend>
+	<div class="pestanas" role="group" aria-label="Dificultad">
+		<button type="button" aria-pressed="true" data-todas>
+			Todas <span class="cuenta">{total}</span>
+		</button>
 		{
-			dominios.map((d) => (
-				<div class="dominio">
-					<span class="nombre-dominio">{d.dominio}</span>
-					{d.areas.map((grupo) => (
-						<div class="area">
-							<span class="nombre-area">{grupo.area}</span>
+			dificultades.map((d) => (
+				<button
+					type="button"
+					aria-pressed="false"
+					data-grupo="dificultad"
+					data-opcion={d.id}
+					data-etiqueta={d.nombre}
+					data-unica
+					data-dificultad={d.id}
+					disabled={d.cuenta === 0}
+				>
+					<span class="punto" aria-hidden="true" />
+					{d.nombre}
+					<span class="cuenta">{d.cuenta}</span>
+				</button>
+			))
+		}
+	</div>
+
+	{
+		vistas.length > 0 && (
+			<details class="panel" data-panel>
+				<summary>
+					<Icon name="setting" size="1rem" />
+					{resumenPanel}
+					<span class="activos-panel" hidden data-activos-panel />
+				</summary>
+				<div class="grupos">
+					{tracks.length > 1 && (
+						<fieldset class="grupo">
+							<legend>Track</legend>
 							<div class="chips">
-								{grupo.conceptos.map((c) => (
-									<button type="button" aria-pressed="false" data-concepto={slug(c.id)}>
-										{c.etiqueta}
-										<span class="usos">{usos(c.id)}</span>
+								{tracks.map((o) => (
+									<button type="button" class="chip" aria-pressed="false" data-grupo="track" data-opcion={o.id} data-etiqueta={o.nombre} data-track={o.id}>
+										<span class="punto" aria-hidden="true" />
+										{o.nombre}
+										<span class="usos">{o.cuenta}</span>
 									</button>
 								))}
 							</div>
-						</div>
-					))}
+						</fieldset>
+					)}
+					{fuentes.length > 1 && (
+						<fieldset class="grupo">
+							<legend>Fuente</legend>
+							<div class="chips">
+								{fuentes.map((o) => (
+									<button type="button" class="chip" aria-pressed="false" data-grupo="fuente" data-opcion={o.id} data-etiqueta={o.nombre}>
+										{o.nombre}
+										<span class="usos">{o.cuenta}</span>
+									</button>
+								))}
+							</div>
+						</fieldset>
+					)}
+					{dominios.length > 0 && (
+						<fieldset class="grupo ancho">
+							<legend>Conceptos</legend>
+							{dominios.map((d) => (
+								<div class="dominio" data-track={d.track}>
+									<span class="nombre-dominio">
+										<span class="punto" aria-hidden="true" />
+										{d.dominio}
+									</span>
+									{d.areas.map((grupo) => (
+										<div class="area">
+											<span class="nombre-area">{grupo.area}</span>
+											<div class="chips">
+												{grupo.conceptos.map((c) => (
+													<button type="button" class="chip" aria-pressed="false" data-grupo="conceptos" data-opcion={slug(c.id)} data-etiqueta={c.etiqueta}>
+														{c.etiqueta}
+														<span class="usos">{cuantos('conceptos', slug(c.id))}</span>
+													</button>
+												))}
+											</div>
+										</div>
+									))}
+								</div>
+							))}
+						</fieldset>
+					)}
+					{temas.length > 0 && (
+						<fieldset class="grupo ancho">
+							<legend>Temas</legend>
+							<div class="chips">
+								{temas.map((o) => (
+									<button type="button" class="chip" aria-pressed="false" data-grupo="tema" data-opcion={o.id} data-etiqueta={o.nombre}>
+										{o.nombre}
+										<span class="usos">{o.cuenta}</span>
+									</button>
+								))}
+							</div>
+						</fieldset>
+					)}
 				</div>
-			))
-		}
+			</details>
+		)
+	}
+
+	<div class="estado">
+		<p class="recuento" aria-live="polite" data-recuento>{total} ejercicios</p>
+		<ul class="activos" aria-label="Filtros activos" data-activos></ul>
 		<button type="button" class="limpiar" hidden data-limpiar>
 			<Icon name="close" size="0.9rem" />
 			Quitar filtros
 		</button>
-	</fieldset>
+	</div>
 
 	<div class="rejilla" data-rejilla>
 		{
@@ -100,27 +230,41 @@ const total = problemas.length;
 							<article
 								class="ejercicio"
 								data-ejercicio
-								data-numero={p.numero}
+								data-posicion={posicion.get(p.id)}
+								data-numero={p.numero ?? ''}
+								data-rango={rangoDeDificultad(p.dificultad)}
 								data-texto={normalizar([p.numero, p.etiqueta, p.descripcion, ...p.temas].filter(Boolean).join(' '))}
-								data-conceptos={usados.map(slug).join(' ')}
+								data-valores={JSON.stringify(valores.get(p.id))}
 							>
-								<span class="numero" aria-hidden="true">
+								<span class="insignia" aria-hidden="true">
 									{p.numero ?? p.etiqueta.slice(0, 2)}
 								</span>
 								<div class="cuerpo">
-									<h3>
-										<a href={p.href} class="enlace">
-											<span class="sr-only">{prefijoDeEjercicio(p)}</span>
-											{p.etiqueta}
-										</a>
-									</h3>
+									{p.fuente && <p class="fuente">{FUENTES[p.fuente as keyof typeof FUENTES].nombre}</p>}
+									<div class="titular">
+										<h3>
+											<a href={p.href} class="enlace">
+												<span class="sr-only">{prefijoDeEjercicio(p)}</span>
+												{p.etiqueta}
+											</a>
+										</h3>
+										{p.dificultad && <Dificultad dificultad={p.dificultad} />}
+									</div>
 									{p.descripcion && <p class="descripcion">{p.descripcion}</p>}
 									{usados.length > 0 && (
 										<ul class="usa" aria-label="Conceptos que usa">
 											{usados.map((c) => (
 												<li>
-													<button type="button" data-concepto={slug(c)} title="Filtrar por este concepto">
-														{etiquetaDe.get(c)}
+													<button
+														type="button"
+														aria-pressed="false"
+														data-grupo="conceptos"
+														data-opcion={slug(c)}
+														data-etiqueta={conceptoPorId.get(c)?.etiqueta}
+														data-track={trackDe(c)}
+														title="Filtrar por este concepto"
+													>
+														{conceptoPorId.get(c)?.etiqueta}
 													</button>
 												</li>
 											))}
@@ -135,69 +279,133 @@ const total = problemas.length;
 		}
 	</div>
 
-	<p class="vacio" hidden data-vacio>Ningún problema coincide con el filtro.</p>
+	<p class="vacio" hidden data-vacio>Ningún ejercicio coincide con el filtro.</p>
 </lista-problemas>
 
 <script>
-	import { alternarConcepto, escribirFiltro, filtrar, hayFiltro, leerFiltro, type Filtro } from '../lib/filtro';
+	import {
+		alternar,
+		elegirSolo,
+		escribirFiltro,
+		FILTRO_VACIO,
+		filtrar,
+		GRUPOS,
+		hayFiltro,
+		leerFiltro,
+		type Filtro,
+		type Grupo,
+		type Orden,
+	} from '../lib/filtro';
+
+	const ejercicios = (n: number) => `${n} ${n === 1 ? 'ejercicio' : 'ejercicios'}`;
 
 	class ListaProblemas extends HTMLElement {
 		connectedCallback() {
 			const buscador = this.querySelector<HTMLInputElement>('[data-buscador]')!;
+			const orden = this.querySelector<HTMLSelectElement>('[data-orden]')!;
+			const todas = this.querySelector<HTMLButtonElement>('[data-todas]')!;
+			const activosPanel = this.querySelector<HTMLElement>('[data-activos-panel]');
 			const recuento = this.querySelector<HTMLElement>('[data-recuento]')!;
+			const activos = this.querySelector<HTMLElement>('[data-activos]')!;
+			const limpiar = this.querySelector<HTMLButtonElement>('[data-limpiar]')!;
 			const rejilla = this.querySelector<HTMLElement>('[data-rejilla]')!;
 			const vacio = this.querySelector<HTMLElement>('[data-vacio]')!;
-			const limpiar = this.querySelector<HTMLButtonElement>('[data-limpiar]')!;
-			const botones = [...this.querySelectorAll<HTMLButtonElement>('button[data-concepto]')];
+			const botones = [...this.querySelectorAll<HTMLButtonElement>('button[data-grupo]')];
 			const tarjetas = [...this.querySelectorAll<HTMLElement>('[data-ejercicio]')].map((elemento) => ({
 				elemento,
-				numero: Number(elemento.dataset.numero),
+				posicion: Number(elemento.dataset.posicion),
+				numero: elemento.dataset.numero ? Number(elemento.dataset.numero) : undefined,
+				rango: Number(elemento.dataset.rango),
 				texto: elemento.dataset.texto!,
-				conceptos: elemento.dataset.conceptos!.split(' ').filter(Boolean),
+				valores: JSON.parse(elemento.dataset.valores!) as Record<Grupo, string[]>,
 			}));
-			const conocidos = new Set(botones.map((b) => b.dataset.concepto!));
 
-			let filtro: Filtro = leerFiltro(location.search, conocidos);
+			const grupoDe = (b: HTMLElement) => b.dataset.grupo as Grupo;
+			const conocidas = Object.fromEntries(GRUPOS.map((g) => [g, new Set<string>()])) as Record<Grupo, Set<string>>;
+			const etiquetas = new Map<string, string>();
+			for (const b of botones) {
+				conocidas[grupoDe(b)].add(b.dataset.opcion!);
+				etiquetas.set(`${b.dataset.grupo}:${b.dataset.opcion}`, b.dataset.etiqueta ?? b.dataset.opcion!);
+			}
+
+			let filtro: Filtro = leerFiltro(location.search, conocidas);
 			buscador.value = filtro.consulta;
+			orden.value = filtro.orden;
+
+			const cambiar = (nuevo: Filtro) => {
+				filtro = nuevo;
+				aplicar();
+			};
+
+			// Los filtros activos (salvo la dificultad, que ya se ve en las pestañas),
+			// cada uno con un botón para quitarlo.
+			const pintarActivos = () => {
+				const elegidos = GRUPOS.filter((g) => g !== 'dificultad').flatMap((g) =>
+					filtro.seleccion[g].map((opcion) => ({ grupo: g, opcion })),
+				);
+				activos.replaceChildren(
+					...elegidos.map(({ grupo, opcion }) => {
+						const etiqueta = etiquetas.get(`${grupo}:${opcion}`) ?? opcion;
+						const boton = document.createElement('button');
+						boton.type = 'button';
+						boton.textContent = etiqueta;
+						boton.setAttribute('aria-label', `Quitar el filtro ${etiqueta}`);
+						boton.addEventListener('click', () => cambiar(alternar(filtro, grupo, opcion)));
+						const li = document.createElement('li');
+						li.append(boton);
+						return li;
+					}),
+				);
+				if (activosPanel) {
+					const n = elegidos.length;
+					const texto = document.createElement('span');
+					texto.className = 'sr-only';
+					texto.textContent = n === 1 ? ' filtro activo' : ' filtros activos';
+					activosPanel.replaceChildren(...(n > 0 ? [String(n), texto] : []));
+					activosPanel.hidden = n === 0;
+				}
+			};
 
 			const aplicar = (guardar = true) => {
 				const activo = hayFiltro(filtro);
+				// Con filtro, o en otro orden, las tarjetas se reordenan (CSS `order`) y
+				// se ocultan las cabeceras de las decenas.
+				const reordenar = activo || filtro.orden !== 'fuente';
 				const visibles = filtrar(tarjetas, filtro);
 				for (const t of tarjetas) {
 					t.elemento.hidden = true;
 					t.elemento.style.order = '';
 				}
-				// Con filtro, las tarjetas se reordenan por relevancia (CSS `order`) y
-				// se ocultan las cabeceras de las decenas.
 				visibles.forEach((t, i) => {
 					t.elemento.hidden = false;
-					if (activo) t.elemento.style.order = String(i);
+					if (reordenar) t.elemento.style.order = String(i);
 				});
-				rejilla.classList.toggle('filtrando', activo);
-				for (const b of botones) b.setAttribute('aria-pressed', String(filtro.conceptos.includes(b.dataset.concepto!)));
+				rejilla.classList.toggle('reordenada', reordenar);
+				for (const b of botones) {
+					b.setAttribute('aria-pressed', String(filtro.seleccion[grupoDe(b)].includes(b.dataset.opcion!)));
+				}
+				todas.setAttribute('aria-pressed', String(filtro.seleccion.dificultad.length === 0));
+				pintarActivos();
 				vacio.hidden = visibles.length > 0;
 				limpiar.hidden = !activo;
 				recuento.textContent =
-					visibles.length === tarjetas.length
-						? `${tarjetas.length} problemas`
-						: `${visibles.length} de ${tarjetas.length} problemas`;
+					visibles.length === tarjetas.length ? ejercicios(tarjetas.length) : `${visibles.length} de ${ejercicios(tarjetas.length)}`;
 				if (guardar) history.replaceState(history.state, '', location.pathname + escribirFiltro(filtro) + location.hash);
 			};
 
-			buscador.addEventListener('input', () => {
-				filtro = { ...filtro, consulta: buscador.value };
-				aplicar();
-			});
+			buscador.addEventListener('input', () => cambiar({ ...filtro, consulta: buscador.value }));
+			orden.addEventListener('change', () => cambiar({ ...filtro, orden: orden.value as Orden }));
+			todas.addEventListener('click', () => cambiar(elegirSolo(filtro, 'dificultad')));
 			for (const boton of botones) {
 				boton.addEventListener('click', () => {
-					filtro = alternarConcepto(filtro, boton.dataset.concepto!);
-					aplicar();
+					const grupo = grupoDe(boton);
+					const opcion = boton.dataset.opcion!;
+					cambiar('unica' in boton.dataset ? elegirSolo(filtro, grupo, opcion) : alternar(filtro, grupo, opcion));
 				});
 			}
 			limpiar.addEventListener('click', () => {
-				filtro = { conceptos: [], consulta: '' };
 				buscador.value = '';
-				aplicar();
+				cambiar({ ...FILTRO_VACIO, orden: filtro.orden });
 				buscador.focus();
 			});
 			aplicar(false);
@@ -213,11 +421,13 @@ const total = problemas.length;
 		margin-top: 1rem;
 	}
 
+	/* ---------- Buscador y orden ---------- */
 	.barra {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.75rem 1.5rem;
 		align-items: center;
+		justify-content: space-between;
 	}
 	.buscador {
 		display: flex;
@@ -247,65 +457,191 @@ const total = problemas.length;
 	input::placeholder {
 		color: var(--sl-color-gray-3);
 	}
-	.recuento {
-		margin: 0;
+	.orden {
+		display: flex;
+		gap: 0.6rem;
+		align-items: center;
 		font-size: var(--sl-text-sm);
 		font-weight: 500;
 		color: var(--sl-color-gray-2);
 	}
+	select {
+		padding: 0.5rem 0.75rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: var(--euler-radio);
+		background: var(--sl-color-black);
+		color: var(--sl-color-white);
+		font: inherit;
+		cursor: pointer;
+	}
 
-	.filtro-conceptos {
-		display: grid;
-		gap: 0.75rem;
-		margin: 1.5rem 0 0;
-		padding: 1.25rem 1.5rem;
+	/* ---------- Pestañas de dificultad ---------- */
+	.pestanas {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem;
+		margin-top: 1.5rem;
+		border-bottom: 1px solid var(--sl-color-gray-6);
+	}
+	.pestanas button {
+		display: inline-flex;
+		gap: 0.5rem;
+		align-items: center;
+		margin-bottom: -1px;
+		padding: 0.6rem 1rem;
+		border: 0;
+		border-bottom: 2px solid transparent;
+		background: none;
+		color: var(--sl-color-gray-2);
+		font: inherit;
+		font-weight: 500;
+		cursor: pointer;
+	}
+	.pestanas button:hover:not(:disabled) {
+		color: var(--sl-color-white);
+	}
+	.pestanas button[aria-pressed='true'] {
+		border-bottom-color: var(--sl-color-accent);
+		color: var(--sl-color-white);
+		font-weight: 600;
+	}
+	.pestanas button:disabled {
+		opacity: 0.45;
+		cursor: default;
+	}
+	.pestanas .punto {
+		width: 0.6rem;
+		height: 0.6rem;
+		border: 1px solid var(--dificultad-borde);
+		border-radius: 50%;
+		background: var(--dificultad-texto);
+	}
+	.cuenta {
+		padding: 0 0.45rem;
+		border-radius: 999rem;
+		background: var(--sl-color-gray-6);
+		font-size: var(--sl-text-2xs);
+		font-weight: 500;
+		color: var(--sl-color-gray-2);
+	}
+
+	/* ---------- Panel de filtros ---------- */
+	.panel {
+		margin-top: 1rem;
 		border: 1px solid var(--sl-color-gray-6);
 		border-radius: var(--euler-radio);
 		background: var(--sl-color-gray-7);
 	}
+	.panel summary {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
+		padding: 0.75rem 1.25rem;
+		font-weight: 600;
+		color: var(--sl-color-white);
+		cursor: pointer;
+	}
+	.panel summary::after {
+		margin-inline-start: auto;
+		color: var(--sl-color-gray-3);
+		content: '▾';
+		transition: transform 0.15s;
+	}
+	.panel[open] summary::after {
+		transform: rotate(180deg);
+	}
+	.activos-panel {
+		min-width: 1.4rem;
+		padding: 0 0.4rem;
+		border-radius: 999rem;
+		background: var(--sl-color-accent);
+		color: #ffffff;
+		font-size: var(--sl-text-2xs);
+		text-align: center;
+	}
+	.activos-panel[hidden] {
+		display: none;
+	}
+	.grupos {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+		gap: 1.25rem 2rem;
+		padding: 0.25rem 1.25rem 1.25rem;
+	}
+	.grupo {
+		display: grid;
+		gap: 0.6rem;
+		align-content: start;
+		min-width: 0;
+		margin: 0;
+		padding: 0;
+		border: 0;
+	}
+	.grupo.ancho {
+		grid-column: 1 / -1;
+	}
 	legend {
 		float: left;
 		margin-bottom: 0.25rem;
-		font-weight: 600;
-		color: var(--sl-color-white);
+		font-size: var(--sl-text-xs);
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: var(--sl-color-gray-2);
 	}
 	.dominio {
 		display: grid;
-		gap: 0.6rem;
+		gap: 0.5rem;
 	}
 	.dominio + .dominio {
-		padding-top: 0.75rem;
+		padding-top: 0.6rem;
 		border-top: 1px solid var(--sl-color-gray-6);
 	}
 	.nombre-dominio {
+		display: inline-flex;
+		gap: 0.45rem;
+		align-items: center;
 		font-size: var(--sl-text-sm);
 		font-weight: 700;
 		color: var(--sl-color-white);
 	}
+	.punto {
+		flex-shrink: 0;
+		width: 0.55rem;
+		height: 0.55rem;
+		border-radius: 50%;
+		background: var(--dominio, var(--sl-color-gray-4));
+	}
 	.area {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.5rem 1rem;
-		align-items: center;
+		display: grid;
+		grid-template-columns: 9.5rem 1fr;
+		gap: 0.4rem 1rem;
+		align-items: start;
 	}
 	.nombre-area {
-		min-width: 9.5rem;
+		padding-top: 0.4rem;
 		font-size: var(--sl-text-xs);
-		font-weight: 600;
-		letter-spacing: 0.02em;
-		text-transform: uppercase;
+		font-weight: 500;
 		color: var(--sl-color-gray-3);
+	}
+	@media (max-width: 40rem) {
+		.area {
+			grid-template-columns: 1fr;
+		}
+		.nombre-area {
+			padding-top: 0;
+		}
 	}
 	.chips {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.5rem;
 	}
-	.chips button {
+	.chip {
 		display: inline-flex;
-		gap: 0.5rem;
+		gap: 0.45rem;
 		align-items: center;
-		padding: 0.35rem 0.5rem 0.35rem 0.9rem;
+		padding: 0.3rem 0.5rem 0.3rem 0.85rem;
 		border: 1px solid var(--sl-color-gray-5);
 		border-radius: 999rem;
 		background: var(--sl-color-black);
@@ -315,7 +651,7 @@ const total = problemas.length;
 		font-weight: 500;
 		cursor: pointer;
 	}
-	.chips button:hover {
+	.chip:hover {
 		border-color: var(--sl-color-accent);
 	}
 	.usos {
@@ -326,19 +662,57 @@ const total = problemas.length;
 		font-size: var(--sl-text-2xs);
 		text-align: center;
 	}
-	.chips button[aria-pressed='true'] {
+	.chip[aria-pressed='true'] {
 		border-color: var(--euler-boton-borde);
 		background: var(--sl-color-accent);
 		color: #ffffff;
 	}
-	.chips button[aria-pressed='true'] .usos {
+	.chip[aria-pressed='true'] .usos {
 		background: rgba(255, 255, 255, 0.25);
+	}
+
+	/* ---------- Recuento y filtros activos ---------- */
+	.estado {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem 1rem;
+		align-items: center;
+		margin-top: 1.25rem;
+	}
+	.recuento {
+		margin: 0;
+		font-size: var(--sl-text-sm);
+		font-weight: 600;
+		color: var(--sl-color-gray-2);
+	}
+	.activos {
+		display: contents;
+	}
+	.activos :global(li) {
+		list-style: none;
+	}
+	.activos :global(button) {
+		display: inline-flex;
+		gap: 0.4rem;
+		align-items: center;
+		padding: 0.15rem 0.6rem;
+		border: 1px solid var(--sl-color-accent);
+		border-radius: 999rem;
+		background: var(--sl-color-accent-low);
+		color: var(--sl-color-accent-high);
+		font: inherit;
+		font-size: var(--sl-text-xs);
+		font-weight: 500;
+		cursor: pointer;
+	}
+	.activos :global(button)::after {
+		content: '✕';
+		font-size: 0.7em;
 	}
 	.limpiar {
 		display: inline-flex;
 		gap: 0.35rem;
 		align-items: center;
-		justify-self: start;
 		padding: 0;
 		border: 0;
 		background: none;
@@ -352,6 +726,7 @@ const total = problemas.length;
 		display: none;
 	}
 
+	/* ---------- Tarjetas ---------- */
 	.rejilla {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(min(100%, 21rem), 1fr));
@@ -373,11 +748,11 @@ const total = problemas.length;
 		font-weight: 500;
 		color: var(--sl-color-gray-3);
 	}
-	.filtrando .decena {
-		display: none;
+	.reordenada {
+		margin-top: 1rem;
 	}
-	.filtrando {
-		margin-top: 1.5rem;
+	.reordenada .decena {
+		display: none;
 	}
 
 	.ejercicio {
@@ -402,7 +777,7 @@ const total = problemas.length;
 		border-color: var(--sl-color-accent);
 		box-shadow: var(--euler-sombra-grande);
 	}
-	.numero {
+	.insignia {
 		display: grid;
 		flex-shrink: 0;
 		place-items: center;
@@ -417,8 +792,23 @@ const total = problemas.length;
 	}
 	.cuerpo {
 		display: grid;
+		flex: 1;
 		gap: 0.4rem;
 		min-width: 0;
+	}
+	.fuente {
+		margin: 0;
+		font-size: var(--sl-text-2xs);
+		font-weight: 600;
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+		color: var(--sl-color-gray-3);
+	}
+	.titular {
+		display: flex;
+		gap: 0.75rem;
+		align-items: flex-start;
+		justify-content: space-between;
 	}
 	h3 {
 		margin: 0;
@@ -426,11 +816,14 @@ const total = problemas.length;
 		font-weight: 600;
 		line-height: 1.3;
 	}
+	.titular :global(.dificultad) {
+		margin-top: 0.2rem;
+	}
 	.enlace {
 		color: var(--sl-color-white);
 		text-decoration: none;
 	}
-	/* Toda la tarjeta lleva al problema; las etiquetas de conceptos quedan por encima. */
+	/* Toda la tarjeta lleva al ejercicio; las etiquetas de conceptos quedan por encima. */
 	.enlace::after {
 		position: absolute;
 		inset: 0;
@@ -458,6 +851,9 @@ const total = problemas.length;
 	.usa button {
 		position: relative;
 		z-index: 1;
+		display: inline-flex;
+		gap: 0.4rem;
+		align-items: center;
 		padding: 0.15rem 0.65rem;
 		border: 1px solid var(--sl-color-gray-5);
 		border-radius: 999rem;
@@ -468,13 +864,21 @@ const total = problemas.length;
 		font-weight: 500;
 		cursor: pointer;
 	}
+	/* El punto con el color del dominio del concepto. */
+	.usa button::before {
+		width: 0.45rem;
+		height: 0.45rem;
+		border-radius: 50%;
+		background: var(--dominio, var(--sl-color-gray-4));
+		content: '';
+	}
 	.usa button:hover {
-		border-color: var(--sl-color-accent);
+		border-color: var(--dominio, var(--sl-color-accent));
 	}
 	.usa button[aria-pressed='true'] {
-		border-color: var(--sl-color-accent);
-		background: var(--sl-color-accent-low);
-		color: var(--sl-color-accent-high);
+		border-color: var(--dominio, var(--sl-color-accent));
+		background: var(--dominio-suave, var(--sl-color-accent-low));
+		color: var(--dominio-texto, var(--sl-color-accent-high));
 	}
 
 	.vacio {
