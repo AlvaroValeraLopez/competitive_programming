@@ -1,0 +1,135 @@
+---
+title: 'Problema 16: Suma de las cifras de una potencia'
+description: Sumar las cifras de 2¹⁰⁰⁰, un número de 302 cifras, duplicando una lista de cifras con llevadas o con enteros de precisión arbitraria, y por qué Math.pow da aquí el número exacto por casualidad.
+sidebar:
+  label: '16 · Cifras de 2¹⁰⁰⁰'
+  order: 16
+temas: [Números grandes, Potencias]
+conceptos: [precision-arbitraria]
+---
+
+import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+import solucion from '@soluciones/11_20/16_powerDigitSum.js?raw';
+
+## El problema
+
+$2^{15} = 32\,768$, y la suma de sus cifras es $3 + 2 + 7 + 6 + 8 = 26$. **¿Cuánto suman las cifras de $2^{1000}$?**
+
+[Enunciado original en Project Euler](https://projecteuler.net/problem=16)
+
+## La idea en una frase
+
+$2^{1000}$ tiene 302 cifras, demasiadas para un número de coma flotante, así que hay que calcularlo exactamente, duplicando mil veces una lista de cifras o con enteros de precisión arbitraria, y después sumar las cifras.
+
+## Primer intento: con Number
+
+```js
+const texto = String(2 ** 1000);
+```
+
+El resultado es `"1.0715086071862673e+301"`: el número en notación científica, con 17 cifras significativas. Sumar las cifras de esa cadena no tiene sentido. Hace falta el número entero, con sus 302 cifras.
+
+## Desarrollo matemático
+
+### Paso 1: cuántas cifras tiene
+
+Un entero $N \ge 1$ tiene $\lfloor \log_{10} N \rfloor + 1$ cifras, y $\log_{10} 2^{1000} = 1000 \log_{10} 2 \approx 301{,}03$. Por tanto, **$2^{1000}$ tiene 302 cifras**. Para comparar, un `Number` solo guarda unas 16 cifras significativas.
+
+### Paso 2: duplicar una lista de cifras
+
+Guardamos el número como una lista de cifras, empezando por las unidades, y lo multiplicamos por 2 mil veces, empezando por 1. Para duplicar, se recorren las cifras de derecha a izquierda: en cada una se calcula $s = 2d + \text{llevada}$, se escribe $s \bmod 10$ y la llevada pasa a ser $\lfloor s / 10 \rfloor$.
+
+**La llevada nunca pasa de 1**, porque $2 \cdot 9 + 1 = 19$. Por ejemplo, de $2^{14}$ a $2^{15}$:
+
+| Cifra de $16\,384$ | $2d + \text{llevada}$ | Se escribe | Se lleva |
+| --- | --- | --- | --- |
+| 4 | $8 + 0 = 8$ | 8 | 0 |
+| 8 | $16 + 0 = 16$ | 6 | 1 |
+| 3 | $6 + 1 = 7$ | 7 | 0 |
+| 6 | $12 + 0 = 12$ | 2 | 1 |
+| 1 | $2 + 1 = 3$ | 3 | 0 |
+
+Leído de abajo arriba: $32\,768$, que es $2^{15}$.
+
+Cada duplicación recorre las cifras que tiene el número en ese momento, que van creciendo de 1 a 302. En total son unas 150 000 operaciones con cifras, una fracción de segundo.
+
+### Paso 3: menos multiplicaciones
+
+En lugar de mil duplicaciones se puede usar la **potenciación rápida**, que eleva al cuadrado repetidamente: $2^{1000} = (2^{500})^2$, $2^{500} = (2^{250})^2$, $2^{250} = (2^{125})^2$, $2^{125} = 2 \cdot 2^{124}$… Como $1000$ en binario es $1111101000$, con 10 cifras binarias de las que 6 son unos, bastan 9 cuadrados y 5 multiplicaciones por 2. Cada cuadrado es una multiplicación de dos números grandes, más cara que una duplicación, pero hay muchas menos.
+
+### Paso 4: una comprobación con el 9
+
+**Un número y la suma de sus cifras dejan el mismo resto al dividirlos entre 9**, porque $10 \equiv 1 \pmod 9$ y, por tanto, $10^i \equiv 1$ para toda potencia de 10:
+
+$$
+N = \sum_i d_i \cdot 10^i \equiv \sum_i d_i \pmod 9
+$$
+
+Sirve para detectar errores. Con el ejemplo: $26$ deja resto 8 al dividirlo entre 9, y $2^{15}$ también, porque las potencias de 2 repiten sus restos entre 9 cada seis pasos ($2, 4, 8, 7, 5, 1, \dots$) y $15 = 2 \cdot 6 + 3$, así que $2^{15} \equiv 2^3 = 8$. La misma cuenta da el resto de $2^{1000}$ entre 9, que tiene que coincidir con el de la suma de sus cifras.
+
+## El código
+
+<Tabs>
+<TabItem label="JavaScript (repositorio)">
+
+<Code code={solucion} lang="js" title="16_powerDigitSum.js" />
+
+Calcula la potencia con `BigInt(base) ** BigInt(exponent)`, que es exacta, la convierte en texto y suma sus cifras con `reduce`. Cómo calcula la potencia por dentro depende del motor de JavaScript.
+
+</TabItem>
+<TabItem label="JavaScript (lista de cifras)">
+
+```js
+function cifrasDePotenciaDeDos(n) {
+  const cifras = [1]; // empezando por las unidades
+  for (let i = 0; i < n; i++) {
+    let llevada = 0;
+    for (let j = 0; j < cifras.length; j++) {
+      const s = 2 * cifras[j] + llevada;
+      cifras[j] = s % 10;
+      llevada = Math.floor(s / 10);
+    }
+    if (llevada > 0) cifras.push(llevada);
+  }
+  return cifras;
+}
+
+const suma = cifrasDePotenciaDeDos(1000).reduce((a, b) => a + b, 0);
+console.log(suma);
+```
+
+Es el paso 2, sin enteros grandes: solo hay números de una o dos cifras, y todo es exacto con `Number`.
+
+</TabItem>
+<TabItem label="Python">
+
+```python
+print(sum(int(c) for c in str(2**1000)))
+```
+
+En Python los enteros no tienen límite de tamaño, así que `2**1000` ya es exacto.
+
+</TabItem>
+</Tabs>
+
+<Aside type="caution" title="Una versión anterior funcionaba por casualidad">
+Antes, el repositorio calculaba `BigInt(Math.pow(base, exponent))`, es decir, la potencia como `Number` y después la convertía. Con $2^{1000}$ funciona, porque una potencia de 2 se guarda sin error en coma flotante. Con $3^{1000}$, o con cualquier base que no sea potencia de 2, el `Number` ya está redondeado y las cifras salen mal. Por eso ahora la potencia se calcula entera desde el principio.
+</Aside>
+
+## Complejidad
+
+| Método | Operaciones con cifras para $2^{1000}$ |
+| --- | --- |
+| Duplicar una lista mil veces (paso 2) | ~150 000 |
+| Potenciación rápida (paso 3) | 14 multiplicaciones de números de hasta 302 cifras |
+
+Para $2^n$ en general, el número tiene unas $0{,}301\,n$ cifras: duplicar cuesta del orden de $n^2$ operaciones, y la potenciación rápida, unas $\log_2 n$ multiplicaciones de números de ese tamaño.
+
+## Conceptos utilizados
+
+<Relaciones mostrar="conceptos" />
+
+## Problemas relacionados
+
+<Relaciones mostrar="relacionados" />

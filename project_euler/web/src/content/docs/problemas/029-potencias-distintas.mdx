@@ -1,0 +1,137 @@
+---
+title: 'Problema 29: Potencias distintas'
+description: Contar cuántos valores distintos toma aᵇ con a y b entre 2 y 100, guardando las potencias como enteros grandes o, sin calcular ninguna, comparando exponentes gracias a la factorización única.
+sidebar:
+  label: '29 · Potencias distintas'
+  order: 29
+temas: [Potencias, Factorización]
+conceptos: [factorizacion-en-primos, precision-arbitraria]
+---
+
+import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+import solucion from '@soluciones/21_30/29_distinctPowers.js?raw';
+
+## El problema
+
+Con $2 \le a \le 5$ y $2 \le b \le 5$, las potencias $a^b$ son
+
+$$
+\begin{array}{llll}
+2^2 = 4, & 2^3 = 8, & 2^4 = 16, & 2^5 = 32 \\
+3^2 = 9, & 3^3 = 27, & 3^4 = 81, & 3^5 = 243 \\
+4^2 = 16, & 4^3 = 64, & 4^4 = 256, & 4^5 = 1024 \\
+5^2 = 25, & 5^3 = 125, & 5^4 = 625, & 5^5 = 3125
+\end{array}
+$$
+
+Ordenadas y sin repetir, quedan 15 números distintos: 4, 8, 9, 16, 25, 27, 32, 64, 81, 125, 243, 256, 625, 1024 y 3125. **¿Cuántos términos distintos hay en la lista de $a^b$ con $2 \le a \le 100$ y $2 \le b \le 100$?**
+
+[Enunciado original en Project Euler](https://projecteuler.net/problem=29)
+
+## La idea en una frase
+
+Dos potencias coinciden solo cuando sus bases son potencias de una misma «raíz»: escribiendo cada base como $a = r^k$, con $r$ lo más pequeño posible, $a^b = r^{kb}$, y basta con contar los exponentes $kb$ distintos de cada raíz, sin calcular ningún número grande.
+
+## Primer intento: guardar todas las potencias
+
+Lo directo es calcular las $99 \times 99 = 9801$ potencias, meterlas en un conjunto, que descarta las repetidas, y contar. El problema es su tamaño: $100^{100} = 10^{200}$ tiene 201 cifras. Hacen falta [enteros de precisión arbitraria](../../conceptos/precision-arbitraria/) para compararlas con seguridad.
+
+Con `Number` se obtiene, de hecho, el mismo recuento: las potencias iguales se redondean igual, como $9^{50}$ y $3^{100}$, y las distintas quedan distintas tras redondear. Pero eso no está garantizado: dos números distintos podrían redondear al mismo `Number`, o un mismo número calculado de dos formas podría redondear distinto.
+
+## Desarrollo matemático
+
+### Paso 1: cada base tiene una raíz única
+
+Decimos que $r \ge 2$ es una **potencia perfecta** si se puede escribir como $s^m$ con $m \ge 2$, como $8 = 2^3$ o $36 = 6^2$.
+
+> Todo entero $a \ge 2$ se escribe de una única forma como $a = r^k$ con $k \ge 1$ y $r$ que no es una potencia perfecta.
+
+**Por qué.** Sea $a = p_1^{e_1} \cdots p_s^{e_s}$ su [factorización en primos](../../conceptos/factorizacion-en-primos/) y $g = \operatorname{mcd}(e_1, \dots, e_s)$. Entonces $a = r^g$ con $r = p_1^{e_1/g} \cdots p_s^{e_s/g}$, y $r$ no es potencia perfecta porque sus exponentes no tienen divisores comunes. Por ejemplo, $64 = 2^6$ tiene raíz 2 y $k = 6$; $36 = 2^2 \cdot 3^2$ tiene raíz 6 y $k = 2$.
+
+### Paso 2: cuándo coinciden dos potencias
+
+> Si $r$ y $s$ no son potencias perfectas y $r^m = s^l$, entonces $r = s$ y $m = l$.
+
+**Demostración.** Por la factorización única, para cada primo $p$ el exponente de $p$ en $r$, multiplicado por $m$, es igual al exponente de $p$ en $s$, multiplicado por $l$: $e_p(r)\, m = e_p(s)\, l$. Escribamos $m / l = u / v$ como fracción irreducible. Entonces $e_p(r)\, u = e_p(s)\, v$, y como $u$ y $v$ son coprimos, $v$ divide a $e_p(r)$ para todo primo $p$. Pero los exponentes de $r$ no tienen divisores comunes, así que $v = 1$; del mismo modo, $u = 1$. Por tanto $m = l$, y entonces $r = s$.
+
+Juntando los dos pasos: si $a = r^k$ y $c = s^j$, entonces **$a^b = c^d$ si y solo si $r = s$ y $kb = jd$**. Cada potencia queda identificada por su raíz y un exponente.
+
+### Paso 3: contar exponentes
+
+Para cada raíz $r \le N$ que no sea potencia perfecta, sea $K$ el mayor exponente con $r^K \le N$. Las bases con raíz $r$ son $r, r^2, \dots, r^K$, y sus potencias son $r^{kb}$ con $1 \le k \le K$ y $2 \le b \le N$. El número de potencias distintas con raíz $r$ es el número de productos distintos
+
+$$
+E(K) = \big|\{\, k\, b \;:\; 1 \le k \le K,\ 2 \le b \le N \,\}\big|
+$$
+
+que **solo depende de $K$**. El total es la suma de $E(K)$ para todas las raíces. La mayoría de las raíces tienen $K = 1$ y aportan $E(1) = N - 1$ potencias cada una. Para $N = 100$, las únicas raíces con $K \ge 2$ son:
+
+| Raíz $r$ | 2 | 3 | 5 | 6 | 7 | 10 |
+| --- | --- | --- | --- | --- | --- | --- |
+| $K$ | 6 | 4 | 2 | 2 | 2 | 2 |
+
+### Paso 4: comprobarlo con el ejemplo
+
+Con $N = 5$, las bases 2, 3, 4 y 5 tienen raíces 2, 3, 2 y 5, porque $4 = 2^2$.
+
+- **Raíz 2**, con $K = 2$: los exponentes son $\{2, 3, 4, 5\} \cup \{4, 6, 8, 10\} = \{2, 3, 4, 5, 6, 8, 10\}$, siete potencias. El 4 sale dos veces: $2^4 = 4^2 = 16$.
+- **Raíz 3** y **raíz 5**, con $K = 1$: cuatro potencias cada una.
+
+En total $7 + 4 + 4 = 15$, como dice el enunciado.
+
+## El código
+
+<Tabs>
+<TabItem label="JavaScript (repositorio)">
+
+<Code code={solucion} lang="js" title="29_distinctPowers.js" />
+
+Es el primer intento: calcula cada potencia exactamente con `BigInt(i) ** BigInt(j)` y la añade a un `Set`, que ignora las repetidas. El tamaño del conjunto es la respuesta.
+
+</TabItem>
+<TabItem label="Python (exponentes)">
+
+```python
+def potencias_distintas(N):
+    potencias_perfectas = set()
+    for r in range(2, N + 1):
+        p = r * r
+        while p <= N:
+            potencias_perfectas.add(p)
+            p *= r
+
+    total = 0
+    for r in range(2, N + 1):
+        if r in potencias_perfectas:
+            continue
+        K = 1
+        while r ** (K + 1) <= N:
+            K += 1
+        total += len({k * b for k in range(1, K + 1) for b in range(2, N + 1)})
+    return total
+
+print(potencias_distintas(100))
+```
+
+Es el paso 3. Con `potencias_distintas(5)` devuelve 15, el ejemplo del enunciado. Los exponentes que compara son, como mucho, $6 \cdot 100 = 600$: no aparece ningún número grande.
+
+</TabItem>
+</Tabs>
+
+## Complejidad
+
+| Método | Qué guarda | Coste para $N = 100$ |
+| --- | --- | --- |
+| Conjunto de potencias (repositorio) | 9801 enteros de hasta 201 cifras | calcular y comparar números grandes |
+| Exponentes (paso 3) | enteros menores que 600 | 9801 productos $k \cdot b$, todos pequeños |
+
+Cada base $a = r^k$ aporta sus $N - 1$ productos $k \cdot b$, así que los dos métodos hacen $(N-1)^2$ pasos; la diferencia está en el tamaño de lo que se compara. El método de los exponentes funciona igual para $N = 10\,000$, donde las potencias tendrían hasta 40 001 cifras y el conjunto, cien millones de ellas.
+
+## Conceptos utilizados
+
+<Relaciones mostrar="conceptos" />
+
+## Problemas relacionados
+
+<Relaciones mostrar="relacionados" />
