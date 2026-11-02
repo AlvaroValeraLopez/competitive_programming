@@ -1,0 +1,160 @@
+---
+// Ilustración de la portada: una «ficha» del problema 1 con su fórmula y la
+// comprobación con el ejemplo, sobre una escalera de Gauss. Todo lo que se
+// muestra se calcula aquí, no se escribe a mano.
+import katex from 'katex';
+import { Icon } from '@astrojs/starlight/components';
+
+const formula = (tex: string) => katex.renderToString(tex, { displayMode: true, output: 'html' });
+
+const sumaMultiplos = (k: number, limite: number) => {
+	const m = Math.floor((limite - 1) / k);
+	return (k * m * (m + 1)) / 2;
+};
+const ejemplo = 10;
+const resultadoEjemplo = sumaMultiplos(3, ejemplo) + sumaMultiplos(5, ejemplo) - sumaMultiplos(15, ejemplo);
+const multiplosEjemplo = Array.from({ length: ejemplo - 1 }, (_, i) => i + 1).filter(
+	(n) => n % 3 === 0 || n % 5 === 0,
+);
+if (multiplosEjemplo.reduce((a, b) => a + b, 0) !== resultadoEjemplo) {
+	throw new Error('La fórmula de la portada no coincide con la suma directa');
+}
+
+// Escalera de 4 filas más su complemento: un rectángulo de 4 × 5.
+const n = 4;
+const lado = 22;
+const casillas = Array.from({ length: n }, (_, f) =>
+	Array.from({ length: n + 1 }, (_, c) => ({ f, c, propia: c <= f })),
+).flat();
+const filas = Array.from({ length: n }, (_, f) => f + 1);
+---
+
+<div class="ilustracion" aria-hidden="true">
+	<div class="ficha trasera">
+		<svg viewBox={`0 0 ${(n + 1) * lado} ${n * lado}`} width={(n + 1) * lado}>
+			{
+				casillas.map(({ f, c, propia }) => (
+					<rect
+						x={c * lado + 1.5}
+						y={f * lado + 1.5}
+						width={lado - 3}
+						height={lado - 3}
+						rx="3"
+						class={propia ? 'propia' : 'copia'}
+					/>
+				))
+			}
+		</svg>
+		<span class="leyenda">2 · ({filas.join(' + ')}) = {n} · {n + 1}</span>
+	</div>
+
+	<div class="ficha delantera">
+		<div class="cabecera">
+			<span class="numero">Problema 1</span>
+			<span class="nombre">Múltiplos de 3 y 5</span>
+		</div>
+		<div class="formula" set:html={formula(String.raw`S(N) = S_3 + S_5 - S_{15}`)} />
+		<div class="formula" set:html={formula(String.raw`S_k = k \cdot \frac{m(m+1)}{2}`)} />
+		<div class="pie">
+			<span class="comprobado">
+				<Icon name="approve-check" size="1.1rem" />
+				Con N = {ejemplo}: {multiplosEjemplo.join(' + ')} = {resultadoEjemplo}
+			</span>
+			<span class="coste">O(1)</span>
+		</div>
+	</div>
+</div>
+
+<style>
+	.ilustracion {
+		position: relative;
+		width: min(100%, 26rem);
+		min-height: 23rem;
+		margin-inline: auto;
+	}
+	.ficha {
+		position: absolute;
+		border: 1px solid var(--sl-color-gray-6);
+		border-radius: var(--euler-radio);
+		background: var(--sl-color-black);
+		box-shadow: var(--euler-sombra-grande);
+	}
+	.trasera {
+		top: 0;
+		right: 0;
+		display: grid;
+		gap: 0.5rem;
+		justify-items: center;
+		padding: 1rem 1.25rem 0.75rem;
+		background: var(--sl-color-gray-7);
+		transform: rotate(4deg);
+	}
+	.trasera .propia {
+		fill: var(--sl-color-accent);
+	}
+	.trasera .copia {
+		fill: var(--sl-color-gray-4);
+	}
+	.leyenda {
+		font-size: var(--sl-text-2xs);
+		color: var(--sl-color-gray-2);
+	}
+	.delantera {
+		bottom: 0;
+		left: 0;
+		width: min(100%, 21rem);
+		padding: 1rem 1.25rem;
+	}
+	.cabecera {
+		display: flex;
+		gap: 0.6rem;
+		align-items: center;
+		font-size: var(--sl-text-sm);
+	}
+	.numero {
+		padding: 0.15rem 0.6rem;
+		border-radius: 999rem;
+		background: var(--sl-color-accent);
+		color: #ffffff;
+		font-weight: 600;
+		font-size: var(--sl-text-xs);
+	}
+	.nombre {
+		color: var(--sl-color-white);
+		font-weight: 600;
+	}
+	.formula :global(.katex-display) {
+		margin: 0.6rem 0;
+	}
+	.formula :global(.katex) {
+		font-size: 1.15em;
+		color: var(--sl-color-white);
+	}
+	.pie {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		align-items: center;
+		justify-content: space-between;
+		padding-top: 0.75rem;
+		border-top: 1px solid var(--sl-color-gray-6);
+		font-size: var(--sl-text-xs);
+	}
+	.comprobado {
+		display: inline-flex;
+		gap: 0.35rem;
+		align-items: center;
+		color: var(--sl-color-gray-2);
+	}
+	.comprobado :global(svg) {
+		color: #4fcda7;
+	}
+	.coste {
+		padding: 0.1rem 0.55rem;
+		border-radius: 999rem;
+		background: var(--sl-color-accent-low);
+		color: var(--sl-color-accent-high);
+		font-family: var(--sl-font-mono);
+		font-weight: 600;
+	}
+</style>

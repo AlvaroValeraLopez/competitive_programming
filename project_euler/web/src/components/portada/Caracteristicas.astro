@@ -1,0 +1,68 @@
+---
+// Tres columnas con icono, como la sección «Escribe código en local…» de
+// Exercism, contando cómo está hecha cada página.
+import { Icon } from '@astrojs/starlight/components';
+
+const caracteristicas = [
+	{
+		icono: 'puzzle',
+		titulo: 'De la fuerza bruta a la fórmula',
+		texto: 'Cada problema empieza por la solución obvia y muestra qué idea matemática la hace rápida.',
+	},
+	{
+		icono: 'open-book',
+		titulo: 'Demostraciones completas',
+		texto: 'Cada paso está justificado y se comprueba con el ejemplo del enunciado antes de seguir.',
+	},
+	{
+		icono: 'approve-check',
+		titulo: 'Vídeos verificados',
+		texto: 'Animaciones generadas con código cuyas cuentas se comprueban con tests antes de renderizarlas.',
+	},
+] as const;
+---
+
+<ul class="caracteristicas not-content">
+	{
+		caracteristicas.map(({ icono, titulo, texto }) => (
+			<li>
+				<span class="icono">
+					<Icon name={icono} size="1.5rem" />
+				</span>
+				<h3>{titulo}</h3>
+				<p>{texto}</p>
+			</li>
+		))
+	}
+</ul>
+
+<style>
+	.caracteristicas {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+		gap: 2rem;
+		margin: 1.5rem 0 0;
+		padding: 0;
+		list-style: none;
+	}
+	.icono {
+		display: grid;
+		place-items: center;
+		width: 3rem;
+		height: 3rem;
+		border-radius: 999rem;
+		background: var(--sl-color-accent-low);
+		color: var(--sl-color-accent);
+	}
+	h3 {
+		margin: 1rem 0 0.5rem;
+		font-size: var(--sl-text-xl);
+		font-weight: 600;
+		color: var(--sl-color-white);
+	}
+	p {
+		margin: 0;
+		line-height: 1.6;
+		color: var(--sl-color-gray-2);
+	}
+</style>
