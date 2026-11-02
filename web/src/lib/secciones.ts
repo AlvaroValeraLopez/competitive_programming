@@ -14,7 +14,6 @@ export const SECCIONES: readonly Seccion[] = [
 	{ ruta: 'tracks', nombre: 'Tracks' },
 	{ ruta: 'conceptos', nombre: 'Conceptos' },
 	{ ruta: 'problemas', nombre: 'Ejercicios' },
-	{ ruta: 'mapa', nombre: 'Mapa' },
 ];
 
 /** La sección a la que pertenece una página, por su identificador («problemas/003-…»). */

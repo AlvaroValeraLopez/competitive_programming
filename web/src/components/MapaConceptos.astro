@@ -1,0 +1,35 @@
+---
+// El mapa de conceptos de la sección «Conceptos»: el árbol de cada ruta, en
+// una pestaña por track.
+import { TabItem, Tabs } from '@astrojs/starlight/components';
+import ArbolConceptos from './ArbolConceptos.astro';
+import { obtenerTracks, urlDeTrack } from '../lib/rutas';
+
+const tracks = (await obtenerTracks()).filter((d) => d.conceptos.length > 0);
+---
+
+<div class="mapa-conceptos">
+	<Tabs syncKey="track">
+		{
+			tracks.map(({ track, conceptos, ejercicios }) => (
+				<TabItem label={track.dominio}>
+					<p class="enlace-track">
+						{conceptos.length} conceptos · {ejercicios.length} ejercicios ·{' '}
+						<a href={urlDeTrack(track, 'practicar')}>Practicar con esta ruta</a>
+					</p>
+					<ArbolConceptos dominio={track.dominio} />
+				</TabItem>
+			))
+		}
+	</Tabs>
+</div>
+
+<style>
+	.mapa-conceptos {
+		margin-block: 1.5rem 3rem;
+	}
+	.enlace-track {
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-3);
+	}
+</style>

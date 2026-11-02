@@ -152,13 +152,14 @@ h1#_top,
 }
 
 /* ---------- Páginas de catálogo ---------- */
-/* Los catálogos de conceptos y de problemas usan el ancho disponible en vez de
-   la columna de lectura de 45rem; los párrafos mantienen una medida cómoda. */
-.main-pane:has(catalogo-paginas, lista-problemas) {
+/* Los catálogos de conceptos y de problemas, y los árboles de conceptos, usan el
+   ancho disponible en vez de la columna de lectura de 45rem; los párrafos
+   mantienen una medida cómoda. */
+.main-pane:has(catalogo-paginas, lista-problemas, arbol-conceptos) {
 	--sl-content-width: 72rem;
 }
 
-.main-pane:has(catalogo-paginas, lista-problemas) .sl-markdown-content > p {
+.main-pane:has(catalogo-paginas, lista-problemas, arbol-conceptos) .sl-markdown-content > p {
 	max-width: 45rem;
 }
 

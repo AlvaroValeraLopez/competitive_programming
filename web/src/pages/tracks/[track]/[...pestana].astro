@@ -1,12 +1,12 @@
 ---
 // Las páginas de cada track, una por pestaña: /tracks/<slug>/ («Acerca de»),
-// /tracks/<slug>/aprender/ (la ruta de conceptos) y /tracks/<slug>/practicar/
+// /tracks/<slug>/aprender/ (el árbol de conceptos) y /tracks/<slug>/practicar/
 // (sus ejercicios). Usan el diseño de Starlight a través de <StarlightPage>.
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import ArbolConceptos from '../../../components/ArbolConceptos.astro';
 import ListaProblemas from '../../../components/ListaProblemas.astro';
 import AcercaTrack from '../../../components/tracks/AcercaTrack.astro';
 import CabeceraTrack, { type Pestana } from '../../../components/tracks/CabeceraTrack.astro';
-import RutaTrack from '../../../components/tracks/RutaTrack.astro';
 import { obtenerTracks } from '../../../lib/rutas';
 import { TRACKS } from '../../../lib/tracks';
 
@@ -32,6 +32,6 @@ const titulos: Record<Pestana, string> = {
 <StarlightPage frontmatter={{ title: titulos[pestana], description: track.resumen, tableOfContents: false }}>
 	<CabeceraTrack datos={datos} actual={pestana} />
 	{pestana === 'acerca' && <AcercaTrack datos={datos} />}
-	{pestana === 'aprender' && <RutaTrack datos={datos} />}
+	{pestana === 'aprender' && <ArbolConceptos dominio={track.dominio} />}
 	{pestana === 'practicar' && <ListaProblemas dominio={track.dominio} />}
 </StarlightPage>

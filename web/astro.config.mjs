@@ -22,6 +22,11 @@ export default defineConfig({
 			rehypePlugins: [rehypeKatex, envolverTablas],
 		}),
 	},
+	// El antiguo mapa de problemas y conceptos: ahora el mapa son los árboles de
+	// conceptos de la sección «Conceptos».
+	redirects: {
+		'/mapa': '/conceptos/',
+	},
 	integrations: [
 		starlight({
 			title: 'Retos, paso a paso',
@@ -64,7 +69,6 @@ export default defineConfig({
 			// orden de la paginación «Anterior / Siguiente» al pie de cada página.
 			sidebar: [
 				{ label: 'Inicio', link: '/' },
-				{ label: 'Mapa', link: '/mapa/' },
 				{
 					label: 'Problemas',
 					items: [{ autogenerate: { directory: 'problemas' } }],

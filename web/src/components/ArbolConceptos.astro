@@ -1,0 +1,361 @@
+---
+// Árbol de conceptos de una ruta, al estilo del de Exercism: solo conceptos,
+// cada uno debajo de los que necesita y con el color de su dominio. Los
+// conceptos previos de otras rutas aparecen atenuados. Al pasar el ratón (o el
+// foco) por un concepto se resaltan sus relaciones directas.
+import { abreviatura } from '../lib/grafo';
+import { disponerArbol, type MedidasArbol } from '../lib/arbol';
+import { obtenerGrafo } from '../lib/relaciones';
+import { obtenerTracks } from '../lib/rutas';
+import { trackDeDominio } from '../lib/tracks';
+
+interface Props {
+	dominio: string;
+}
+
+// Cinco tarjetas por fila miden 5 · 204 + 4 · 20 = 1100 px (más los márgenes):
+// caben en la columna ancha de 72rem.
+const MEDIDAS: MedidasArbol = { anchoNodo: 204, altoNodo: 68, anchoHueco: 16, separacionX: 20, separacionY: 52 };
+const MARGEN = 16; // deja sitio a las sombras de las tarjetas
+
+const { dominio } = Astro.props;
+const tracks = await obtenerTracks();
+const grafo = await obtenerGrafo();
+const porId = new Map(tracks.flatMap((d) => d.conceptos).map((c) => [c.id, c]));
+const propios = tracks.find((d) => d.track.dominio === dominio)?.conceptos ?? [];
+const idsPropios = new Set(propios.map((c) => c.id));
+const externos = [...new Set(propios.flatMap((c) => c.padres))]
+	.filter((id) => !idsPropios.has(id) && porId.has(id))
+	.map((id) => porId.get(id)!);
+const conceptos = [...externos, ...propios];
+
+const arbol = disponerArbol(
+	conceptos.map((c) => ({ id: c.id, titulo: c.etiqueta, orden: c.orden, padres: c.padres })),
+	MEDIDAS,
+);
+// En el documento van por filas y de izquierda a derecha, para que el tabulador siga el dibujo.
+const cajas = [...arbol.nodos].sort((a, b) => a.nivel - b.nivel || a.x - b.x);
+const ancho = arbol.ancho + 2 * MARGEN;
+const alto = arbol.alto + 2 * MARGEN;
+
+const slugDe = (id: string) => trackDeDominio(porId.get(id)?.dominio)?.slug;
+const usos = (id: string) =>
+	(grafo.nodos.get(id)?.hijos ?? []).filter((h) => grafo.nodos.get(h)?.tipo === 'problema').length;
+const detalleDe = (id: string) => {
+	if (!idsPropios.has(id)) return `Ruta de ${porId.get(id)!.dominio}`;
+	const n = usos(id);
+	return `${n} ${n === 1 ? 'ejercicio' : 'ejercicios'}`;
+};
+const enLista = cajas.map((c) => porId.get(c.id)!).filter((c) => idsPropios.has(c.id));
+const conjuncion = (i: number, total: number) => (i === 0 ? '' : i === total - 1 ? ' y ' : ', ');
+---
+
+<div class="arbol-envoltorio not-content">
+	<ul class="leyenda" aria-label="Leyenda">
+		<li>Empieza por arriba: cada concepto se apoya en los que tiene encima.</li>
+		{externos.length > 0 && <li><span class="muestra-externo" aria-hidden="true"></span> De otra ruta</li>}
+	</ul>
+
+	<div class="desplazable">
+		<arbol-conceptos class="arbol" style={`width: ${ancho}px; height: ${alto}px`}>
+			<svg class="lineas" width={ancho} height={alto} viewBox={`${-MARGEN} ${-MARGEN} ${ancho} ${alto}`} aria-hidden="true">
+				{
+					arbol.aristas.map((a) => (
+						<path
+							class:list={['arista', { externa: !idsPropios.has(a.desde) }]}
+							d={a.trazado}
+							data-desde={a.desde}
+							data-hasta={a.hasta}
+							data-track={slugDe(a.hasta)}
+						/>
+					))
+				}
+			</svg>
+			{
+				cajas.map((caja) => {
+					const concepto = porId.get(caja.id)!;
+					return (
+						<a
+							class:list={['nodo', { externo: !idsPropios.has(caja.id) }]}
+							href={concepto.href}
+							title={concepto.descripcion}
+							data-id={caja.id}
+							data-track={slugDe(caja.id)}
+							style={`left: ${caja.x + MARGEN}px; top: ${caja.y + MARGEN}px; width: ${caja.ancho}px; height: ${caja.alto}px`}
+						>
+							<span class="hexagono" aria-hidden="true">
+								<svg viewBox="0 0 100 100">
+									<polygon points="50,4 91,27 91,73 50,96 9,73 9,27" />
+								</svg>
+								<span>{abreviatura(concepto.etiqueta)}</span>
+							</span>
+							<span class="texto">
+								<span class="titulo">{concepto.etiqueta}</span>
+								<span class="detalle">{detalleDe(caja.id)}</span>
+							</span>
+						</a>
+					);
+				})
+			}
+		</arbol-conceptos>
+	</div>
+
+	<details class="como-lista">
+		<summary>Ver la ruta como lista</summary>
+		<ul>
+			{
+				enLista.map((c) => (
+					<li>
+						<a href={c.href}>{c.etiqueta}</a>
+						{c.padres.length === 0 ? (
+							' no necesita ningún concepto previo'
+						) : (
+							<>
+								{' se apoya en '}
+								{c.padres.map((p, i) => (
+									<>
+										{conjuncion(i, c.padres.length)}
+										<a href={porId.get(p)?.href}>{porId.get(p)?.etiqueta ?? p}</a>
+									</>
+								))}
+							</>
+						)}
+					</li>
+				))
+			}
+		</ul>
+	</details>
+</div>
+
+<script>
+	class ArbolConceptos extends HTMLElement {
+		connectedCallback() {
+			const nodos = [...this.querySelectorAll<HTMLElement>('.nodo')];
+			const aristas = [...this.querySelectorAll<SVGPathElement>('.arista')];
+			const vecinos = new Map<string, Set<string>>();
+			const unir = (a: string, b: string) => vecinos.set(a, (vecinos.get(a) ?? new Set()).add(b));
+			for (const arista of aristas) {
+				unir(arista.dataset.desde!, arista.dataset.hasta!);
+				unir(arista.dataset.hasta!, arista.dataset.desde!);
+			}
+
+			const resaltar = (id: string) => {
+				this.classList.add('resaltando');
+				for (const nodo of nodos) {
+					nodo.classList.toggle('activo', nodo.dataset.id === id || vecinos.get(id)?.has(nodo.dataset.id!) === true);
+				}
+				for (const arista of aristas) {
+					arista.classList.toggle('activa', arista.dataset.desde === id || arista.dataset.hasta === id);
+				}
+			};
+			const apagar = () => {
+				this.classList.remove('resaltando');
+				nodos.forEach((n) => n.classList.remove('activo'));
+				aristas.forEach((a) => a.classList.remove('activa'));
+			};
+
+			for (const nodo of nodos) {
+				nodo.addEventListener('mouseenter', () => resaltar(nodo.dataset.id!));
+				nodo.addEventListener('focus', () => resaltar(nodo.dataset.id!));
+				nodo.addEventListener('mouseleave', apagar);
+				nodo.addEventListener('blur', apagar);
+			}
+		}
+	}
+
+	customElements.define('arbol-conceptos', ArbolConceptos);
+</script>
+
+<style>
+	.arbol-envoltorio {
+		--mapa-linea: #c8d5ef;
+		margin-top: 1rem;
+	}
+	:global([data-theme='dark']) .arbol-envoltorio {
+		--mapa-linea: #433f56;
+	}
+
+	/* El color de cada dominio: borde y relleno del hexágono, y el texto que va dentro. */
+	[data-track='matematicas'] {
+		--dominio: #604fcd;
+		--dominio-suave: #f2f0fc;
+		--dominio-texto: #3b2a93;
+	}
+	[data-track='algoritmia'] {
+		--dominio: #0e8a7a;
+		--dominio-suave: #e0f4f0;
+		--dominio-texto: #0a5c52;
+	}
+	[data-track='implementacion'] {
+		--dominio: #c4560f;
+		--dominio-suave: #fcede2;
+		--dominio-texto: #8a3a07;
+	}
+	:global([data-theme='dark']) [data-track='matematicas'] {
+		--dominio: #8b7cf0;
+		--dominio-suave: #2b2650;
+		--dominio-texto: #cbc4f6;
+	}
+	:global([data-theme='dark']) [data-track='algoritmia'] {
+		--dominio: #2fb5a3;
+		--dominio-suave: #11322e;
+		--dominio-texto: #8fe0d4;
+	}
+	:global([data-theme='dark']) [data-track='implementacion'] {
+		--dominio: #f08d4f;
+		--dominio-suave: #3a2416;
+		--dominio-texto: #f7c39f;
+	}
+
+	.leyenda {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem 1.75rem;
+		margin: 0 0 0.5rem;
+		padding: 0;
+		list-style: none;
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-2);
+	}
+	.leyenda li {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
+	}
+	.muestra-externo {
+		width: 1.75rem;
+		height: 1.1rem;
+		border: 1px dashed var(--sl-color-gray-4);
+		border-radius: 4px;
+	}
+
+	.desplazable {
+		overflow-x: auto;
+	}
+	.arbol {
+		position: relative;
+		display: block;
+		margin-inline: auto;
+	}
+	.lineas {
+		position: absolute;
+		inset: 0;
+	}
+	.arista {
+		fill: none;
+		stroke: var(--mapa-linea);
+		stroke-width: 2;
+		transition:
+			stroke 0.15s,
+			opacity 0.15s;
+	}
+	.arista.externa {
+		stroke-dasharray: 6 5;
+	}
+	.arbol.resaltando .arista:not(.activa) {
+		opacity: 0.25;
+	}
+	.arista.activa {
+		stroke: var(--dominio);
+	}
+
+	.nodo {
+		position: absolute;
+		display: flex;
+		gap: 0.6rem;
+		align-items: center;
+		padding: 0 0.85rem;
+		border: 1px solid var(--sl-color-gray-6);
+		border-radius: var(--euler-radio);
+		background: var(--sl-color-black);
+		box-shadow: var(--euler-sombra);
+		color: var(--sl-color-white);
+		text-decoration: none;
+		transition:
+			opacity 0.15s,
+			box-shadow 0.15s,
+			border-color 0.15s;
+	}
+	.nodo.externo {
+		border-style: dashed;
+		border-color: var(--sl-color-gray-5);
+		box-shadow: none;
+		opacity: 0.7;
+	}
+	.arbol.resaltando .nodo:not(.activo) {
+		opacity: 0.4;
+	}
+	.nodo.activo,
+	.nodo:hover,
+	.nodo:focus-visible {
+		border-color: var(--dominio);
+		box-shadow: var(--euler-sombra-grande);
+		opacity: 1;
+	}
+
+	.hexagono {
+		position: relative;
+		display: grid;
+		flex-shrink: 0;
+		place-items: center;
+		width: 2.4rem;
+		height: 2.4rem;
+		font-size: var(--sl-text-sm);
+		font-weight: 700;
+		color: var(--dominio-texto);
+	}
+	.hexagono svg {
+		position: absolute;
+		inset: 0;
+	}
+	.hexagono polygon {
+		fill: var(--dominio-suave);
+		stroke: var(--dominio);
+		stroke-width: 5;
+		stroke-linejoin: round;
+	}
+	.hexagono span {
+		position: relative;
+	}
+
+	.texto {
+		display: grid;
+		gap: 0.15rem;
+		min-width: 0;
+	}
+	.titulo {
+		display: -webkit-box;
+		overflow: hidden;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		font-size: 0.875rem;
+		font-weight: 600;
+		line-height: 1.25;
+		hyphens: auto;
+		overflow-wrap: break-word;
+	}
+	.detalle {
+		font-size: var(--sl-text-2xs);
+		color: var(--sl-color-gray-3);
+	}
+
+	.como-lista {
+		margin-top: 1.25rem;
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-2);
+	}
+	.como-lista summary {
+		cursor: pointer;
+		font-weight: 500;
+		color: var(--sl-color-text-accent);
+	}
+	.como-lista ul {
+		margin: 0.75rem 0 0;
+		padding-inline-start: 1.25rem;
+		line-height: 1.8;
+	}
+	.como-lista a {
+		color: var(--sl-color-text-accent);
+		font-weight: 500;
+	}
+</style>
