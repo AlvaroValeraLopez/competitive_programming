@@ -1,5 +1,8 @@
 """Lo que afirma el vídeo de la suma de Gauss, comprobado antes de renderizarlo."""
 
+import re
+from pathlib import Path
+
 import numpy as np
 import pytest
 from manim import PI, ORIGIN
@@ -63,20 +66,29 @@ def test_la_comprobacion_detecta_una_figura_que_no_encaja():
         comprobar_casillas(cuadricula, copia, complemento_escalera(3))
 
 
-# Valores rgb() que el navegador calcula para las variables de Starlight en modo oscuro.
-COLORES_WEB = {
-    "FONDO": (23, 24, 28),  # --sl-color-bg
-    "ACENTO": (51, 105, 255),  # --sl-color-accent
-    "ACENTO_CLARO": (179, 199, 255),  # --sl-color-text-accent
-    "GRIS": (85, 89, 98),  # --sl-color-gray-4
-    "TEXTO": (193, 195, 200),  # --sl-color-gray-2
+TEMA_WEB = Path(__file__).resolve().parents[2] / "web" / "src" / "styles" / "tema.css"
+
+# Color del vídeo -> variable CSS del modo oscuro de la web.
+VARIABLES_WEB = {
+    "FONDO": "--sl-color-black",  # el fondo de página en modo oscuro
+    "ACENTO": "--sl-color-accent",
+    "ACENTO_CLARO": "--sl-color-accent-high",
+    "GRIS": "--sl-color-gray-4",
+    "TEXTO": "--sl-color-gray-2",
+    "BLANCO": "--sl-color-white",
 }
 
 
-@pytest.mark.parametrize("nombre, rgb", COLORES_WEB.items())
-def test_los_colores_son_exactamente_los_de_la_web(nombre, rgb):
-    color = getattr(estilo, nombre)
-    assert color.to_hex().upper() == "#{:02X}{:02X}{:02X}".format(*rgb)
+def colores_modo_oscuro() -> dict[str, str]:
+    """Las variables `--sl-color-*: #rrggbb` del bloque `:root` (modo oscuro) de tema.css."""
+    bloque = re.search(r"^:root \{(.*?)^\}", TEMA_WEB.read_text(), re.S | re.M).group(1)
+    return {nombre: valor.upper() for nombre, valor in re.findall(r"(--sl-color-[\w-]+):\s*(#[0-9a-fA-F]{6});", bloque)}
+
+
+@pytest.mark.parametrize("nombre, variable", VARIABLES_WEB.items())
+def test_los_colores_son_exactamente_los_de_la_web(nombre, variable):
+    """Si cambia la paleta de la web, este test falla hasta actualizar la de los vídeos."""
+    assert getattr(estilo, nombre).to_hex().upper() == colores_modo_oscuro()[variable]
 
 
 def test_la_fuente_de_los_rotulos_esta_instalada():
