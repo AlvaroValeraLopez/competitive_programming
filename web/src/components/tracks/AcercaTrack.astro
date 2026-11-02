@@ -1,0 +1,76 @@
+---
+// Pestaña «Acerca de» de un track: qué se aprende, por dónde se empieza y qué
+// áreas recorre la ruta, con enlaces a las otras dos pestañas.
+import { LinkButton } from '@astrojs/starlight/components';
+import { urlDeTrack, type DatosTrack } from '../../lib/rutas';
+
+interface Props {
+	datos: DatosTrack;
+}
+
+const { datos } = Astro.props;
+const { track, ruta, conceptos, ejercicios, areas } = datos;
+const inicio = ruta[0] ?? [];
+const porArea = areas.map((area) => ({ area, conceptos: conceptos.filter((c) => c.area === area) }));
+const practicar = `Practicar con ${ejercicios.length} ${ejercicios.length === 1 ? 'ejercicio' : 'ejercicios'}`;
+---
+
+<div class="acerca">
+	<p class="descripcion">{track.descripcion}</p>
+
+	<div class="acciones not-content">
+		<LinkButton href={urlDeTrack(track, 'aprender')} icon="right-arrow">Ver la ruta</LinkButton>
+		<LinkButton href={urlDeTrack(track, 'practicar')} variant="secondary">{practicar}</LinkButton>
+	</div>
+
+	<h2>Por dónde empezar</h2>
+	<p>
+		{
+			inicio.length === 1
+				? 'La ruta empieza por un concepto que no necesita ningún otro:'
+				: `La ruta empieza por ${inicio.length} conceptos que no necesitan ningún otro:`
+		}
+	</p>
+	<ul>
+		{
+			inicio.map(({ concepto }) => (
+				<li>
+					<a href={concepto.href}>{concepto.etiqueta}</a>
+					{concepto.descripcion && ` — ${concepto.descripcion}`}
+				</li>
+			))
+		}
+	</ul>
+
+	<h2>Qué recorre</h2>
+	<ul class="areas">
+		{
+			porArea.map(({ area, conceptos }) => (
+				<li>
+					<strong>{area}</strong>:{' '}
+					{conceptos.map((c, i) => (
+						<>
+							{i > 0 && ', '}
+							<a href={c.href}>{c.etiqueta}</a>
+						</>
+					))}
+				</li>
+			))
+		}
+	</ul>
+</div>
+
+<style>
+	.descripcion {
+		font-size: var(--sl-text-lg);
+	}
+	.acciones {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1rem;
+		margin: 1.5rem 0 0.5rem;
+	}
+	.areas li + li {
+		margin-top: 0.4rem;
+	}
+</style>

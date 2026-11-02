@@ -11,6 +11,7 @@ export interface Seccion {
 }
 
 export const SECCIONES: readonly Seccion[] = [
+	{ ruta: 'tracks', nombre: 'Tracks' },
 	{ ruta: 'conceptos', nombre: 'Conceptos' },
 	{ ruta: 'problemas', nombre: 'Ejercicios' },
 	{ ruta: 'mapa', nombre: 'Mapa' },
