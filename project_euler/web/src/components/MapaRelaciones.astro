@@ -1,17 +1,20 @@
 ---
 // Mapa de problemas y conceptos al estilo del «recorrido» de Exercism: tarjetas
-// en capas unidas por líneas discontinuas. Al pasar el ratón (o el foco) por
-// una tarjeta se resaltan sus relaciones directas.
+// unidas por líneas discontinuas, una columna por nivel (los conceptos previos a
+// la izquierda), que crece hacia abajo al añadir problemas. Al pasar el ratón (o
+// el foco) por una tarjeta se resaltan sus relaciones directas.
 import { Icon } from '@astrojs/starlight/components';
 import { abreviatura, disponer, type Medidas } from '../lib/grafo';
 import { obtenerGrafo, urlDe } from '../lib/relaciones';
 
+// Con 4 niveles el mapa mide 4 · 220 + 3 · 48 = 1024 px (más los márgenes):
+// cabe en la columna de contenido de la página a 1440 px.
 const MEDIDAS: Medidas = {
-	anchoTarjeta: 280,
-	altoTarjeta: 116,
-	anchoHueco: 24,
-	separacionX: 40,
-	separacionY: 80,
+	anchoTarjeta: 220,
+	altoTarjeta: 112,
+	altoHueco: 20,
+	separacionColumnas: 48,
+	separacionFilas: 28,
 };
 const MARGEN = 24; // deja sitio a las sombras de las tarjetas
 
@@ -259,16 +262,16 @@ const lista = [...grafo.nodos.values()]
 	.cabecera {
 		display: flex;
 		flex: 1;
-		gap: 0.9rem;
+		gap: 0.7rem;
 		align-items: center;
-		padding: 0 1.25rem;
+		padding: 0 0.9rem;
 	}
 	.icono {
 		display: grid;
 		flex-shrink: 0;
 		place-items: end start;
-		width: 2.6rem;
-		height: 2.6rem;
+		width: 2.4rem;
+		height: 2.4rem;
 		padding: 0.2rem 0.3rem;
 		border: 1px solid var(--sl-color-white);
 		font-size: var(--sl-text-sm);
@@ -284,6 +287,7 @@ const lista = [...grafo.nodos.values()]
 		color: #ffffff;
 	}
 	.titulo {
+		font-size: 0.9375rem;
 		font-weight: 600;
 		line-height: 1.3;
 	}

@@ -177,16 +177,25 @@ export function compararNodos(grafo: Grafo, a: string, b: string): number {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Disposición en capas (método de Sugiyama simplificado)                      */
+/* Disposición en columnas (método de Sugiyama simplificado)                   */
 /* -------------------------------------------------------------------------- */
+
+/*
+ * Cada nivel es una columna, de izquierda a derecha: los conceptos previos a la
+ * izquierda y lo que se apoya en ellos a la derecha. Dentro de cada columna las
+ * tarjetas se apilan hacia abajo. Así el ancho solo depende de cuántos niveles
+ * hay (que crece muy despacio) y no de cuántos problemas (que crece rápido).
+ */
 
 export interface Medidas {
 	anchoTarjeta: number;
 	altoTarjeta: number;
-	/** Espacio horizontal que reserva una arista larga al atravesar una capa. */
-	anchoHueco: number;
-	separacionX: number;
-	separacionY: number;
+	/** Espacio vertical que reserva una arista larga al atravesar una columna. */
+	altoHueco: number;
+	/** Separación horizontal entre columnas. */
+	separacionColumnas: number;
+	/** Separación vertical entre tarjetas de la misma columna. */
+	separacionFilas: number;
 }
 
 export interface Caja {
@@ -203,10 +212,12 @@ export interface NodoDispuesto extends Caja {
 export interface AristaDispuesta extends Arista {
 	/** Atributo `d` de un `<path>` SVG. */
 	trazado: string;
+	/** Punto de salida, en el borde derecho del padre. */
 	inicio: { x: number; y: number };
+	/** Punto de llegada, en el borde izquierdo del hijo. */
 	fin: { x: number; y: number };
-	/** Puntos por los que pasa al atravesar capas intermedias (uno por capa). */
-	huecos: { x: number; yArriba: number; yAbajo: number }[];
+	/** Tramos por los que pasa al atravesar columnas intermedias (uno por columna). */
+	huecos: { y: number; xIzquierda: number; xDerecha: number }[];
 }
 
 export interface Disposicion {
@@ -220,114 +231,116 @@ interface Elemento {
 	clave: string;
 	/** Id del nodo, o undefined si es un hueco de una arista larga. */
 	nodo?: string;
-	arriba: Elemento[];
-	abajo: Elemento[];
-	x: number;
+	/** Vecinos en la columna anterior y en la siguiente. */
+	previos: Elemento[];
+	siguientes: Elemento[];
+	/** Posición vertical del centro. */
+	y: number;
 }
 
 /**
- * Coloca los nodos en capas según su nivel y traza las aristas. Las aristas que
- * saltan varias capas pasan por «huecos» reservados en las capas intermedias,
- * de modo que nunca atraviesan una tarjeta.
+ * Coloca los nodos en columnas según su nivel y traza las aristas. Las aristas
+ * que saltan varias columnas pasan por «huecos» reservados en las columnas
+ * intermedias, de modo que nunca atraviesan una tarjeta.
  */
 export function disponer(grafo: Grafo, medidas: Medidas): Disposicion {
 	const nivel = niveles(grafo);
-	const numCapas = Math.max(0, ...nivel.values()) + 1;
-	const capas: Elemento[][] = Array.from({ length: numCapas }, () => []);
+	const numColumnas = Math.max(0, ...nivel.values()) + 1;
+	const columnas: Elemento[][] = Array.from({ length: numColumnas }, () => []);
 	const elementos = new Map<string, Elemento>();
 
 	for (const id of [...grafo.nodos.keys()].sort((a, b) => compararNodos(grafo, a, b))) {
-		const elemento: Elemento = { clave: id, nodo: id, arriba: [], abajo: [], x: 0 };
+		const elemento: Elemento = { clave: id, nodo: id, previos: [], siguientes: [], y: 0 };
 		elementos.set(id, elemento);
-		capas[nivel.get(id)!].push(elemento);
+		columnas[nivel.get(id)!].push(elemento);
 	}
 
 	const cadenas = grafo.aristas.map((arista, k) => {
 		const cadena = [elementos.get(arista.desde)!];
-		for (let capa = nivel.get(arista.desde)! + 1; capa < nivel.get(arista.hasta)!; capa++) {
-			const hueco: Elemento = { clave: `hueco:${k}:${capa}`, arriba: [], abajo: [], x: 0 };
-			capas[capa].push(hueco);
+		for (let columna = nivel.get(arista.desde)! + 1; columna < nivel.get(arista.hasta)!; columna++) {
+			const hueco: Elemento = { clave: `hueco:${k}:${columna}`, previos: [], siguientes: [], y: 0 };
+			columnas[columna].push(hueco);
 			cadena.push(hueco);
 		}
 		cadena.push(elementos.get(arista.hasta)!);
 		for (let i = 0; i + 1 < cadena.length; i++) {
-			cadena[i].abajo.push(cadena[i + 1]);
-			cadena[i + 1].arriba.push(cadena[i]);
+			cadena[i].siguientes.push(cadena[i + 1]);
+			cadena[i + 1].previos.push(cadena[i]);
 		}
 		return cadena;
 	});
 
-	const anchoDe = (e: Elemento) => (e.nodo ? medidas.anchoTarjeta : medidas.anchoHueco);
-	const anchoCapa = (capa: Elemento[]) =>
-		capa.reduce((total, e) => total + anchoDe(e), 0) + Math.max(0, capa.length - 1) * medidas.separacionX;
+	const altoDe = (e: Elemento) => (e.nodo ? medidas.altoTarjeta : medidas.altoHueco);
+	const altoColumna = (columna: Elemento[]) =>
+		columna.reduce((total, e) => total + altoDe(e), 0) + Math.max(0, columna.length - 1) * medidas.separacionFilas;
 	const colocar = () => {
-		const ancho = Math.max(...capas.map(anchoCapa));
-		for (const capa of capas) {
-			let x = (ancho - anchoCapa(capa)) / 2;
-			for (const e of capa) {
-				e.x = x + anchoDe(e) / 2;
-				x += anchoDe(e) + medidas.separacionX;
+		const alto = Math.max(...columnas.map(altoColumna));
+		for (const columna of columnas) {
+			let y = (alto - altoColumna(columna)) / 2;
+			for (const e of columna) {
+				e.y = y + altoDe(e) / 2;
+				y += altoDe(e) + medidas.separacionFilas;
 			}
 		}
-		return ancho;
+		return alto;
 	};
 
-	// Ordena cada capa por el baricentro de sus vecinos para reducir cruces.
-	const ordenar = (capa: Elemento[], vecinos: (e: Elemento) => Elemento[]) => {
+	// Ordena cada columna por el baricentro de sus vecinos para reducir cruces.
+	const ordenar = (columna: Elemento[], vecinos: (e: Elemento) => Elemento[]) => {
 		const clave = new Map(
-			capa.map((e, i) => {
+			columna.map((e, i) => {
 				const v = vecinos(e);
-				return [e, v.length ? v.reduce((s, n) => s + n.x, 0) / v.length : e.x + i * 1e-6] as const;
+				return [e, v.length ? v.reduce((s, n) => s + n.y, 0) / v.length : e.y + i * 1e-6] as const;
 			}),
 		);
-		capa.sort((a, b) => clave.get(a)! - clave.get(b)!);
+		columna.sort((a, b) => clave.get(a)! - clave.get(b)!);
 	};
 	colocar();
 	for (let pasada = 0; pasada < 4; pasada++) {
-		for (let i = 1; i < numCapas; i++) {
-			ordenar(capas[i], (e) => e.arriba);
+		for (let i = 1; i < numColumnas; i++) {
+			ordenar(columnas[i], (e) => e.previos);
 			colocar();
 		}
-		for (let i = numCapas - 2; i >= 0; i--) {
-			ordenar(capas[i], (e) => e.abajo);
+		for (let i = numColumnas - 2; i >= 0; i--) {
+			ordenar(columnas[i], (e) => e.siguientes);
 			colocar();
 		}
 	}
-	const ancho = colocar();
+	const alto = colocar();
 
-	const yArriba = (capa: number) => capa * (medidas.altoTarjeta + medidas.separacionY);
-	const capaDe = new Map<Elemento, number>();
-	capas.forEach((capa, i) => capa.forEach((e) => capaDe.set(e, i)));
+	const xIzquierda = (columna: number) => columna * (medidas.anchoTarjeta + medidas.separacionColumnas);
+	const columnaDe = new Map<Elemento, number>();
+	columnas.forEach((columna, i) => columna.forEach((e) => columnaDe.set(e, i)));
 
 	// Reparte los puntos de salida y de llegada a lo largo del borde de cada tarjeta.
 	const puerto = (e: Elemento, vecino: Elemento, lista: Elemento[]) => {
-		if (!e.nodo) return e.x;
-		const ordenados = [...lista].sort((a, b) => a.x - b.x);
-		const paso = medidas.anchoTarjeta / (ordenados.length + 1);
-		return e.x - medidas.anchoTarjeta / 2 + paso * (ordenados.indexOf(vecino) + 1);
+		if (!e.nodo) return e.y;
+		const ordenados = [...lista].sort((a, b) => a.y - b.y);
+		const paso = medidas.altoTarjeta / (ordenados.length + 1);
+		return e.y - medidas.altoTarjeta / 2 + paso * (ordenados.indexOf(vecino) + 1);
 	};
 
 	const aristas: AristaDispuesta[] = cadenas.map((cadena, k) => {
 		const huecos: AristaDispuesta['huecos'] = [];
 		const primero = cadena[0];
 		const inicio = {
-			x: puerto(primero, cadena[1], primero.abajo),
-			y: yArriba(capaDe.get(primero)!) + medidas.altoTarjeta,
+			x: xIzquierda(columnaDe.get(primero)!) + medidas.anchoTarjeta,
+			y: puerto(primero, cadena[1], primero.siguientes),
 		};
 		let trazado = `M ${inicio.x} ${inicio.y}`;
 		let anterior = inicio;
 		for (let i = 1; i < cadena.length; i++) {
 			const e = cadena[i];
-			const capa = capaDe.get(e)!;
-			const llegada = { x: puerto(e, cadena[i - 1], e.arriba), y: yArriba(capa) };
-			const medio = (anterior.y + llegada.y) / 2;
-			trazado += ` C ${anterior.x} ${medio}, ${llegada.x} ${medio}, ${llegada.x} ${llegada.y}`;
+			const izquierda = xIzquierda(columnaDe.get(e)!);
+			const llegada = { x: izquierda, y: puerto(e, cadena[i - 1], e.previos) };
+			const medio = (anterior.x + llegada.x) / 2;
+			trazado += ` C ${medio} ${anterior.y}, ${medio} ${llegada.y}, ${llegada.x} ${llegada.y}`;
 			anterior = llegada;
 			if (!e.nodo) {
-				const abajo = yArriba(capa) + medidas.altoTarjeta;
-				huecos.push({ x: e.x, yArriba: llegada.y, yAbajo: abajo });
-				trazado += ` L ${e.x} ${abajo}`;
-				anterior = { x: e.x, y: abajo };
+				const derecha = izquierda + medidas.anchoTarjeta;
+				huecos.push({ y: e.y, xIzquierda: izquierda, xDerecha: derecha });
+				trazado += ` L ${derecha} ${e.y}`;
+				anterior = { x: derecha, y: e.y };
 			}
 		}
 		return { ...grafo.aristas[k], trazado, inicio, fin: anterior, huecos };
@@ -335,11 +348,12 @@ export function disponer(grafo: Grafo, medidas: Medidas): Disposicion {
 
 	const nodos: NodoDispuesto[] = [...elementos.values()].map((e) => ({
 		id: e.nodo!,
-		x: e.x - medidas.anchoTarjeta / 2,
-		y: yArriba(capaDe.get(e)!),
+		x: xIzquierda(columnaDe.get(e)!),
+		y: e.y - medidas.altoTarjeta / 2,
 		ancho: medidas.anchoTarjeta,
 		alto: medidas.altoTarjeta,
 	}));
 
-	return { ancho, alto: yArriba(numCapas - 1) + medidas.altoTarjeta, nodos, aristas };
+	const ancho = numColumnas * medidas.anchoTarjeta + (numColumnas - 1) * medidas.separacionColumnas;
+	return { ancho, alto, nodos, aristas };
 }
