@@ -57,6 +57,7 @@ export default defineConfig({
 				'./src/styles/tema.css',
 				'./src/styles/custom.css',
 			],
+			routeMiddleware: './src/menu-lateral.ts',
 			components: {
 				Hero: './src/components/Heroe.astro',
 				PageTitle: './src/components/TituloPagina.astro',

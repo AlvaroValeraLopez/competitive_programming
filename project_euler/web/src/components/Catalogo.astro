@@ -1,0 +1,239 @@
+---
+// Catálogo completo de problemas (por decenas) o de conceptos (por áreas), con
+// buscador. Los problemas se pueden filtrar además por área: las áreas de los
+// conceptos que usan, que son pocas aunque haya muchos problemas.
+import { Icon } from '@astrojs/starlight/components';
+import TarjetaPagina from './TarjetaPagina.astro';
+import { AREAS, agruparConceptos, agruparProblemas, normalizar } from '../lib/menu';
+import { obtenerPaginas, type PaginaContenido } from '../lib/paginas';
+import { obtenerGrafo } from '../lib/relaciones';
+
+interface Props {
+	tipo: 'problemas' | 'conceptos';
+}
+
+const { tipo } = Astro.props;
+const { problemas, conceptos } = await obtenerPaginas();
+const grafo = await obtenerGrafo();
+
+const areaDeConcepto = new Map(conceptos.map((c) => [c.id, c.area]));
+const areasDe = (pagina: PaginaContenido): string[] => {
+	if (pagina.area) return [pagina.area];
+	const areas = new Set(grafo.nodos.get(pagina.id)?.padres.map((c) => areaDeConcepto.get(c)));
+	return AREAS.filter((a) => areas.has(a));
+};
+
+const grupos =
+	tipo === 'problemas'
+		? agruparProblemas(problemas).map((d) => ({
+				titulo: d.etiqueta,
+				cuenta: `${d.problemas.length} de 10`,
+				paginas: d.problemas,
+			}))
+		: agruparConceptos(conceptos).map((g) => ({
+				titulo: g.area,
+				cuenta: `${g.conceptos.length} ${g.conceptos.length === 1 ? 'concepto' : 'conceptos'}`,
+				paginas: g.conceptos,
+			}));
+
+const paginas = tipo === 'problemas' ? problemas : conceptos;
+const areasPresentes = AREAS.filter((a) => paginas.some((p) => areasDe(p).includes(a)));
+const textoDe = (p: PaginaContenido) =>
+	normalizar([p.numero, p.etiqueta, p.descripcion, ...p.temas, ...areasDe(p)].filter(Boolean).join(' '));
+const singular = tipo === 'problemas' ? 'problema' : 'concepto';
+---
+
+<catalogo-paginas class="catalogo not-content" data-singular={singular} data-plural={tipo}>
+	<div class="filtros">
+		<label class="buscador">
+			<Icon name="magnifier" size="1.1rem" />
+			<span class="sr-only">Buscar {tipo}</span>
+			<input
+				type="search"
+				placeholder={tipo === 'problemas' ? 'Buscar por número, título o tema' : 'Buscar por nombre o tema'}
+				autocomplete="off"
+				data-buscador
+			/>
+		</label>
+		{
+			tipo === 'problemas' && areasPresentes.length > 1 && (
+				<div class="chips" role="group" aria-label="Filtrar por área">
+					<button type="button" aria-pressed="true" data-area="">
+						Todas las áreas
+					</button>
+					{areasPresentes.map((area) => (
+						<button type="button" aria-pressed="false" data-area={area}>
+							{area}
+						</button>
+					))}
+				</div>
+			)
+		}
+		<p class="recuento" aria-live="polite" data-recuento>{paginas.length} {tipo}</p>
+	</div>
+
+	{
+		grupos.map((grupo) => (
+			<section data-grupo>
+				<h2>
+					{grupo.titulo}
+					<span class="cuenta">{grupo.cuenta}</span>
+				</h2>
+				<ul class="rejilla-tarjetas">
+					{grupo.paginas.map((pagina) => (
+						<TarjetaPagina
+							pagina={pagina}
+							compacta={tipo === 'conceptos'}
+							data-texto={textoDe(pagina)}
+							data-numero={pagina.numero}
+							data-areas={areasDe(pagina).join('|')}
+						/>
+					))}
+				</ul>
+			</section>
+		))
+	}
+
+	<p class="vacio" hidden data-vacio>Ningún {singular} coincide con la búsqueda.</p>
+</catalogo-paginas>
+
+<script>
+	import { normalizar } from '../lib/menu';
+
+	class CatalogoPaginas extends HTMLElement {
+		connectedCallback() {
+			const buscador = this.querySelector<HTMLInputElement>('[data-buscador]')!;
+			const chips = [...this.querySelectorAll<HTMLButtonElement>('[data-area]')];
+			const tarjetas = [...this.querySelectorAll<HTMLElement>('li[data-texto]')];
+			const grupos = [...this.querySelectorAll<HTMLElement>('[data-grupo]')];
+			const recuento = this.querySelector<HTMLElement>('[data-recuento]')!;
+			const vacio = this.querySelector<HTMLElement>('[data-vacio]')!;
+			const { singular, plural } = this.dataset;
+			let area = '';
+
+			const filtrar = () => {
+				const consulta = normalizar(buscador.value.trim());
+				const esNumero = /^\d+$/.test(consulta);
+				let visibles = 0;
+				for (const tarjeta of tarjetas) {
+					const porTexto =
+						!consulta ||
+						(esNumero && tarjeta.dataset.numero ? tarjeta.dataset.numero === consulta : tarjeta.dataset.texto!.includes(consulta));
+					const porArea = !area || tarjeta.dataset.areas!.split('|').includes(area);
+					tarjeta.hidden = !(porTexto && porArea);
+					if (!tarjeta.hidden) visibles++;
+				}
+				for (const grupo of grupos) grupo.hidden = !grupo.querySelector('li[data-texto]:not([hidden])');
+				vacio.hidden = visibles > 0;
+				const total = tarjetas.length;
+				recuento.textContent =
+					visibles === total
+						? `${total} ${total === 1 ? singular : plural}`
+						: `${visibles} de ${total} ${total === 1 ? singular : plural}`;
+			};
+
+			buscador.addEventListener('input', filtrar);
+			for (const chip of chips) {
+				chip.addEventListener('click', () => {
+					area = chip.dataset.area!;
+					chips.forEach((c) => c.setAttribute('aria-pressed', String(c === chip)));
+					filtrar();
+				});
+			}
+		}
+	}
+
+	customElements.define('catalogo-paginas', CatalogoPaginas);
+</script>
+
+<style>
+	.catalogo {
+		display: block;
+		margin-top: 1rem;
+	}
+	.filtros {
+		display: grid;
+		gap: 0.9rem;
+		margin-bottom: 0.5rem;
+	}
+	.buscador {
+		display: flex;
+		gap: 0.6rem;
+		align-items: center;
+		max-width: 28rem;
+		padding: 0.65rem 1rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: var(--euler-radio);
+		background: var(--sl-color-black);
+		box-shadow: var(--euler-sombra);
+		color: var(--sl-color-gray-3);
+	}
+	.buscador:focus-within {
+		border-color: var(--sl-color-accent);
+	}
+	input {
+		flex: 1;
+		min-width: 0;
+		border: 0;
+		outline: 0;
+		background: transparent;
+		color: var(--sl-color-white);
+		font: inherit;
+	}
+	input::placeholder {
+		color: var(--sl-color-gray-3);
+	}
+	.chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+	.chips button {
+		padding: 0.35rem 0.9rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 999rem;
+		background: var(--sl-color-black);
+		color: var(--sl-color-gray-1);
+		font: inherit;
+		font-size: var(--sl-text-xs);
+		font-weight: 500;
+		cursor: pointer;
+	}
+	.chips button:hover {
+		border-color: var(--sl-color-accent);
+	}
+	.chips button[aria-pressed='true'] {
+		border-color: var(--euler-boton-borde);
+		background: var(--sl-color-accent);
+		color: #ffffff;
+	}
+	.recuento {
+		margin: 0;
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-3);
+	}
+	section {
+		margin-top: 2.25rem;
+	}
+	h2 {
+		display: flex;
+		gap: 0.75rem;
+		align-items: baseline;
+		margin: 0;
+		font-size: var(--sl-text-2xl);
+		font-weight: 700;
+		color: var(--sl-color-white);
+	}
+	.cuenta {
+		font-size: var(--sl-text-sm);
+		font-weight: 500;
+		color: var(--sl-color-gray-3);
+	}
+	.rejilla-tarjetas {
+		margin-top: 1rem;
+	}
+	.vacio {
+		margin-top: 2rem;
+		color: var(--sl-color-gray-2);
+	}
+</style>
