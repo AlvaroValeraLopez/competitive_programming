@@ -11,6 +11,10 @@ export const collections = {
 				// Temas matemáticos de la página: se muestran bajo el título y en las
 				// tarjetas de la portada.
 				temas: z.array(z.string()).optional(),
+				// Relaciones (ver src/lib/grafo.ts). Problemas: conceptos que usan.
+				// Conceptos: conceptos previos que necesitan. Sin el prefijo «conceptos/».
+				conceptos: z.array(z.string()).optional(),
+				requiere: z.array(z.string()).optional(),
 			}),
 		}),
 	}),

@@ -6,7 +6,8 @@ sidebar:
   order: 1
 ---
 
-import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Aside } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
 import GaussStaircase from '../../../components/GaussStaircase.astro';
 import Video from '../../../components/Video.astro';
 
@@ -98,15 +99,4 @@ La segunda dice que la suma de los primeros cubos es el cuadrado de un número t
 
 ## Dónde aparece
 
-<CardGrid>
-	<LinkCard
-		title="Problema 1: Múltiplos de 3 y 5"
-		description="Sumar múltiplos sin recorrerlos uno a uno."
-		href="../../problemas/001-multiplos-de-3-y-5/"
-	/>
-	<LinkCard
-		title="Problema 12: Número triangular muy divisible"
-		description="Los números triangulares y su factorización."
-		href="../../problemas/012-numero-triangular-muy-divisible/"
-	/>
-</CardGrid>
+<Relaciones mostrar="aparece" />

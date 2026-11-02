@@ -5,9 +5,11 @@ sidebar:
   label: '12 · Triangular muy divisible'
   order: 12
 temas: [Divisores, Números coprimos]
+conceptos: [suma-de-gauss, funcion-divisor]
 ---
 
-import { Aside, CardGrid, Code, LinkCard, TabItem, Tabs } from '@astrojs/starlight/components';
+import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
 import solucion from '@soluciones/11_20/12_highlyDivisibleTriangularNumber.js?raw';
 
 ## El problema
@@ -166,15 +168,8 @@ Los números con muchos divisores son raros. El número medio de divisores de lo
 
 ## Conceptos utilizados
 
-<CardGrid>
-	<LinkCard
-		title="Suma de Gauss"
-		description="La fórmula cerrada de los números triangulares."
-		href="../../conceptos/suma-de-gauss/"
-	/>
-	<LinkCard
-		title="Función divisor"
-		description="Factorización, multiplicatividad y conteo por parejas."
-		href="../../conceptos/funcion-divisor/"
-	/>
-</CardGrid>
+<Relaciones mostrar="conceptos" />
+
+## Problemas relacionados
+
+<Relaciones mostrar="relacionados" />

@@ -4,9 +4,11 @@ description: Cómo contar (o sumar) los elementos de una unión de conjuntos sin
 sidebar:
   label: Inclusión-exclusión
   order: 2
+requiere: [coeficientes-binomiales]
 ---
 
-import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Aside } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
 
 ## Dos conjuntos
 
@@ -68,12 +70,10 @@ Así, los múltiplos de 3 o de 5 son $M_3 \cup M_5$, y su intersección es $M_{1
 El mínimo común múltiplo solo coincide con el producto cuando los números no comparten factores. Los múltiplos de 4 y de 6 a la vez son los múltiplos de $\operatorname{mcm}(4, 6) = 12$, **no** los de 24.
 </Aside>
 
+## Conceptos previos
+
+<Relaciones mostrar="requiere" />
+
 ## Dónde aparece
 
-<CardGrid>
-	<LinkCard
-		title="Problema 1: Múltiplos de 3 y 5"
-		description="Sumar los múltiplos de 3 o de 5 sin contar dos veces los de 15."
-		href="../../problemas/001-multiplos-de-3-y-5/"
-	/>
-</CardGrid>
+<Relaciones mostrar="aparece" />

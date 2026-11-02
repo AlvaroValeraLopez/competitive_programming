@@ -6,7 +6,8 @@ sidebar:
   order: 3
 ---
 
-import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Aside } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
 
 ## Definición
 
@@ -83,10 +84,4 @@ donde $\gamma \approx 0{,}5772$ es la constante de Euler-Mascheroni. Los enteros
 
 ## Dónde aparece
 
-<CardGrid>
-	<LinkCard
-		title="Problema 12: Número triangular muy divisible"
-		description="Buscar el primer número triangular con más de 500 divisores."
-		href="../../problemas/012-numero-triangular-muy-divisible/"
-	/>
-</CardGrid>
+<Relaciones mostrar="aparece" />

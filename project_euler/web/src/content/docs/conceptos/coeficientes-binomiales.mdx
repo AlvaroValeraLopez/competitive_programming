@@ -6,7 +6,8 @@ sidebar:
   order: 4
 ---
 
-import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Aside } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
 
 ## Definición
 
@@ -112,15 +113,4 @@ El error relativo es de alrededor de $\frac{1}{8n}$, así que la aproximación m
 
 ## Dónde aparece
 
-<CardGrid>
-	<LinkCard
-		title="Problema 15: Caminos en una cuadrícula"
-		description="Contar caminos es elegir en qué pasos se va a la derecha."
-		href="../../problemas/015-caminos-en-una-cuadricula/"
-	/>
-	<LinkCard
-		title="Principio de inclusión-exclusión"
-		description="El teorema del binomio explica por qué la fórmula funciona."
-		href="../inclusion-exclusion/"
-	/>
-</CardGrid>
+<Relaciones mostrar="aparece" />
