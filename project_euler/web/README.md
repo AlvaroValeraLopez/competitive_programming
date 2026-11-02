@@ -21,8 +21,11 @@ src/
 │   └── …                    # Dibujos, vídeo y componentes interactivos
 ├── content/docs/
 │   ├── index.mdx            # Portada
-│   ├── problemas/           # Una página por problema: 001-..., 012-..., 015-...
-│   └── conceptos/           # Teoría reutilizable entre problemas
+│   ├── mapa.mdx             # Mapa de relaciones
+│   ├── problemas/           # index.mdx (catálogo) y una página por problema: 001-..., 012-...
+│   └── conceptos/           # index.mdx (catálogo) y la teoría reutilizable entre problemas
+├── lib/                     # Lógica pura con tests (grafo, menú) y lectura del contenido
+├── menu-lateral.ts          # Genera el menú lateral a partir del frontmatter
 └── styles/
     ├── tema.css             # Colores, tipografía y formas (estética de Exercism)
     └── custom.css           # Ajustes de fórmulas y tablas
@@ -48,7 +51,21 @@ requiere: [coeficientes-binomiales]
 
 A partir de ahí se genera todo lo demás: el [mapa](src/content/docs/mapa.mdx), las secciones «Conceptos utilizados» y «Problemas relacionados» de cada problema, y «Conceptos previos» y «Dónde aparece» de cada concepto (con `<Relaciones mostrar="…" />`). Si una página usa un concepto que no existe, o los conceptos previos forman un ciclo, la compilación falla diciendo dónde está el error.
 
-La lógica está en `src/lib/grafo.ts`, sin dependencias de Astro, y tiene tests:
+## Menú lateral y catálogos
+
+El menú no se escribe a mano: `src/menu-lateral.ts` (un *route middleware* de Starlight) lo genera en cada página a partir del frontmatter, para que siga siendo manejable cuando haya cien problemas.
+
+- **Problemas**, agrupados por decenas (1–10, 11–20…) según `sidebar.order`, con un contador de los explicados en cada una («2/10»). Solo aparecen las decenas que tienen algún problema.
+- **Conceptos**, agrupados por área según el campo `area`, que es obligatorio en los conceptos y debe ser una de las áreas de `AREAS` en `src/lib/menu.ts` (para añadir una área nueva, añádela ahí).
+- Todos los grupos van plegados, salvo el que contiene la página actual.
+
+Cada sección tiene su catálogo completo, con buscador (por número, título o tema, sin que importen las tildes): **Todos los problemas** (`/problemas/`), que además filtra por el área de los conceptos que usa cada problema, y **Todos los conceptos** (`/conceptos/`). La portada solo muestra las primeras tarjetas y enlaza a ellos.
+
+Si a un concepto le falta el área, o dos problemas tienen el mismo número, la compilación falla diciendo dónde.
+
+## Tests
+
+La lógica del grafo (`src/lib/grafo.ts`) y del menú (`src/lib/menu.ts`) no depende de Astro y tiene tests:
 
 ```bash
 npm test
@@ -60,7 +77,8 @@ npm test
    el problema, la idea en una frase, la fuerza bruta, el desarrollo matemático, el código,
    la complejidad y los conceptos utilizados. En el frontmatter, `sidebar.order` es el número
    del problema, `temas` la lista de etiquetas y `conceptos` los conceptos que usa (ver
-   «Relaciones»); la portada genera su tarjeta a partir de estos campos y de `description`.
+   «Relaciones»). La tarjeta del catálogo y su entrada en el menú salen de estos campos y de
+   `description`. Un concepto nuevo necesita además `area`.
 2. El código del repositorio se importa sin copiarlo, con el alias `@soluciones`, que apunta a
    `../problems_1_to_hundred`:
 
