@@ -1,0 +1,8 @@
+# entorno de Python
+.venv/
+__pycache__/
+.pytest_cache/
+
+# salida de Manim (los vídeos finales se copian a ../web/public/videos)
+build/
+media/
