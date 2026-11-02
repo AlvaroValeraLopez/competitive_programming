@@ -1,0 +1,153 @@
+---
+title: 'Problema 6: Cuadrado de la suma menos suma de cuadrados'
+description: Restar la suma de los cuadrados del 1 al 100 al cuadrado de su suma con dos fórmulas cerradas, y ver qué cuenta esa diferencia en la tabla de multiplicar.
+sidebar:
+  label: '6 · Cuadrado de la suma'
+  order: 6
+temas: [Sumas, Fórmulas cerradas]
+conceptos: [suma-de-gauss, suma-de-cuadrados]
+---
+
+import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+import solucion from '@soluciones/1_10/6_ sumSquareDifference.js?raw';
+
+## El problema
+
+La suma de los cuadrados de los diez primeros números es $1^2 + 2^2 + \cdots + 10^2 = 385$, y el cuadrado de su suma es $(1 + 2 + \cdots + 10)^2 = 55^2 = 3025$. La diferencia es $3025 - 385 = 2640$.
+
+**¿Cuál es la diferencia entre el cuadrado de la suma y la suma de los cuadrados de los cien primeros números?**
+
+[Enunciado original en Project Euler](https://projecteuler.net/problem=6)
+
+## La idea en una frase
+
+Las dos cantidades tienen fórmula cerrada, la suma de Gauss al cuadrado y la suma de los cuadrados, así que la diferencia se calcula con unas pocas operaciones, y además se puede simplificar en un único producto.
+
+## Primer intento: fuerza bruta
+
+```js
+const N = 100;
+let suma = 0;
+let sumaDeCuadrados = 0;
+for (let k = 1; k <= N; k++) {
+  suma += k;
+  sumaDeCuadrados += k * k;
+}
+console.log(suma * suma - sumaDeCuadrados);
+```
+
+Son 100 vueltas, así que con $N = 100$ es inmediato. Pero el coste crece con $N$: con $N = 10^9$ ya son mil millones de vueltas, y con las fórmulas sigue siendo un puñado de operaciones.
+
+## Desarrollo matemático
+
+### Paso 1: el cuadrado de la suma
+
+La suma de los $n$ primeros números es la [suma de Gauss](../../conceptos/suma-de-gauss/), así que
+
+$$
+\left(\sum_{k=1}^{n} k\right)^2 = \left(\frac{n(n+1)}{2}\right)^2
+$$
+
+### Paso 2: la suma de los cuadrados
+
+Es la fórmula de la [suma de cuadrados](../../conceptos/suma-de-cuadrados/):
+
+$$
+\sum_{k=1}^{n} k^2 = \frac{n(n+1)(2n+1)}{6}
+$$
+
+Con estos dos pasos el problema ya está resuelto: basta con restar.
+
+### Paso 3: qué cuenta la diferencia
+
+Al elevar la suma al cuadrado salen todos los productos $i \cdot j$ con $i$ y $j$ entre 1 y $n$: son las casillas de la tabla de multiplicar de $n \times n$. La diagonal, donde $i = j$, es justo la suma de los cuadrados. Al restarla quedan las casillas de fuera de la diagonal, en las que cada producto aparece dos veces, $i \cdot j$ y $j \cdot i$:
+
+$$
+\left(\sum_{k=1}^{n} k\right)^2 - \sum_{k=1}^{n} k^2 = 2\sum_{1 \le i < j \le n} i\,j
+$$
+
+Para $n = 10$, la suma de los productos $i \cdot j$ con $i < j$ es 1320, y su doble es 2640.
+
+### Paso 4: una fórmula de un solo producto
+
+Restamos las fórmulas de los pasos 1 y 2 sacando factor común $\frac{n(n+1)}{12}$:
+
+$$
+\frac{n^2(n+1)^2}{4} - \frac{n(n+1)(2n+1)}{6} = \frac{n(n+1)}{12}\,\big(3n(n+1) - 2(2n+1)\big) = \frac{n(n+1)\,(3n^2 - n - 2)}{12}
+$$
+
+Y el último paréntesis se factoriza, porque se anula en $n = 1$: $3n^2 - n - 2 = (n - 1)(3n + 2)$. Por tanto
+
+$$
+D(n) = \frac{(n-1)\,n\,(n+1)\,(3n+2)}{12}
+$$
+
+**Un detalle bonito.** El cuadrado de la suma es también la suma de los cubos, $\left(\sum k\right)^2 = \sum k^3$ (teorema de Nicómaco, en [suma de cuadrados](../../conceptos/suma-de-cuadrados/#la-suma-de-los-cubos)). Así que la diferencia también es
+
+$$
+D(n) = \sum_{k=1}^{n} \left(k^3 - k^2\right) = \sum_{k=1}^{n} k^2 (k - 1)
+$$
+
+### Paso 5: comprobarlo con el ejemplo
+
+Con $n = 10$:
+
+| Cantidad | Fórmula | Valor |
+| --- | --- | --- |
+| Cuadrado de la suma | $\left(\frac{10 \cdot 11}{2}\right)^2$ | 3025 |
+| Suma de los cuadrados | $\frac{10 \cdot 11 \cdot 21}{6}$ | 385 |
+| Diferencia (paso 4) | $\frac{9 \cdot 10 \cdot 11 \cdot 32}{12}$ | 2640 |
+
+Las tres coinciden con el enunciado.
+
+## El código
+
+<Tabs>
+<TabItem label="JavaScript (repositorio)">
+
+<Code code={solucion} lang="js" title="6_ sumSquareDifference.js" />
+
+Es exactamente el desarrollo: `squareOfTheSum` es el paso 1 y `sumOfSquares` el paso 2. Las dos divisiones son exactas: $n(n+1)$ siempre es par, y $n(n+1)(2n+1)$ siempre es múltiplo de 6.
+
+</TabItem>
+<TabItem label="Python">
+
+```python
+def diferencia(n):
+    return (n - 1) * n * (n + 1) * (3 * n + 2) // 12
+
+print(diferencia(100))
+```
+
+Usa la fórmula del paso 4. Con `diferencia(10)` devuelve 2640, el ejemplo del enunciado. La división entre 12 es exacta, porque la fórmula sale de restar dos enteros, así que `//` no pierde nada.
+
+</TabItem>
+</Tabs>
+
+<Aside type="caution" title="Números grandes en JavaScript">
+La diferencia crece como $n^4 / 4$. Con $n = 100$ es pequeña, pero a partir de $n = 13\,778$ pasa de $2^{53} \approx 9 \cdot 10^{15}$, el mayor entero que un `Number` representa con exactitud, y el resultado del repositorio empezaría a redondearse. Para valores así hay que usar `BigInt`. En Python no hace falta.
+</Aside>
+
+## Complejidad
+
+| Método | Coste | $n = 100$ | $n = 10^9$ |
+| --- | --- | --- | --- |
+| Fuerza bruta | $O(n)$ | 100 vueltas | $10^9$ vueltas |
+| Fórmulas (repositorio) | $O(1)$ | unas 10 operaciones | unas 10 operaciones |
+
+## Generalización
+
+La misma idea sirve para cualquier lista de números $a_1, \dots, a_n$: el cuadrado de su suma menos la suma de sus cuadrados es el doble de la suma de los productos por parejas, $2\sum_{i<j} a_i a_j$. Por eso, para sumar los productos de todas las parejas de una lista no hace falta recorrer las $\binom{n}{2}$ parejas, que serían del orden de $n^2$: basta con dos sumas y una resta.
+
+$$
+\sum_{i<j} a_i\, a_j = \frac{\left(\sum a_i\right)^2 - \sum a_i^2}{2}
+$$
+
+## Conceptos utilizados
+
+<Relaciones mostrar="conceptos" />
+
+## Problemas relacionados
+
+<Relaciones mostrar="relacionados" />

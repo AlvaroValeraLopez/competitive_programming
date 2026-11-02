@@ -1,0 +1,163 @@
+---
+title: 'Problema 2: Números de Fibonacci pares'
+description: Sumar los términos pares de la sucesión de Fibonacci que no pasan de cuatro millones, sabiendo que solo es par uno de cada tres y saltando directamente de uno al siguiente.
+sidebar:
+  label: '2 · Fibonacci pares'
+  order: 2
+temas: [Fibonacci, Paridad]
+conceptos: [fibonacci]
+---
+
+import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+import solucion from '@soluciones/1_10/2_evenFibonacciNumbers.js?raw';
+
+## El problema
+
+Cada término nuevo de la sucesión de Fibonacci se obtiene sumando los dos anteriores. Si se empieza por 1 y 2, los diez primeros términos son
+
+$$
+1,\ 2,\ 3,\ 5,\ 8,\ 13,\ 21,\ 34,\ 55,\ 89,\ \dots
+$$
+
+**Teniendo en cuenta solo los términos que no pasan de cuatro millones, ¿cuánto suman los que son pares?**
+
+[Enunciado original en Project Euler](https://projecteuler.net/problem=2)
+
+## La idea en una frase
+
+Solo es par uno de cada tres términos, y los pares siguen su propia recurrencia, así que se puede saltar de un par al siguiente sin pasar por los impares; incluso hay una fórmula para su suma, porque los pares suman exactamente la mitad que todos los términos juntos.
+
+## Primer intento: fuerza bruta
+
+Generamos la sucesión y sumamos los términos pares:
+
+```js
+let a = 1;
+let b = 2;
+let suma = 0;
+while (a <= 4_000_000) {
+  if (a % 2 === 0) suma += a;
+  [a, b] = [b, a + b];
+}
+```
+
+Funciona y es instantáneo: la sucesión crece tan deprisa, cada término aproximadamente 1,618 veces el anterior, que el bucle da poco más de treinta vueltas. Aquí no hay que optimizar nada por velocidad. Lo interesante es lo que aparece al mirar la sucesión de cerca, y que sí importa cuando el límite es gigantesco.
+
+## Desarrollo matemático
+
+Con la numeración habitual, $F_1 = F_2 = 1$ (ver [la sucesión de Fibonacci](../../conceptos/fibonacci/)), la sucesión del enunciado es $F_2, F_3, F_4, \dots$: empieza en $F_2 = 1$ y $F_3 = 2$, saltándose el primer 1. Como ese 1 es impar, da igual para la suma de los pares.
+
+### Paso 1: uno de cada tres es par
+
+La paridad de los términos se repite con periodo 3: impar, impar, par, impar, impar, par… Porque la paridad de cada término solo depende de la de los dos anteriores, y después de $(\text{impar}, \text{impar})$ viene un par, y después vuelve la pareja $(\text{impar}, \text{impar})$. Así que los términos pares son exactamente
+
+$$
+F_3,\ F_6,\ F_9,\ F_{12},\ \dots \;=\; 2,\ 8,\ 34,\ 144,\ 610,\ \dots
+$$
+
+### Paso 2: saltar de un par al siguiente
+
+Llamemos $E_k = F_{3k}$ a los términos pares. Cumplen su propia recurrencia:
+
+$$
+E_{k+1} = 4E_k + E_{k-1}
+$$
+
+**Demostración.** Aplicando la regla de Fibonacci tres veces seguidas,
+
+$$
+F_{n+6} = F_{n+5} + F_{n+4} = 2F_{n+4} + F_{n+3} = 3F_{n+3} + 2F_{n+2}
+$$
+
+Y como $F_{n+2} = F_{n+1} + F_n$ y $F_{n+3} = F_{n+2} + F_{n+1}$, el doble de $F_{n+2}$ se puede escribir como $2F_{n+2} = (F_{n+2} + F_{n+1}) + F_n = F_{n+3} + F_n$. Sustituyendo:
+
+$$
+F_{n+6} = 4F_{n+3} + F_n
+$$
+
+Con $n = 3k - 3$ es la recurrencia de los $E_k$. Por ejemplo, $4 \cdot 8 + 2 = 34$ y $4 \cdot 34 + 8 = 144$.
+
+### Paso 3: los pares suman la mitad del total
+
+Cada término par es la suma de los dos impares que tiene justo delante: $F_{3k} = F_{3k-1} + F_{3k-2}$. Por tanto, si cortamos la sucesión justo después de un par, $F_{3m}$, los pares suman lo mismo que los impares, es decir, la mitad del total:
+
+$$
+\sum_{k=1}^{m} F_{3k} = \frac{1}{2} \sum_{i=1}^{3m} F_i
+$$
+
+Aquí sí hay que contar el primer 1, $F_1$, porque $F_3 = 2$ es la suma de $F_1$ y $F_2$. La suma de los primeros términos de Fibonacci tiene una fórmula cerrada, $\sum_{i=1}^{n} F_i = F_{n+2} - 1$, así que
+
+$$
+\sum_{k=1}^{m} F_{3k} = \frac{F_{3m+2} - 1}{2}
+$$
+
+### Paso 4: comprobarlo con el ejemplo
+
+Con los términos que no pasan de 100, los diez del enunciado, los pares son 2, 8 y 34, que suman 44.
+
+- **Con el paso 2:** después de 2 y 8 viene $4 \cdot 8 + 2 = 34$, y el siguiente, $4 \cdot 34 + 8 = 144$, ya pasa de 100.
+- **Con el paso 3:** el último par es $34 = F_9$, así que $m = 3$ y la suma es $\frac{F_{11} - 1}{2} = \frac{89 - 1}{2} = 44$.
+
+### Paso 5: cuántos términos hay
+
+Como $F_n$ es el entero más cercano a $\varphi^n / \sqrt{5}$, con $\varphi \approx 1{,}618$, el último término que no pasa de un límite $L$ tiene un índice aproximado de
+
+$$
+n \approx \log_{\varphi}\!\big(L\sqrt{5}\big) = \frac{\ln L + \ln \sqrt{5}}{\ln \varphi}
+$$
+
+**El número de términos crece como el logaritmo del límite.** Para $L = 4 \cdot 10^6$ salen unos 33, y solo un tercio de ellos son pares.
+
+## El código
+
+<Tabs>
+<TabItem label="JavaScript (repositorio)">
+
+<Code code={solucion} lang="js" title="2_evenFibonacciNumbers.js" />
+
+El código guarda tres términos seguidos, `a`, `b` y `c`, y empieza con $F_1, F_2, F_3 = 1, 1, 2$. En cada vuelta avanza **tres posiciones de golpe**: `a = b + c` es el siguiente término, `b = a + c` el de después y `c = a + b` el tercero. Así `c` siempre es un término par (paso 1), y el código lo suma sin comprobar la paridad.
+
+La condición `c < LIMIT` usa `<` en lugar de `<=`, aunque el enunciado incluye los términos iguales a cuatro millones. Da igual, porque 4 000 000 no es un número de Fibonacci.
+
+</TabItem>
+<TabItem label="Python">
+
+```python
+def suma_fibonacci_pares(limite):
+    suma = 0
+    anterior, actual = 0, 2        # F_0 y F_3: dos términos pares seguidos
+    while actual <= limite:
+        suma += actual
+        anterior, actual = actual, 4 * actual + anterior
+    return suma
+
+print(suma_fibonacci_pares(4_000_000))
+```
+
+Usa la recurrencia del paso 2 y solo pasa por los términos pares, empezando por $E_0 = F_0 = 0$ y $E_1 = F_3 = 2$. Con `suma_fibonacci_pares(100)` devuelve 44, el ejemplo del paso 4.
+
+</TabItem>
+</Tabs>
+
+<Aside type="note" title="¿Es seguro usar Number?">
+Sí. Todos los términos que intervienen son menores que unos pocos millones, muy lejos de $2^{53} \approx 9 \cdot 10^{15}$. El primer término de Fibonacci que no cabe con exactitud en un `Number` es $F_{79}$.
+</Aside>
+
+## Complejidad
+
+| Método | Términos que recorre | Coste |
+| --- | --- | --- |
+| Fuerza bruta | todos los que no pasan de $L$ | $O(\log L)$ |
+| Repositorio o recurrencia de los pares | un tercio de ellos | $O(\log L)$ |
+| Fórmula del paso 3 | ninguno, si se calcula $F_{3m+2}$ directamente | $O(\log \log L)$ multiplicaciones |
+
+Con $L = 4 \cdot 10^6$ las tres son instantáneas. La diferencia se nota con límites enormes: con $L = 10^{100}$ la sucesión tiene unos 480 términos, algunos de cien cifras. Entonces conviene calcular el índice $m$ con el logaritmo del paso 5 y obtener $F_{3m+2}$ en unos $\log_2(3m)$ pasos con las fórmulas de duplicación que aparecen en [Fibonacci](../../conceptos/fibonacci/#para-profundizar).
+
+## Conceptos utilizados
+
+<Relaciones mostrar="conceptos" />
+
+## Problemas relacionados
+
+<Relaciones mostrar="relacionados" />

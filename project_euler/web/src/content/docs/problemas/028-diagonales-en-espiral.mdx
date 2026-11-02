@@ -1,0 +1,156 @@
+---
+title: 'Problema 28: Diagonales de una espiral'
+description: Sumar las diagonales de una espiral de números de 1001 × 1001 sin construirla, viendo que son las esquinas de cada anillo y que se suman con la fórmula de la suma de cuadrados.
+sidebar:
+  label: '28 · Diagonales de una espiral'
+  order: 28
+temas: [Sumas, Patrones]
+conceptos: [suma-de-cuadrados]
+---
+
+import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+import solucion from '@soluciones/21_30/28_numberSpiralDiagonals.js?raw';
+
+## El problema
+
+Empezando por el 1 y avanzando hacia la derecha en el sentido de las agujas del reloj, se forma una espiral de $5 \times 5$:
+
+$$
+\begin{array}{ccccc}
+\mathbf{21} & 22 & 23 & 24 & \mathbf{25} \\
+20 & \mathbf{7} & 8 & \mathbf{9} & 10 \\
+19 & 6 & \mathbf{1} & 2 & 11 \\
+18 & \mathbf{5} & 4 & \mathbf{3} & 12 \\
+\mathbf{17} & 16 & 15 & 14 & \mathbf{13}
+\end{array}
+$$
+
+Los números de las dos diagonales, en negrita, suman 101. **¿Cuánto suman las diagonales de una espiral de $1001 \times 1001$ formada de la misma manera?**
+
+[Enunciado original en Project Euler](https://projecteuler.net/problem=28)
+
+## La idea en una frase
+
+La espiral está hecha de anillos cuadrados, las diagonales son las cuatro esquinas de cada anillo y la esquina superior derecha siempre es un cuadrado perfecto; las otras tres salen restando, y al sumar todos los anillos aparece la suma de los cuadrados.
+
+## Primer intento: fuerza bruta
+
+Lo directo es construir la espiral: una matriz de $1001 \times 1001$, rellenada siguiendo el camino de la espiral, y después sumar las dos diagonales. Funciona, pero hay que rellenar un millón de casillas para acabar sumando solo 2001 números, y el código que recorre la espiral, girando en cada esquina, es fácil de equivocar.
+
+## Desarrollo matemático
+
+Llamemos $s$ al lado de la espiral, que es impar, y $m = (s - 1)/2$. Con $s = 5$, $m = 2$.
+
+### Paso 1: la espiral está hecha de anillos
+
+El centro es el 1. Alrededor está el **anillo 1**, el borde del cuadrado de $3 \times 3$, con los números del 2 al 9; luego el **anillo 2**, el borde del cuadrado de $5 \times 5$, del 10 al 25; y así sucesivamente.
+
+En general, el anillo $k$ es el borde del cuadrado de lado $2k + 1$. Lo de dentro es un cuadrado de lado $2k - 1$, que contiene los números del 1 al $(2k - 1)^2$, así que **el anillo $k$ contiene los números de $(2k - 1)^2 + 1$ a $(2k + 1)^2$**. Son $(2k + 1)^2 - (2k - 1)^2 = 8k$ números. Una espiral de lado $s$ tiene el centro y los anillos $1, 2, \dots, m$.
+
+### Paso 2: las cuatro esquinas de un anillo
+
+Cada anillo termina en su esquina superior derecha, en $(2k + 1)^2$: el 9, el 25… Recorrido hacia atrás, cada lado del anillo tiene $2k$ pasos de una esquina a la siguiente, así que las cuatro esquinas son
+
+$$
+(2k+1)^2, \qquad (2k+1)^2 - 2k, \qquad (2k+1)^2 - 4k, \qquad (2k+1)^2 - 6k
+$$
+
+Por ejemplo, en el anillo 2 son 25, 21, 17 y 13. Su suma es
+
+$$
+4\,(2k+1)^2 - 12k = 16k^2 + 4k + 4
+$$
+
+### Paso 3: sumar todos los anillos
+
+La suma de las diagonales es el centro más las esquinas de los $m$ anillos:
+
+$$
+S = 1 + \sum_{k=1}^{m} \left(16k^2 + 4k + 4\right) = 1 + 16\sum_{k=1}^{m} k^2 + 4\sum_{k=1}^{m} k + 4m
+$$
+
+Aquí aparecen la [suma de cuadrados](../../conceptos/suma-de-cuadrados/) y la [suma de Gauss](../../conceptos/suma-de-gauss/):
+
+$$
+S = 1 + 16\,\frac{m(m+1)(2m+1)}{6} + 4\,\frac{m(m+1)}{2} + 4m
+$$
+
+Desarrollando y poniendo denominador común:
+
+$$
+S(m) = \frac{16m^3 + 30m^2 + 26m + 3}{3}
+$$
+
+o, en función del lado $s = 2m + 1$,
+
+$$
+S = \frac{4s^3 + 3s^2 + 8s - 9}{6}
+$$
+
+### Paso 4: comprobarlo con el ejemplo
+
+Con $s = 5$:
+
+| Anillo $k$ | Esquinas | Suma | $16k^2 + 4k + 4$ |
+| --- | --- | --- | --- |
+| centro | 1 | 1 | |
+| 1 | 9, 7, 5, 3 | 24 | 24 |
+| 2 | 25, 21, 17, 13 | 76 | 76 |
+
+En total $1 + 24 + 76 = 101$, como dice el enunciado. Con la fórmula, $S(2) = \frac{128 + 120 + 52 + 3}{3} = \frac{303}{3} = 101$.
+
+## El código
+
+<Tabs>
+<TabItem label="JavaScript (repositorio)">
+
+<Code code={solucion} lang="js" title="28_numberSpiralDiagonals.js" />
+
+El repositorio recorre las esquinas sin construir la espiral. `stepSize` es la distancia entre dos esquinas del anillo actual, $2k$ en el paso 2, y empieza en 2. En cada anillo avanza cuatro veces esa distancia desde la última esquina del anillo anterior, $(2k - 1)^2$, sumando cada esquina que alcanza. El bucle sigue mientras `stepSize < spiralSize`, es decir, para $2k = 2, 4, \dots, s - 1$: justo los anillos del 1 al $m$.
+
+</TabItem>
+<TabItem label="Python">
+
+```python
+def suma_diagonales(s):           # s impar
+    m = (s - 1) // 2
+    return (16 * m**3 + 30 * m**2 + 26 * m + 3) // 3
+
+print(suma_diagonales(1001))
+```
+
+Usa la fórmula del paso 3. Con `suma_diagonales(5)` devuelve 101, el ejemplo del enunciado. La división entre 3 es exacta porque la suma es un entero.
+
+</TabItem>
+</Tabs>
+
+<Aside type="note" title="¿Es seguro usar Number?">
+Sí. La suma crece como $\frac{2}{3}s^3$, y con $s = 1001$ queda muy por debajo de $2^{53} \approx 9 \cdot 10^{15}$. Con `Number` no habría problemas hasta lados de más de doscientos mil.
+</Aside>
+
+## Complejidad
+
+| Método | Coste | Operaciones con $s = 1001$ |
+| --- | --- | --- |
+| Construir la espiral | $O(s^2)$ | ~$10^6$ casillas |
+| Recorrer las esquinas (repositorio) | $O(s)$ | 2000 sumas |
+| Fórmula (paso 3) | $O(1)$ | unas 10 operaciones |
+
+## Para profundizar
+
+Las cuatro esquinas del anillo $k$ son los valores de cuatro polinomios de segundo grado:
+
+$$
+4k^2 + 4k + 1, \qquad 4k^2 + 2k + 1, \qquad 4k^2 + 1, \qquad 4k^2 - 2k + 1
+$$
+
+Por eso, si se marcan los primos en una espiral así, salen dibujadas líneas diagonales: algunos polinomios de segundo grado dan muchos más primos que otros, como en el [problema 27](../027-primos-cuadraticos/). Es la **espiral de Ulam**. El problema 58 de Project Euler vuelve a una espiral como esta y pregunta qué proporción de los números de sus diagonales son primos.
+
+## Conceptos utilizados
+
+<Relaciones mostrar="conceptos" />
+
+## Problemas relacionados
+
+<Relaciones mostrar="relacionados" />
