@@ -1,0 +1,205 @@
+---
+title: 'Problema 27: Primos cuadráticos'
+description: Buscar el polinomio n² + an + b que da más primos seguidos, descartando candidatos con argumentos de paridad y divisibilidad antes de probar nada.
+sidebar:
+  label: '27 · Primos cuadráticos'
+  order: 27
+temas: [Primos, Polinomios]
+conceptos: [test-de-primalidad]
+---
+
+import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+import solucion from '@soluciones/21_30/27_quadraticPrimes.js?raw';
+
+## El problema
+
+Euler descubrió que el polinomio $n^2 + n + 41$ da un número primo para cada $n = 0, 1, \dots, 39$: cuarenta primos seguidos. En $n = 40$ falla, porque $40^2 + 40 + 41 = 40 \cdot 41 + 41 = 41^2$, y en $n = 41$ también, porque los tres términos de $41^2 + 41 + 41$ son múltiplos de 41.
+
+Más tarde se encontró $n^2 - 79n + 1601$, que da 80 primos para $n = 0, 1, \dots, 79$. El producto de sus coeficientes es $-79 \cdot 1601 = -126\,479$.
+
+Entre los polinomios $n^2 + an + b$ con $|a| < 1000$ y $|b| \le 1000$, **¿cuál es el producto $a \cdot b$ del que da más primos para valores consecutivos de $n$, empezando en $n = 0$?**
+
+[Enunciado original en Project Euler](https://projecteuler.net/problem=27)
+
+## La idea en una frase
+
+Los primeros valores de $n$ imponen condiciones muy fuertes: $n = 0$ obliga a que $b$ sea primo, $n = 1$ y la paridad obligan a que $a$ sea impar, y $n = b$ acota la racha, lo que reduce la búsqueda de cuatro millones de pares a 167 000 y acota los números cuya primalidad hay que comprobar.
+
+## Primer intento: fuerza bruta
+
+Para cada pareja $(a, b)$ se cuenta cuántos $n$ seguidos, desde 0, dan un primo, y nos quedamos con la mejor:
+
+```js
+function esPrimo(m) {
+  if (m < 2) return false;
+  for (let d = 2; d * d <= m; d++) {
+    if (m % d === 0) return false;
+  }
+  return true;
+}
+
+function rachaDePrimos(a, b) {
+  let n = 0;
+  while (esPrimo(n * n + a * n + b)) n++;
+  return n;
+}
+
+let mejor = 0;
+let producto = 0;
+for (let a = -999; a <= 999; a++) {
+  for (let b = -1000; b <= 1000; b++) {
+    const r = rachaDePrimos(a, b);
+    if (r > mejor) {
+      mejor = r;
+      producto = a * b;
+    }
+  }
+}
+```
+
+Son $1999 \cdot 2001 = 3\,999\,999$ parejas, cada una con al menos una prueba de primalidad. Funciona, pero casi todo ese trabajo se puede descartar razonando antes de probar nada.
+
+Una aclaración: ser primo es una propiedad de los enteros **mayores que 1**. Un valor negativo, como $-7$, no es primo, así que corta la racha igual que el 0, el 1 o un número compuesto.
+
+## Desarrollo matemático
+
+Llamemos $f(n) = n^2 + an + b$, y **racha** al número $R$ de valores $f(0), f(1), \dots, f(R-1)$ que son primos antes del primer fallo.
+
+### Paso 1: n = 0 obliga a que b sea primo
+
+$f(0) = b$. Si la racha tiene al menos un primo, **$b$ es un primo positivo**, y como $b \le 1000$ solo quedan 168 candidatos en lugar de 2001. Los dos ejemplos del enunciado lo cumplen: 41 y 1601 son primos.
+
+### Paso 2: n = 1 y la paridad obligan a que a sea impar
+
+$f(1) = 1 + a + b$ también tiene que ser primo. Para ver qué dice eso de $a$, escribimos $f(n) = n(n + a) + b$ y miramos la paridad de $n(n + a)$:
+
+- **Si $a$ es impar**, $n$ y $n + a$ tienen distinta paridad, así que uno de los dos es par y $n(n + a)$ es par para **todo** $n$. Con $b$ impar, todos los valores $f(n)$ son impares: la paridad nunca obliga a cortar la racha.
+- **Si $a$ es par y $b$ es impar**, $n + a$ tiene la paridad de $n$, así que $n(n + a)$ tiene la paridad de $n^2$, que es la de $n$. Entonces $f(n)$ es par para cada $n$ impar, y el único primo par es 2. Si la racha llegara a $n = 3$, tendríamos $f(1) = 1 + a + b = 2$ y $f(3) = 9 + 3a + b = 2$. Restando, $8 + 2a = 0$, es decir, $a = -4$ y $b = 5$. Pero entonces $f(2) = 4 - 8 + 5 = 1$, que no es primo. Por tanto, la racha tiene **como mucho 3 primos**.
+- **Si $b = 2$**, el único primo par, entonces $f(2) = 4 + 2a + 2 = 2(a + 3)$ es par, así que tendría que valer 2, lo que da $a = -2$. Pero entonces $f(1) = 1 - 2 + 2 = 1$, que no es primo. La racha tiene **como mucho 2 primos**.
+
+El polinomio de Euler ($a = 1$, $b = 41$) cumple las condiciones del enunciado y da 40 primos, así que el ganador tiene al menos 40. Por tanto, **$a$ es impar y $b$ es un primo impar**. Los dos ejemplos del enunciado tienen $a$ impar: $1$ y $-79$.
+
+Recorriendo todas las parejas se confirma: con $a$ par y $b$ impar la racha más larga es de 3 primos, y con $b = 2$, de 2.
+
+### Paso 3: n = b acota la racha
+
+En $n = b$ todos los términos son múltiplos de $b$:
+
+$$
+f(b) = b^2 + ab + b = b\,(b + a + 1)
+$$
+
+Como $b$ es primo, este producto solo puede ser primo si el otro factor vale 1, es decir, si $a = -b$. Pero en ese caso $f(1) = 1 - b + b = 1$, que no es primo, y la racha se queda en 1.
+
+**Conclusión: la racha nunca pasa de $b$.** Si tuviera más de $b$ primos, $f(b)$ sería primo, luego $a = -b$, luego la racha sería 1, y $1 < b$.
+
+Con los ejemplos del enunciado: para el polinomio de Euler, $f(41) = 41 \cdot 43$, como dice el propio enunciado, y su racha, 40, no pasa de 41. (Se corta un paso antes porque, con $a = 1$, $f(b - 1) = (b-1)^2 + (b - 1) + b = b^2$.) Para el segundo polinomio la cota es $80 \le 1601$.
+
+Dos consecuencias:
+
+- **El ganador tiene $b \ge 41$**: su racha es de al menos 40, y $b$ es un primo mayor o igual que la racha.
+- **Los valores que hay que comprobar están acotados.** Para cada pareja se evalúa $f(n)$ con $n = 0, 1, \dots, R$, y $R \le b \le 1000$. Como $|a| \le 999$,
+
+$$
+f(n) \le 1000^2 + 999 \cdot 1000 + 1000 = 2\,000\,000
+$$
+
+### Paso 4: comprobar la primalidad
+
+Hay dos opciones (ver [test de primalidad](../../conceptos/test-de-primalidad/)):
+
+- **El test 6k ± 1.** Todo entero es de la forma $6k + r$ con $r \in \{0, 1, 2, 3, 4, 5\}$. Los de resto 0, 2 y 4 son pares, y los de resto 3 son múltiplos de 3. Así que todo primo mayor que 3 es de la forma $6k \pm 1$, y después de descartar el 2 y el 3 basta con probar los divisores $5, 7, 11, 13, 17, 19, \dots$, de dos en dos ($i$ e $i + 2$, con $i = 5, 11, 17, \dots$) mientras $i^2 \le m$. Por ejemplo, para ver que 1601 es primo se prueban 2 y 3 y después solo 12 divisores, de 5 a 37, porque $41^2 = 1681 > 1601$.
+- **Una criba.** Con la cota del paso 3 se puede hacer una [criba de Eratóstenes](../../conceptos/criba-de-eratostenes/) hasta $2 \cdot 10^6$ una sola vez, y después cada comprobación es una consulta a una tabla.
+
+La cota del paso 3 es la del peor caso: en la búsqueda completa, el mayor valor que llega a comprobarse es $12\,989$.
+
+### Paso 5: comprobarlo con los ejemplos
+
+Con la función `racha(a, b)` de la versión en Python, `racha(1, 41)` devuelve 40 y `racha(-79, 1601)` devuelve 80, como dice el enunciado. El segundo polinomio queda fuera de la búsqueda porque $1601 > 1000$.
+
+Esos 80 primos no son tan sorprendentes como parecen. Escribiendo $m = n - 40$,
+
+$$
+n^2 - 79n + 1601 = m^2 + m + 41,
+$$
+
+así que el segundo polinomio es el de Euler desplazado, recorriendo $m = -40, \dots, 39$. Y el polinomio de Euler toma el mismo valor en $m$ y en $-1 - m$, porque $(-1-m)^2 + (-1-m) = m^2 + m$. Los 80 primos son los 40 de Euler, cada uno repetido dos veces.
+
+## El código
+
+<Tabs>
+<TabItem label="JavaScript (repositorio)">
+
+<Code code={solucion} lang="js" title="27_quadraticPrimes.js" />
+
+`isPrime` es el test $6k \pm 1$ del paso 4. Devuelve `false` para cualquier valor menor o igual que 1, así que un valor negativo corta la racha: solo cuentan los primos positivos. En `findQuadraticPrimes`, la línea `if (!isPrime(b)) continue;` es el paso 1, el bucle `while` cuenta la racha y la comparación estricta `n > maxNumOfPrimes` se queda con la primera pareja que alcanza el máximo (y solo hay una).
+
+No usa los pasos 2 y 3: sigue probando los $a$ pares y $b = 2$, pero esas parejas dan como mucho 3 primos, así que apenas cuestan.
+
+</TabItem>
+<TabItem label="Python">
+
+```python
+# Paso 4: criba hasta el mayor valor posible (paso 3: n <= b <= 1000 y |a| <= 999)
+TOPE = 1000**2 + 999 * 1000 + 1000
+es_primo = bytearray([1]) * (TOPE + 1)
+es_primo[0] = es_primo[1] = 0
+for p in range(2, int(TOPE**0.5) + 1):
+    if es_primo[p]:
+        es_primo[p * p :: p] = bytes(len(range(p * p, TOPE + 1, p)))
+
+def racha(a, b):
+    """Cuántos n consecutivos, desde 0, dan un primo."""
+    n = 0
+    while True:
+        valor = n * n + a * n + b
+        if valor < 2 or not es_primo[valor]:
+            return n
+        n += 1
+
+mejor, producto = 0, 0
+for b in range(3, 1001, 2):          # pasos 1 y 2: b primo impar
+    if not es_primo[b]:
+        continue
+    for a in range(-999, 1000, 2):   # paso 2: a impar
+        r = racha(a, b)
+        if r > mejor:
+            mejor, producto = r, a * b
+
+print(producto)
+```
+
+La condición `valor < 2` va antes de consultar la tabla: además de descartar 0 y 1, evita usar un valor negativo como índice, que en Python contaría desde el final.
+
+</TabItem>
+</Tabs>
+
+## Complejidad
+
+| Método | Parejas cuya racha se calcula | Pruebas de primalidad |
+| --- | --- | --- |
+| Fuerza bruta | 3 999 999 | al menos una por pareja |
+| Repositorio (paso 1, test $6k \pm 1$) | 335 832 | 3 999 999 para filtrar $b$ y 733 342 en las rachas |
+| Pasos 1 y 2, con criba | 167 000 | 395 342 consultas a la tabla, más la criba hasta $2 \cdot 10^6$ |
+
+Las tres versiones tardan poco: el interés está en ver cuánto trabajo eliminan unas pocas líneas de razonamiento.
+
+## Mejoras posibles
+
+- **Empezar con el récord de Euler.** Si se parte de `mejor = 40` (con su producto), el paso 3 permite saltarse todos los $b < 41$.
+- **Recorrer f(1) en vez de a.** Como $f(1) = 1 + a + b$ tiene que ser primo, en lugar de probar todos los $a$ impares se puede recorrer los primos $p$ y tomar $a = p - 1 - b$. Con $b$ primo impar, $a$ impar y $f(1)$ primo quedan 38 433 parejas.
+
+## Para profundizar
+
+<Aside type="note" title="Los números afortunados de Euler">
+El polinomio de Euler no es un caso aislado. Rabinowitsch demostró en 1913 que $n^2 + n + q$ da primos para todos los $n = 0, 1, \dots, q - 2$ si y solo si $4q - 1$ es un **número de Heegner**, un resultado de la teoría de números algebraicos. Los valores que lo cumplen son $q = 2, 3, 5, 11, 17$ y $41$, que corresponden a $4q - 1 = 7, 11, 19, 43, 67$ y $163$. Como la lista de números de Heegner está completa (lo demostraron Heegner, Baker y Stark), no hay ningún $q$ mayor que 41 con esta propiedad.
+</Aside>
+
+## Conceptos utilizados
+
+<Relaciones mostrar="conceptos" />
+
+## Problemas relacionados
+
+<Relaciones mostrar="relacionados" />

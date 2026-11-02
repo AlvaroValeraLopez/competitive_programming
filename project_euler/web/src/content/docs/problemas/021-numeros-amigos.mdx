@@ -1,0 +1,227 @@
+---
+title: 'Problema 21: Números amigos'
+description: Sumar los números amigos menores que 10000 con una tabla de la suma de divisores propios, calculada para todos los números de una vez con una criba.
+sidebar:
+  label: '21 · Números amigos'
+  order: 21
+temas: [Divisores, Números amigos]
+conceptos: [funcion-divisor]
+---
+
+import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+import solucion from '@soluciones/21_30/21_amicableNumbers.js?raw';
+
+## El problema
+
+Llamemos $s(n)$ a la suma de los **divisores propios** de $n$, es decir, de sus divisores menores que $n$. Si $s(a) = b$ y $s(b) = a$ con $a \neq b$, se dice que $a$ y $b$ forman una **pareja de números amigos**, y cada uno de ellos es un **número amigo**.
+
+Por ejemplo, los divisores propios de 220 son 1, 2, 4, 5, 10, 11, 20, 22, 44, 55 y 110, que suman 284, y los de 284 son 1, 2, 4, 71 y 142, que suman 220. Así que 220 y 284 son amigos. **¿Cuánto suman todos los números amigos menores que 10000?**
+
+[Enunciado original en Project Euler](https://projecteuler.net/problem=21)
+
+<Aside type="note" title="Notación">
+El enunciado original llama $d(n)$ a la suma de los divisores propios. En esta web $d(n)$ es el **número** de divisores (la [función divisor](../../conceptos/funcion-divisor/)), $\sigma(n)$ es la [suma de **todos** los divisores](../../conceptos/funcion-divisor/#la-suma-de-divisores-σn) y $s(n) = \sigma(n) - n$ la suma de los propios. Aquí usamos siempre $s(n)$.
+</Aside>
+
+## La idea en una frase
+
+Se calcula una tabla con $s(n)$ para todos los $n$ a la vez, con una criba que reparte cada número entre sus múltiplos, y después cada candidato $a$ se resuelve con una consulta: ¿es $s(s(a)) = a$?
+
+## Primer intento: fuerza bruta
+
+Calcular $s(a)$ probando todos los candidatos de 1 a $a - 1$ y, con $b = s(a)$, calcular $s(b)$ de la misma forma:
+
+```js
+function sumaPropiosBruta(n) {
+  let suma = 0;
+  for (let d = 1; d < n; d++) {
+    if (n % d === 0) suma += d;
+  }
+  return suma;
+}
+
+function sumaAmigosBruta(limite) {
+  let total = 0;
+  for (let a = 2; a < limite; a++) {
+    const b = sumaPropiosBruta(a);
+    if (b !== a && sumaPropiosBruta(b) === a) total += a;
+  }
+  return total;
+}
+```
+
+Es correcto, pero cuadrático: para $N = 10\,000$ hace unas $8 \cdot 10^7$ divisiones, y con $N = 10^6$ serían unas $8 \cdot 10^{11}$. El problema está en calcular cada $s(n)$ por separado, empezando de cero cada vez.
+
+## Desarrollo matemático
+
+Llamemos $N$ al límite (aquí, $N = 10\,000$).
+
+### Paso 1: la condición de amistad
+
+La definición dice que $a$ es amigo si existe un $b \neq a$ con $s(a) = b$ y $s(b) = a$. Pero ese $b$ no hay que buscarlo: la primera condición lo fija, $b = s(a)$. Sustituyendo en las otras dos:
+
+$$
+a \text{ es amigo} \iff s(s(a)) = a \quad \text{y} \quad s(a) \neq a
+$$
+
+La segunda condición es imprescindible. Si $s(a) = a$, la primera se cumple sola, porque $s(s(a)) = s(a) = a$. Esos números son los **números perfectos**, como $6 = 1 + 2 + 3$ o $28 = 1 + 2 + 4 + 7 + 14$, y no son amigos de nadie más que de sí mismos. Por debajo de 10000 hay cuatro: 6, 28, 496 y 8128.
+
+Tampoco hay que preocuparse de contar dos veces: si $a$ es amigo con pareja $b$, entonces $b$ es amigo con pareja $a$. Al recorrer todos los $a < N$, cada miembro de la pareja se suma una vez, cuando le toca.
+
+### Paso 2: una tabla de s(n)
+
+Para comprobar la condición del paso 1 hace falta $s(b)$, y $b$ puede ser cualquier número. Por eso conviene calcular $s(n)$ para **todos** los $n < N$, guardarlo en una tabla y consultarla. Los primeros valores:
+
+| $n$ | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| $s(n)$ | 0 | 1 | 1 | 3 | 1 | **6** | 1 | 7 | 4 | 8 | 1 | 16 |
+
+Los primos tienen $s(p) = 1$, el 6 es perfecto ($s(6) = 6$) y el 12 es el primer número con $s(n) > n$ (un número **abundante**, protagonista del [problema 23](../023-sumas-no-abundantes/)).
+
+Con el ejemplo del enunciado, $s(220) = 284$ y $s(284) = 220 \neq 284$, así que 220 cumple el paso 1, y 284 también.
+
+### Paso 3: calcular s(n) hasta la raíz cuadrada
+
+Los divisores de $n$ van por parejas $(i,\ n / i)$, y el menor de cada pareja no pasa de $\sqrt{n}$ (está explicado en [contar divisores sin factorizar](../../conceptos/funcion-divisor/#contar-divisores-sin-factorizar)). Para sumar los divisores **propios** de $n > 1$:
+
+- se empieza con 1, que siempre es divisor propio, y se deja fuera a su pareja, $n$;
+- para cada $i$ de 2 a $\lfloor \sqrt{n} \rfloor$ que divide a $n$, se suman $i$ y $n / i$, o solo $i$ si $i = n / i$.
+
+Con $n = 220$ ($\sqrt{220} \approx 14{,}8$), los divisores encontrados son 2, 4, 5, 10 y 11:
+
+$$
+s(220) = 1 + (2 + 110) + (4 + 55) + (5 + 44) + (10 + 22) + (11 + 20) = 284
+$$
+
+Cada $s(n)$ cuesta unas $\sqrt{n}$ divisiones, así que la tabla entera cuesta del orden de $N\sqrt{N}$: unas $6{,}5 \cdot 10^5$ para $N = 10\,000$.
+
+### Paso 4: ¿y si la pareja se pasa del límite?
+
+Ser amigo no depende del límite: si $a < N$ es amigo, cuenta, aunque su pareja $b = s(a)$ sea mayor o igual que $N$. Pero la tabla solo llega hasta $N - 1$, así que en ese caso no podemos consultar $s(b)$ en ella.
+
+El caso existe para límites pequeños. Con $N = 250$, el 220 es amigo y menor que el límite, pero su pareja 284 no está en la tabla: un programa que descarte las parejas fuera de la tabla devuelve 0 en vez de 220.
+
+Para $N = 10\,000$ hay 609 números $a < N$ con $s(a) \ge N$ (el mayor valor es $s(9240) = 25\,320$). Calculando $s(s(a))$ directamente para todos ellos se comprueba que **ninguno es amigo**: la siguiente pareja de amigos tiene sus dos miembros por encima de 10000. Así que, para este límite, descartar los $b \ge N$ no cambia el resultado. Aun así, la versión en Python de más abajo calcula $s(b)$ aparte cuando $b$ se sale de la tabla, para que funcione con cualquier límite.
+
+### Paso 5: toda la tabla de una vez con una criba
+
+En lugar de preguntar, para cada $n$, «¿qué números dividen a $n$?», le damos la vuelta: para cada $i$, «¿de qué números es $i$ divisor propio?». La respuesta son sus múltiplos $2i, 3i, 4i, \dots$ Así que basta con:
+
+```text
+s[m] = 0 para todo m
+para i = 1, 2, ..., N/2:
+    para m = 2i, 3i, 4i, ... (mientras m < N):
+        s[m] += i
+```
+
+**Por qué funciona.** Si $i$ es un divisor propio de $m$, entonces $m = k\,i$ con $k \ge 2$, así que $i$ se suma a `s[m]` exactamente una vez, cuando el bucle de $i$ pasa por su múltiplo $k\,i$. Y no se suma nada más: solo se suman números $i$ a sus múltiplos $m \ne i$. Por ejemplo, a `s[12]` le llegan $1, 2, 3, 4$ y $6$, que suman 16. El bucle externo para en $N/2$ porque un número mayor que $N/2$ no tiene múltiplos $2i, 3i, \dots$ por debajo de $N$.
+
+**Cuánto cuesta.** El número $i$ tiene menos de $N / i$ múltiplos por debajo de $N$, así que el total de sumas es como mucho
+
+$$
+\sum_{i=1}^{N/2} \frac{N}{i} = N \left(1 + \frac{1}{2} + \cdots + \frac{1}{N/2}\right) \approx N \ln N,
+$$
+
+porque la suma de los inversos (la serie armónica) crece como el logaritmo. Para $N = 10\,000$ son exactamente $83\,644$ sumas, frente a las $6{,}5 \cdot 10^5$ divisiones del paso 3. Y la criba no divide nunca: solo suma.
+
+## El código
+
+<Tabs>
+<TabItem label="JavaScript (repositorio)">
+
+<Code code={solucion} lang="js" title="21_amicableNumbers.js" />
+
+`sumOfDivisors` es el paso 3: empieza en 1 y recorre $i$ hasta $\sqrt{n}$ sumando las dos mitades de cada pareja. `findAmicableNumbers` construye primero la tabla `divisorsSum` del paso 2, para no recalcular $s(b)$, y después aplica el paso 1: `divisorsSum[potentialAmicable] === i` es $s(s(a)) = a$ y `potentialAmicable !== i` descarta los números perfectos. La condición `potentialAmicable < limit` es la simplificación del paso 4, válida para este límite.
+
+Un detalle sin consecuencias: `sumOfDivisors(0)` y `sumOfDivisors(1)` devuelven 1, aunque $s(1) = 0$. Para $i = 1$ la pareja sería 1, igual a $i$, y se descarta, y para $i = 0$ la pareja sería 1, cuya entrada en la tabla vale 1 y no 0. Ninguno de los dos se suma.
+
+</TabItem>
+<TabItem label="Python">
+
+```python
+from math import isqrt
+
+def tabla_s(limite):
+    """s(n) para todo n < limite, con la criba aditiva."""
+    s = [0] * limite
+    for i in range(1, limite // 2 + 1):
+        for multiplo in range(2 * i, limite, i):
+            s[multiplo] += i
+    return s
+
+def s_directa(n):
+    """s(n) probando divisores hasta la raíz, para números fuera de la tabla."""
+    suma = 1
+    for i in range(2, isqrt(n) + 1):
+        if n % i == 0:
+            suma += i
+            if i != n // i:
+                suma += n // i
+    return suma
+
+def suma_amigos(limite):
+    s = tabla_s(limite)
+    total = 0
+    for a in range(2, limite):
+        b = s[a]
+        s_b = s[b] if b < limite else s_directa(b)
+        if b != a and s_b == a:
+            total += a
+    return total
+
+print(suma_amigos(10000))
+```
+
+`tabla_s` es la criba del paso 5 y `s_directa` cubre el caso del paso 4. Con `suma_amigos(250)` devuelve 220, y con `suma_amigos(285)` devuelve $220 + 284 = 504$.
+
+</TabItem>
+<TabItem label="JavaScript (criba)">
+
+```js
+function sumaAmigos(limite) {
+  // Criba aditiva: s[m] acaba valiendo la suma de los divisores propios de m
+  const s = new Array(limite).fill(0);
+  for (let i = 1; 2 * i < limite; i++) {
+    for (let m = 2 * i; m < limite; m += i) s[m] += i;
+  }
+  let total = 0;
+  for (let a = 2; a < limite; a++) {
+    const b = s[a];
+    // b < limite basta para limite = 10000 (ver paso 4)
+    if (b !== a && b < limite && s[b] === a) total += a;
+  }
+  return total;
+}
+
+console.log(sumaAmigos(10000));
+```
+
+Es la solución del repositorio con la tabla calculada por la criba del paso 5 en lugar de con divisiones.
+
+</TabItem>
+</Tabs>
+
+## Complejidad
+
+| Método | Coste | Operaciones para $N = 10^4$ |
+| --- | --- | --- |
+| Fuerza bruta (todos los candidatos) | $O(N^2)$ | ~$8 \cdot 10^7$ divisiones |
+| Tabla con divisores hasta la raíz (repositorio) | $O(N\sqrt{N})$ | ~$6{,}5 \cdot 10^5$ divisiones |
+| Tabla con criba aditiva | $O(N \log N)$ | ~$8{,}4 \cdot 10^4$ sumas |
+
+Las dos versiones con tabla guardan $N$ números en memoria. Después de construirla, comprobar todos los candidatos cuesta $O(N)$.
+
+## Para profundizar
+
+- **Un atajo con σ.** Si $a$ y $b$ son amigos, $\sigma(a) = s(a) + a = b + a$ y $\sigma(b) = a + b$: los dos tienen la misma suma de divisores, $a + b$. Como $\sigma$ es multiplicativa y $\sigma(p^k) = 1 + p + \cdots + p^k$, con $220 = 2^2 \cdot 5 \cdot 11$ y $284 = 2^2 \cdot 71$ sale $\sigma(220) = 7 \cdot 6 \cdot 12 = 504$ y $\sigma(284) = 7 \cdot 72 = 504$, que es justo $220 + 284$.
+- **La regla de Thābit ibn Qurra** (siglo IX). Si $n > 1$ y los tres números $p = 3 \cdot 2^{n-1} - 1$, $q = 3 \cdot 2^n - 1$ y $r = 9 \cdot 2^{2n-1} - 1$ son primos, entonces $2^n p q$ y $2^n r$ son amigos. Con $n = 2$ se obtiene $p = 5$, $q = 11$, $r = 71$, y de ahí $2^2 \cdot 5 \cdot 11 = 220$ y $2^2 \cdot 71 = 284$. La regla no da todas las parejas: por debajo de 10000 hay cinco, y solo la de 220 y 284 sale de ella.
+- **La misma criba sirve para otras funciones.** Si el bucle externo recorre todos los $i < N$ y el interno empieza en $m = i$ (cada número es divisor de sí mismo), sumar $i$ da $\sigma(m)$ y sumar 1 da $d(m)$, el número de divisores, para todos los $m$ a la vez.
+
+## Conceptos utilizados
+
+<Relaciones mostrar="conceptos" />
+
+## Problemas relacionados
+
+<Relaciones mostrar="relacionados" />

@@ -1,0 +1,185 @@
+---
+title: 'Problema 33: Fracciones que cancelan cifras'
+description: Encontrar las fracciones de dos cifras que se simplifican «tachando» una cifra repetida, convirtiendo cada forma de tachar en una ecuación entre cifras.
+sidebar:
+  label: '33 · Fracciones que cancelan cifras'
+  order: 33
+temas: [Fracciones, Máximo común divisor]
+conceptos: [mcd-y-mcm]
+---
+
+import { Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+import solucion from '@soluciones/31_40/33_digitCancellingFractions.js?raw';
+
+## El problema
+
+La fracción $\frac{49}{98}$ es curiosa: alguien sin experiencia podría intentar simplificarla tachando los dos nueves y obtendría $\frac{4}{8}$, que, por casualidad, es correcto.
+
+Los ejemplos como $\frac{30}{50} = \frac{3}{5}$, en los que se tachan ceros, se consideran **triviales**. Hay exactamente cuatro fracciones no triviales de este tipo que valen menos que 1 y tienen dos cifras en el numerador y en el denominador. **Si se multiplican las cuatro y el producto se escribe como fracción irreducible, ¿cuál es su denominador?**
+
+[Enunciado original en Project Euler](https://projecteuler.net/problem=33)
+
+## La idea en una frase
+
+Cada forma de tachar una cifra se traduce en una ecuación entre cifras; tres de las cuatro formas solo tienen soluciones triviales, y la que queda, $9ac = b\,(10a - c)$, se resuelve probando unos cientos de tríos de cifras.
+
+## Primer intento: fuerza bruta
+
+Recorrer todas las fracciones $\frac{n}{d}$ con $10 \le n < d \le 99$, buscar una cifra común, tacharla y comparar. Son $1 + 2 + \cdots + 89 = 4005$ fracciones, así que es instantáneo, y es justo lo que hace la solución del repositorio (más abajo).
+
+La fuerza bruta encuentra las cuatro fracciones, pero no explica por qué son tan pocas ni de qué forma hay que tachar. Eso es lo que aclaran las cuentas.
+
+## Desarrollo matemático
+
+### Paso 1: las cuatro formas de tachar
+
+La cifra repetida puede estar en las decenas o en las unidades del numerador, y en las decenas o en las unidades del denominador. Llamando $a, b, c$ a las cifras, hay cuatro patrones:
+
+| Patrón | Cifra tachada | Fracción | Después de tachar |
+| --- | --- | --- | --- |
+| A | decenas y decenas | $\dfrac{10a + b}{10a + c}$ | $\dfrac{b}{c}$ |
+| B | unidades y unidades | $\dfrac{10a + b}{10c + b}$ | $\dfrac{a}{c}$ |
+| C | unidades del numerador y decenas del denominador | $\dfrac{10a + b}{10b + c}$ | $\dfrac{a}{c}$ |
+| D | decenas del numerador y unidades del denominador | $\dfrac{10a + b}{10c + a}$ | $\dfrac{b}{c}$ |
+
+Las cifras de las decenas no pueden ser 0, porque los números tienen dos cifras, y el denominador que queda al tachar tampoco. El ejemplo del enunciado es del patrón C, con $a = 4$, $b = 9$ y $c = 8$.
+
+### Paso 2: la ecuación del patrón C
+
+Igualando la fracción con la tachada y multiplicando en cruz:
+
+$$
+\frac{10a + b}{10b + c} = \frac{a}{c}
+\iff c\,(10a + b) = a\,(10b + c)
+\iff 10ac + bc = 10ab + ac
+$$
+
+Pasando $ac$ a la izquierda y $bc$ a la derecha:
+
+$$
+9ac = 10ab - bc = b\,(10a - c)
+$$
+
+**Comprobación con 49/98:** $9 \cdot 4 \cdot 8 = 288$ y $9 \cdot (40 - 8) = 9 \cdot 32 = 288$. Coinciden.
+
+Dos observaciones:
+
+- **$b$ no puede ser 0**: el lado izquierdo, $9ac$, no es 0 porque $a, c \ge 1$. Así que este patrón nunca tacha ceros.
+- **$a = b = c$ siempre es solución**, porque $9a^2 = a \cdot 9a$. Son las fracciones $\frac{11}{11}, \frac{22}{22}, \dots, \frac{99}{99}$, que valen 1 y no cuentan.
+
+### Paso 3: las soluciones no triviales valen menos que 1
+
+Agrupando de otra forma, $9ac + bc = 10ab$, es decir, $c\,(9a + b) = 10ab$:
+
+$$
+c = \frac{10ab}{9a + b} < \frac{10ab}{9a} = \frac{10b}{9} \le b + 1,
+$$
+
+donde la última desigualdad equivale a $b \le 9$. Como $c$ y $b$ son enteros, **$c \le b$**.
+
+Por otro lado, despejando $b$ en la ecuación del paso 2, $b = \dfrac{9ac}{10a - c}$, con denominador positivo porque $10a \ge 10 > c$. Entonces
+
+$$
+b > c \iff 9ac > c\,(10a - c) \iff 9a > 10a - c \iff c > a,
+$$
+
+y del mismo modo $b = c \iff c = a$. Juntando las dos cosas, o bien $a = b = c$ (la solución trivial), o bien
+
+$$
+a < c < b
+$$
+
+En particular $\frac{a}{c} < 1$: **toda solución no trivial del patrón C vale menos que 1**. Con 49/98, $4 < 8 < 9$.
+
+### Paso 4: los otros tres patrones
+
+**Patrón A.** $c\,(10a + b) = b\,(10a + c)$ se reduce a $10ac = 10ab$, es decir, $a\,(c - b) = 0$. Como $a \ge 1$, $b = c$, y entonces el numerador y el denominador son iguales: la fracción vale 1.
+
+**Patrón B.** $c\,(10a + b) = a\,(10c + b)$ se reduce a $bc = ab$, es decir, $b\,(c - a) = 0$. O bien $a = c$, y la fracción vale 1, o bien $b = 0$, que es exactamente el caso trivial: $\frac{30}{50} = \frac{3}{5}$ es este patrón con $a = 3$, $b = 0$, $c = 5$.
+
+**Patrón D.** Si $\frac{10a + b}{10c + a} = \frac{b}{c}$, dando la vuelta a las dos fracciones,
+
+$$
+\frac{10c + a}{10a + b} = \frac{c}{b},
+$$
+
+que es el patrón C con las cifras $(c, a, b)$ en lugar de $(a, b, c)$. Por el paso 3, si esa solución no es trivial vale menos que 1, así que la fracción original, que es su inversa, vale **más** que 1. El patrón D no da ninguna fracción no trivial menor que 1.
+
+**Comprobación exhaustiva.** Probando los cuatro patrones en las 4005 fracciones: el patrón A no da ninguna, el patrón B da 36, todas con ceros tachados (una por cada pareja de cifras $a < c$), el patrón C da 4 y el patrón D ninguna. Coincide con lo demostrado: **las cuatro fracciones del enunciado son todas del patrón C**.
+
+### Paso 5: resolver el patrón C
+
+Queda encontrar las cifras $a, c \in \{1, \dots, 9\}$ y $b \in \{0, \dots, 9\}$ con $9ac = b\,(10a - c)$. Son $9 \cdot 10 \cdot 9 = 810$ tríos, que se prueban en un instante. Salen 13 soluciones: las 9 triviales con $a = b = c$ y otras 4, que cumplen $a < c < b$, como predice el paso 3. Una de ellas es $\frac{49}{98}$. Las otras tres te las dejamos a ti, o al código.
+
+### Paso 6: multiplicar y simplificar
+
+Cada una de las cuatro fracciones vale lo mismo que su versión tachada $\frac{a}{c}$, así que su producto es
+
+$$
+P = \frac{a_1 a_2 a_3 a_4}{c_1 c_2 c_3 c_4},
+$$
+
+con numerador y denominador de como mucho $9^4 = 6561$. Para dejarla irreducible se dividen los dos entre su [máximo común divisor](../../conceptos/mcd-y-mcm/), que se calcula con el algoritmo de Euclides, $\operatorname{mcd}(x, y) = \operatorname{mcd}(y,\ x \bmod y)$.
+
+**Por qué queda irreducible.** Si $g = \operatorname{mcd}(x, y)$, $x = g x'$ e $y = g y'$, entonces $x'$ e $y'$ no tienen divisores comunes: si $e > 1$ dividiera a los dos, $g e$ sería un divisor común de $x$ e $y$ mayor que $g$.
+
+Con el ejemplo: $\operatorname{mcd}(49, 98) = 49$ y $\operatorname{mcd}(4, 8) = 4$, y las dos fracciones se reducen a $\frac{1}{2}$.
+
+## El código
+
+<Tabs>
+<TabItem label="JavaScript (repositorio)">
+
+<Code code={solucion} lang="js" title="33_digitCancellingFractions.js" />
+
+Es la fuerza bruta con los cuatro patrones del paso 1, en el orden A (`numStr[0] === denStr[0]`), B (`numStr[1] === denStr[1]`), D (`numStr[0] === denStr[1]`) y C (`numStr[1] === denStr[0]`). La comprobación final compara multiplicando en cruz, como en el paso 2, para no dividir con decimales. Para el producto multiplica las cifras que quedan después de tachar, es decir, las fracciones $\frac{a}{c}$, y al final simplifica con `gcd`, que es el algoritmo de Euclides del paso 6.
+
+Dos detalles que no pierden ninguna solución:
+
+- **Salta las fracciones con un 0 en las unidades** para descartar las triviales. En el patrón C las unidades del numerador son $b \ge 1$ (paso 2) y las del denominador son $c \ge 1$, así que no se pierde nada.
+- **Los patrones van en una cadena `else if`**, de modo que, si una fracción encaja en varios, solo se prueba el primero. Pero en una solución del patrón C las tres cifras son distintas ($a < c < b$), y los patrones A, B y D exigirían $a = b$, $b = c$ y $a = c$, respectivamente. Así que las soluciones llegan siempre a la rama del patrón C.
+
+</TabItem>
+<TabItem label="Python">
+
+```python
+from math import gcd
+
+num, den = 1, 1
+for a in range(1, 10):
+    for b in range(1, 10):          # b = 0 es imposible (paso 2)
+        for c in range(1, 10):
+            if 9 * a * c == b * (10 * a - c) and not (a == b == c):
+                num *= a            # la fracción vale a/c
+                den *= c
+
+print(den // gcd(num, den))
+```
+
+Usa directamente la ecuación del paso 2 y solo el patrón C, que es el único que da soluciones (paso 4).
+
+</TabItem>
+</Tabs>
+
+## Complejidad
+
+| Método | Casos que se prueban |
+| --- | --- |
+| Todas las fracciones, cuatro patrones (repositorio) | 4005 fracciones |
+| Ecuación del patrón C | 729 tríos (con $b \ge 1$) |
+
+Las dos versiones son instantáneas. Lo valioso aquí no es la velocidad, sino saber que no se escapa ninguna fracción: la comprobación exhaustiva y la demostración del paso 4 cuentan lo mismo.
+
+## Para profundizar
+
+- **Resolverlo a mano.** De $c\,(9a + b) = 10ab$ se deduce que 5 divide a $c\,(9a + b)$, así que o bien $c = 5$, o bien 5 divide a $9a + b$, es decir, $b \equiv a \pmod 5$. En el caso $c = 5$ la ecuación queda $9a = b\,(2a - 1)$, y como $a$ y $2a - 1$ no tienen divisores comunes, $2a - 1$ tiene que dividir a 9. Con estas pistas se encuentran las cuatro fracciones con lápiz y papel.
+- **Otras bases.** En base $B$ el patrón C da $c\,(Ba + b) = a\,(Bb + c)$, es decir, $(B - 1)\,ac = b\,(Ba - c)$, y el argumento del paso 3 funciona igual porque $\frac{Bb}{B - 1} \le b + 1$ para toda cifra $b \le B - 1$.
+
+## Conceptos utilizados
+
+<Relaciones mostrar="conceptos" />
+
+## Problemas relacionados
+
+<Relaciones mostrar="relacionados" />
