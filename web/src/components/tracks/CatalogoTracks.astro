@@ -1,0 +1,110 @@
+---
+// Catálogo de tracks, al estilo de la página de lenguajes de Exercism: una
+// tarjeta por ruta, con su icono, cuántos ejercicios y conceptos tiene y las
+// áreas que recorre.
+import { Icon } from '@astrojs/starlight/components';
+import Hexagono from './Hexagono.astro';
+import { obtenerTracks, urlDeTrack } from '../../lib/rutas';
+
+const tracks = await obtenerTracks();
+const plural = (n: number, una: string, varias: string) => `${n} ${n === 1 ? una : varias}`;
+---
+
+<ul class="tracks not-content">
+	{
+		tracks.map(({ track, conceptos, ejercicios, areas }) => (
+			<li>
+				<a href={urlDeTrack(track)} class="tarjeta">
+					<Hexagono glifo={track.glifo} tamano={72} />
+					<span class="cuerpo">
+						<span class="nombre">{track.dominio}</span>
+						<span class="resumen">{track.resumen}</span>
+						<span class="cuentas">
+							<span>
+								<Icon name="puzzle" size="1rem" />
+								{plural(ejercicios.length, 'ejercicio', 'ejercicios')}
+							</span>
+							<span>
+								<Icon name="open-book" size="1rem" />
+								{plural(conceptos.length, 'concepto', 'conceptos')}
+							</span>
+						</span>
+						<span class="areas">
+							{areas.map((area) => (
+								<span>{area}</span>
+							))}
+						</span>
+					</span>
+				</a>
+			</li>
+		))
+	}
+</ul>
+
+<style>
+	.tracks {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(min(100%, 26rem), 1fr));
+		gap: 1.25rem;
+		margin: 1.5rem 0 0;
+		padding: 0;
+		list-style: none;
+	}
+	.tarjeta {
+		display: flex;
+		gap: 1.5rem;
+		align-items: flex-start;
+		height: 100%;
+		padding: 1.5rem 1.75rem;
+		border: 1px solid var(--sl-color-gray-6);
+		border-radius: calc(var(--euler-radio) * 1.5);
+		background: var(--sl-color-black);
+		box-shadow: var(--euler-sombra);
+		color: inherit;
+		text-decoration: none;
+		transition:
+			border-color 0.15s,
+			box-shadow 0.15s;
+	}
+	.tarjeta:hover {
+		border-color: var(--sl-color-accent);
+	}
+	.cuerpo {
+		display: grid;
+		gap: 0.6rem;
+	}
+	.nombre {
+		font-size: var(--sl-text-xl);
+		font-weight: 700;
+		color: var(--sl-color-white);
+	}
+	.resumen {
+		color: var(--sl-color-gray-2);
+		font-size: var(--sl-text-sm);
+	}
+	.cuentas {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem 1.25rem;
+		color: var(--sl-color-gray-2);
+		font-size: var(--sl-text-sm);
+	}
+	.cuentas span {
+		display: inline-flex;
+		gap: 0.4rem;
+		align-items: center;
+	}
+	.areas {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin-top: 0.25rem;
+	}
+	.areas span {
+		padding: 0.2rem 0.75rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 999px;
+		color: var(--sl-color-gray-2);
+		font-size: var(--sl-text-xs);
+	}
+</style>

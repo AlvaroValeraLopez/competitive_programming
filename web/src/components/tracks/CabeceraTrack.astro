@@ -1,0 +1,92 @@
+---
+// Cabecera de la página de un track: su icono, su resumen, cuántos conceptos y
+// ejercicios tiene y las pestañas «Acerca de», «Aprender» y «Practicar», como en
+// las páginas de los lenguajes de Exercism.
+import Hexagono from './Hexagono.astro';
+import { urlDeTrack, type DatosTrack } from '../../lib/rutas';
+
+export type Pestana = 'acerca' | 'aprender' | 'practicar';
+
+interface Props {
+	datos: DatosTrack;
+	actual: Pestana;
+}
+
+const { datos, actual } = Astro.props;
+const { track, conceptos, ejercicios } = datos;
+const pestanas: { id: Pestana; nombre: string; href: string }[] = [
+	{ id: 'acerca', nombre: 'Acerca de', href: urlDeTrack(track) },
+	{ id: 'aprender', nombre: 'Aprender', href: urlDeTrack(track, 'aprender') },
+	{ id: 'practicar', nombre: 'Practicar', href: urlDeTrack(track, 'practicar') },
+];
+---
+
+<div class="cabecera-track not-content">
+	<div class="identidad">
+		<Hexagono glifo={track.glifo} tamano={56} />
+		<p class="resumen">
+			{track.resumen}
+			<span class="cuentas">{conceptos.length} conceptos · {ejercicios.length} ejercicios</span>
+		</p>
+	</div>
+	<nav aria-label={`Secciones de ${track.dominio}`}>
+		<ul class="pestanas">
+			{
+				pestanas.map((p) => (
+					<li>
+						<a href={p.href} aria-current={p.id === actual ? 'page' : undefined}>
+							{p.nombre}
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</nav>
+</div>
+
+<style>
+	.cabecera-track {
+		display: grid;
+		gap: 1.25rem;
+		margin-bottom: 2rem;
+	}
+	.identidad {
+		display: flex;
+		gap: 1rem;
+		align-items: center;
+	}
+	.resumen {
+		display: grid;
+		gap: 0.2rem;
+		margin: 0;
+		color: var(--sl-color-gray-2);
+	}
+	.cuentas {
+		color: var(--sl-color-gray-3);
+		font-size: var(--sl-text-sm);
+	}
+	.pestanas {
+		display: flex;
+		gap: 0.25rem;
+		margin: 0;
+		padding: 0;
+		border-bottom: 1px solid var(--sl-color-gray-6);
+		list-style: none;
+	}
+	.pestanas a {
+		display: block;
+		margin-bottom: -1px;
+		padding: 0.6rem 1rem;
+		border-bottom: 3px solid transparent;
+		color: var(--sl-color-gray-2);
+		font-weight: 600;
+		text-decoration: none;
+	}
+	.pestanas a:hover {
+		color: var(--sl-color-white);
+	}
+	.pestanas a[aria-current='page'] {
+		border-bottom-color: var(--sl-color-accent);
+		color: var(--sl-color-white);
+	}
+</style>

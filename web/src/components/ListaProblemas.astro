@@ -10,12 +10,22 @@ import { agruparConceptos, agruparEjercicios, normalizar } from '../lib/menu';
 import { obtenerPaginas } from '../lib/paginas';
 import { obtenerGrafo } from '../lib/relaciones';
 
-const { problemas, conceptos } = await obtenerPaginas();
+interface Props {
+	/** En la página de un track: solo los ejercicios que usan conceptos de su
+	 * dominio, y solo esos conceptos como filtro. */
+	dominio?: string;
+}
+
+const { dominio } = Astro.props;
+const todo = await obtenerPaginas();
 const grafo = await obtenerGrafo();
 
 const slug = (id: string) => id.replace(/^conceptos\//, '');
-const etiquetaDe = new Map(conceptos.map((c) => [c.id, c.etiqueta]));
+const etiquetaDe = new Map(todo.conceptos.map((c) => [c.id, c.etiqueta]));
 const conceptosDe = (id: string) => grafo.nodos.get(id)?.padres ?? [];
+const conceptos = dominio ? todo.conceptos.filter((c) => c.dominio === dominio) : todo.conceptos;
+const delDominio = new Set(conceptos.map((c) => c.id));
+const problemas = dominio ? todo.problemas.filter((p) => conceptosDe(p.id).some((c) => delDominio.has(c))) : todo.problemas;
 const usos = (concepto: string) => problemas.filter((p) => conceptosDe(p.id).includes(concepto)).length;
 
 // Solo se ofrecen como filtro los conceptos que usa algún problema, agrupados por

@@ -1,0 +1,37 @@
+---
+// Las páginas de cada track, una por pestaña: /tracks/<slug>/ («Acerca de»),
+// /tracks/<slug>/aprender/ (la ruta de conceptos) y /tracks/<slug>/practicar/
+// (sus ejercicios). Usan el diseño de Starlight a través de <StarlightPage>.
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import ListaProblemas from '../../../components/ListaProblemas.astro';
+import AcercaTrack from '../../../components/tracks/AcercaTrack.astro';
+import CabeceraTrack, { type Pestana } from '../../../components/tracks/CabeceraTrack.astro';
+import RutaTrack from '../../../components/tracks/RutaTrack.astro';
+import { obtenerTracks } from '../../../lib/rutas';
+import { TRACKS } from '../../../lib/tracks';
+
+export function getStaticPaths() {
+	return TRACKS.flatMap((track) =>
+		([undefined, 'aprender', 'practicar'] as const).map((pestana) => ({
+			params: { track: track.slug, pestana },
+			props: { slug: track.slug, pestana: (pestana ?? 'acerca') as Pestana },
+		})),
+	);
+}
+
+const { slug, pestana } = Astro.props;
+const datos = (await obtenerTracks()).find((d) => d.track.slug === slug)!;
+const { track } = datos;
+const titulos: Record<Pestana, string> = {
+	acerca: track.dominio,
+	aprender: `${track.dominio}: la ruta`,
+	practicar: `${track.dominio}: practicar`,
+};
+---
+
+<StarlightPage frontmatter={{ title: titulos[pestana], description: track.resumen, tableOfContents: false }}>
+	<CabeceraTrack datos={datos} actual={pestana} />
+	{pestana === 'acerca' && <AcercaTrack datos={datos} />}
+	{pestana === 'aprender' && <RutaTrack datos={datos} />}
+	{pestana === 'practicar' && <ListaProblemas dominio={track.dominio} />}
+</StarlightPage>

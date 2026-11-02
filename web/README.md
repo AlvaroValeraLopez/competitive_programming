@@ -20,16 +20,20 @@ src/
 │   ├── TituloPagina.astro   # Título de página con las etiquetas de `temas`
 │   ├── Solucion.astro       # Muestra una solución del repositorio (ver «Soluciones»)
 │   ├── portada/             # Secciones de la portada: tarjetas, características…
+│   ├── tracks/              # Catálogo de tracks y las pestañas de cada uno
 │   └── …                    # Dibujos, vídeo y componentes interactivos
 ├── content/docs/
 │   ├── index.mdx            # Portada
 │   ├── mapa.mdx             # Mapa de relaciones
+│   ├── tracks/              # index.mdx: el catálogo de tracks
 │   ├── problemas/           # index.mdx (catálogo) y una página por ejercicio: 001-..., 012-...
 │   └── conceptos/           # index.mdx (catálogo) y la teoría reutilizable entre ejercicios
 ├── lib/                     # Lógica pura con tests y lectura del contenido
 │   ├── fuentes.ts           # De dónde vienen los ejercicios y cómo se nombran
 │   ├── menu.ts              # Dominios y áreas de los conceptos; agrupación de los catálogos
 │   ├── secciones.ts         # Las secciones de la cabecera y a cuál pertenece cada página
+│   ├── tracks.ts            # Los tracks (rutas por dominio) y cómo se ordenan sus conceptos
+│   ├── rutas.ts             # Los datos de cada track, a partir del contenido
 │   ├── soluciones.ts        # Lenguajes y lectura de las soluciones del repositorio
 │   ├── grafo.ts             # Relaciones entre páginas y disposición del mapa
 │   └── filtro.ts            # Filtro por conceptos de la lista de problemas
@@ -65,6 +69,15 @@ Cada concepto tiene un `area`, y cada área pertenece a un dominio, según `DOMI
 - **Implementación**: números grandes.
 
 El dominio no se escribe: se deduce del área. Para añadir un área nueva, añádela a su dominio en `DOMINIOS`. La sección «Conceptos utilizados» de cada ejercicio separa los conceptos por dominio, de modo que se ve qué matemáticas hacen falta y qué hay que saber para programarlo.
+
+## Tracks
+
+Un track es una ruta de aprendizaje: uno por dominio (Matemáticas, Algoritmia, Implementación), definidos en `src/lib/tracks.ts` con su icono, su resumen y su descripción. La ruta ordena los conceptos del dominio por niveles: en el primero, los que no necesitan ningún otro concepto del dominio; en cada nivel, los que se apoyan en los anteriores. Los conceptos previos de otros dominios no cuentan para el nivel, pero se indican. Los ejercicios de un track son los que usan alguno de sus conceptos.
+
+- `/tracks/` (`content/docs/tracks/index.mdx`): el catálogo, una tarjeta por track.
+- `/tracks/<slug>/`, `/tracks/<slug>/aprender/` y `/tracks/<slug>/practicar/`: las pestañas «Acerca de», «Aprender» (la ruta) y «Practicar» (sus ejercicios). Las genera `src/pages/tracks/[track]/[...pestana].astro` con `<StarlightPage>`, así que no hay que escribirlas.
+
+Al añadir un dominio en `DOMINIOS`, hay que añadir su track; los tests lo comprueban.
 
 ## Relaciones
 
