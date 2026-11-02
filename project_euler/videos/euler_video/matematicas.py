@@ -8,7 +8,7 @@ Este módulo no importa Manim, para que los tests sean rápidos.
 """
 
 from itertools import combinations
-from math import prod
+from math import isqrt, prod
 
 Celda = tuple[int, int]
 """Una casilla de una cuadrícula: (fila, columna), con la fila 0 arriba."""
@@ -146,3 +146,60 @@ def cuadrados_euclides(ancho: int, alto: int) -> list[list[Cuadrado]]:
 def exponentes(n: int) -> dict[int, int]:
     """Exponente de cada primo en la factorización de n."""
     return dict(factorizar(n))
+
+
+# --- Números primos ---
+
+
+def es_primo(n: int) -> bool:
+    """Primalidad probando divisores hasta la raíz cuadrada."""
+    if n < 2:
+        return False
+    d = 2
+    while d * d <= n:
+        if n % d == 0:
+            return False
+        d += 1
+    return True
+
+
+def pares_de_divisores(n: int) -> list[tuple[int, int]]:
+    """Los divisores de n emparejados (d, n / d), con d ≤ n / d: el menor de cada pareja no pasa de √n."""
+    return [(d, n // d) for d in range(1, isqrt(n) + 1) if n % d == 0]
+
+
+def pasos_criba(n: int) -> list[tuple[int, list[int]]]:
+    """Criba de Eratóstenes hasta n: para cada primo p con p² ≤ n, los múltiplos que tacha (de p² a n)."""
+    tachado = [False] * (n + 1)
+    pasos = []
+    for p in range(2, isqrt(n) + 1):
+        if not tachado[p]:
+            multiplos = list(range(p * p, n + 1, p))
+            for m in multiplos:
+                tachado[m] = True
+            pasos.append((p, multiplos))
+    return pasos
+
+
+def pasos_factorizacion(n: int) -> tuple[list[tuple[int, int, list[int]]], int]:
+    """Factorización por tanteo, con el mismo bucle que la web: cada d se divide
+    tantas veces como se pueda y luego se pasa a d + 1.
+
+    Devuelve los pasos (n antes de dividir, factor, candidatos que no dividieron
+    a ese n antes de encontrar el factor) y el candidato en el que se paró porque
+    su cuadrado ya pasaba del n que quedaba. Si queda un n > 1, es primo y es el
+    último paso.
+    """
+    pasos = []
+    fallidos: list[int] = []
+    d = 2
+    while d * d <= n:
+        while n % d == 0:
+            pasos.append((n, d, fallidos))
+            n //= d
+            fallidos = []
+        fallidos.append(d)  # al salir del bucle interior, d ya no divide al n que queda
+        d += 1
+    if n > 1:
+        pasos.append((n, n, fallidos))
+    return pasos, d
