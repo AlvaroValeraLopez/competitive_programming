@@ -1,6 +1,6 @@
 ---
 title: Suma de cuadrados y de cubos
-description: Las fórmulas de 1² + 2² + … + n² y 1³ + 2³ + … + n³, tres formas de demostrarlas y por qué la suma de los cubos es el cuadrado de un número triangular.
+description: Las fórmulas de 1² + 2² + … + n² y 1³ + 2³ + … + n³, varias formas de demostrarlas, una de ellas con un dibujo, y por qué la suma de los cubos es el cuadrado de un número triangular.
 sidebar:
   label: Suma de cuadrados
   order: 3
@@ -10,6 +10,7 @@ area: Sumas y series
 
 import { Aside } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
+import Video from '../../../components/Video.astro';
 
 ## El resultado
 
@@ -85,6 +86,22 @@ Juntando las dos partes:
 $$
 \sum_{k=1}^{n} k^2 = 2\binom{n+1}{3} + \binom{n+1}{2} = \frac{(n+1)\,n\,(n-1)}{3} + \frac{(n+1)\,n}{2} = \frac{n(n+1)(2n+1)}{6}
 $$
+
+## Demostración 4: tres copias en un rectángulo
+
+Tres copias de la suma llenan exactamente un rectángulo de $2n + 1$ casillas de ancho y $T_n = 1 + 2 + \cdots + n$ de alto. Lo partimos en franjas horizontales de alturas $1, 2, \dots, n$.
+
+- **Dos copias, enteras, a los lados.** En la franja de altura $k$ se coloca un cuadrado de $k \times k$ pegado a la izquierda y otro pegado a la derecha. Queda en medio un hueco de $2n + 1 - 2k$ casillas de ancho y $k$ filas.
+- **La tercera, en capas.** Cada cuadrado de $j \times j$ se parte en capas en forma de L de $1, 3, 5, \dots, 2j - 1$ casillas: todo cuadrado es la suma de los primeros impares. Enderezada, cada capa es una fila.
+- **Encajan.** Las filas de $2i - 1$ casillas salen de los cuadrados con $j \ge i$, así que hay $n + 1 - i$ de ellas. En la franja $k = n + 1 - i$ el hueco mide justo $2n + 1 - 2k = 2i - 1$ casillas de ancho y tiene $k = n + 1 - i$ filas. Cada franja se llena con sus filas, sin que sobre ni falte nada.
+
+Por tanto $3 \sum k^2 = (2n + 1)\,T_n = (2n+1)\,\frac{n(n+1)}{2}$, y al dividir entre 3 sale la fórmula.
+
+<Video
+	archivo="suma-de-cuadrados.mp4"
+	titulo="Los cuadrados de 1, 2, 3 y 4 casillas de lado, en tres copias. Dos copias se colocan en escalera a los lados de un rectángulo de 9 por 10 casillas; la tercera se deshace en capas en forma de L de 1, 3, 5 y 7 casillas, que se enderezan y rellenan el hueco central. Las tres copias son 9 · 10 = 90 casillas, así que 1² + 2² + 3² + 4² = 30, y en general la suma vale n(n+1)(2n+1)/6."
+	pie="Vídeo generado con código (Manim). Antes de renderizarlo se comprueba que las capas en L parten cada cuadrado y que las tres copias llenan el rectángulo sin huecos ni solapes, para todos los n hasta 15."
+/>
 
 ## La suma de los cubos
 

@@ -26,6 +26,9 @@ VIDEOS = {
     "test-de-primalidad": ("escenas/primalidad.py", "Primalidad"),
     "factorizacion-en-primos": ("escenas/factorizacion.py", "Factorizacion"),
     "criba-de-eratostenes": ("escenas/criba.py", "Criba"),
+    "suma-de-cuadrados": ("escenas/suma_cuadrados.py", "SumaCuadrados"),
+    "fibonacci": ("escenas/fibonacci.py", "Fibonacci"),
+    "ternas-pitagoricas": ("escenas/ternas_pitagoricas.py", "TernasPitagoricas"),
 }
 
 CALIDADES = {"baja": "l", "media": "m", "alta": "h"}
