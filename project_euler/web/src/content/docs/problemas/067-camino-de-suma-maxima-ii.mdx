@@ -6,13 +6,15 @@ sidebar:
   order: 67
 fuente: project-euler
 numero: 67
+soluciones:
+  - archivo: 'project_euler/problems_1_to_hundred/61_70/67_maximumPathSum.js'
 temas: [Programación dinámica, Caminos]
 conceptos: [principio-de-optimalidad]
 ---
 
-import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
-import solucion from '@soluciones/61_70/67_maximumPathSum.js?raw';
+import Solucion from '../../../components/Solucion.astro';
 
 ## El problema
 
@@ -59,7 +61,7 @@ Si se prefiere programar la recurrencia tal cual, como una función recursiva, b
 <Tabs>
 <TabItem label="JavaScript (repositorio)">
 
-<Code code={solucion} lang="js" title="67_maximumPathSum.js" />
+<Solucion />
 
 Lee `67_triangle.txt` desde la misma carpeta que el script (`__dirname`), descarta las líneas vacías y convierte cada línea en una lista de números. Después aplica la misma función que el problema 18: recorre las filas de abajo arriba sumando a cada número el mayor de los dos de debajo. Si no puede leer el archivo, lo dice y termina con un código de error.
 

@@ -6,13 +6,15 @@ sidebar:
   order: 27
 fuente: project-euler
 numero: 27
+soluciones:
+  - archivo: 'project_euler/problems_1_to_hundred/21_30/27_quadraticPrimes.js'
 temas: [Primos, Polinomios]
 conceptos: [test-de-primalidad]
 ---
 
-import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
-import solucion from '@soluciones/21_30/27_quadraticPrimes.js?raw';
+import Solucion from '../../../components/Solucion.astro';
 
 ## El problema
 
@@ -133,7 +135,7 @@ así que el segundo polinomio es el de Euler desplazado, recorriendo $m = -40, \
 <Tabs>
 <TabItem label="JavaScript (repositorio)">
 
-<Code code={solucion} lang="js" title="27_quadraticPrimes.js" />
+<Solucion />
 
 `isPrime` es el test $6k \pm 1$ del paso 4. Devuelve `false` para cualquier valor menor o igual que 1, así que un valor negativo corta la racha: solo cuentan los primos positivos. En `findQuadraticPrimes`, la línea `if (!isPrime(b)) continue;` es el paso 1, el bucle `while` cuenta la racha y la comparación estricta `n > maxNumOfPrimes` se queda con la primera pareja que alcanza el máximo (y solo hay una).
 

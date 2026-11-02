@@ -6,13 +6,15 @@ sidebar:
   order: 21
 fuente: project-euler
 numero: 21
+soluciones:
+  - archivo: 'project_euler/problems_1_to_hundred/21_30/21_amicableNumbers.js'
 temas: [Divisores, Números amigos]
 conceptos: [funcion-divisor]
 ---
 
-import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
-import solucion from '@soluciones/21_30/21_amicableNumbers.js?raw';
+import Solucion from '../../../components/Solucion.astro';
 
 ## El problema
 
@@ -132,7 +134,7 @@ porque la suma de los inversos (la serie armónica) crece como el logaritmo. Par
 <Tabs>
 <TabItem label="JavaScript (repositorio)">
 
-<Code code={solucion} lang="js" title="21_amicableNumbers.js" />
+<Solucion />
 
 `sumOfDivisors` es el paso 3: empieza en 1 y recorre $i$ hasta $\sqrt{n}$ sumando las dos mitades de cada pareja. `findAmicableNumbers` construye primero la tabla `divisorsSum` del paso 2, para no recalcular $s(b)$, y después aplica el paso 1: `divisorsSum[potentialAmicable] === i` es $s(s(a)) = a$ y `potentialAmicable !== i` descarta los números perfectos. La condición `potentialAmicable < limit` es la simplificación del paso 4, válida para este límite.
 

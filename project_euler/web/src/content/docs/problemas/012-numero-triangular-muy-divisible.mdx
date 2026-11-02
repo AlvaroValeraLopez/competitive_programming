@@ -6,13 +6,15 @@ sidebar:
   order: 12
 fuente: project-euler
 numero: 12
+soluciones:
+  - archivo: 'project_euler/problems_1_to_hundred/11_20/12_highlyDivisibleTriangularNumber.js'
 temas: [Divisores, Números coprimos]
 conceptos: [suma-de-gauss, funcion-divisor]
 ---
 
-import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
-import solucion from '@soluciones/11_20/12_highlyDivisibleTriangularNumber.js?raw';
+import Solucion from '../../../components/Solucion.astro';
 
 ## El problema
 
@@ -112,7 +114,7 @@ Para cada factor basta con probar candidatos hasta su raíz cuadrada, porque los
 <Tabs>
 <TabItem label="JavaScript (repositorio)">
 
-<Code code={solucion} lang="js" title="12_highlyDivisibleTriangularNumber.js" />
+<Solucion />
 
 `countDivisors` es el paso 7 y el operador ternario de `findTriangularOver500Divisors` es el paso 5: elige qué factor dividir entre 2 según la paridad de `n`.
 

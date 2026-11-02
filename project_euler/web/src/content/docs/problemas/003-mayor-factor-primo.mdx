@@ -6,13 +6,15 @@ sidebar:
   order: 3
 fuente: project-euler
 numero: 3
+soluciones:
+  - archivo: 'project_euler/problems_1_to_hundred/1_10/3_largestPrimeFactor.js'
 temas: [Primos, Factorización]
 conceptos: [factorizacion-en-primos]
 ---
 
-import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
-import solucion from '@soluciones/1_10/3_largestPrimeFactor.js?raw';
+import Solucion from '../../../components/Solucion.astro';
 
 ## El problema
 
@@ -118,7 +120,7 @@ El siguiente candidato es 15, y $15^2 = 225 > 29$: paramos. Lo que queda, 29, es
 <Tabs>
 <TabItem label="JavaScript (repositorio)">
 
-<Code code={solucion} lang="js" title="3_largestPrimeFactor.js" />
+<Solucion />
 
 El primer `while` quita los factores 2 (paso 5). El `for` prueba los impares `i` hasta `sqrtN`, y el `while` de dentro es el paso 2: divide mientras puede. Recalcular `sqrtN = Math.sqrt(n)` después de cada división es el paso 4, la cota que se encoge. El `if (n > 2)` final es el paso 3: como $n$ ya es impar, $n > 2$ equivale a $n > 1$. La función devuelve la lista completa de factores primos en orden creciente, así que el último es el mayor.
 

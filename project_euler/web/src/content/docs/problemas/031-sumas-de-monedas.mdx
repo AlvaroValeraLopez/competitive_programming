@@ -6,13 +6,15 @@ sidebar:
   order: 31
 fuente: project-euler
 numero: 31
+soluciones:
+  - archivo: 'project_euler/problems_1_to_hundred/31_40/31_coinSums.js'
 temas: [Programación dinámica, Combinatoria]
 conceptos: [cambio-de-monedas]
 ---
 
-import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
-import solucion from '@soluciones/31_40/31_coinSums.js?raw';
+import Solucion from '../../../components/Solucion.astro';
 
 ## El problema
 
@@ -88,7 +90,7 @@ No hace falta guardar la tabla: basta una lista `w` de 201 casillas, que se actu
 <Tabs>
 <TabItem label="JavaScript (repositorio)">
 
-<Code code={solucion} lang="js" title="31_coinSums.js" />
+<Solucion />
 
 Es el paso 3: `ways[0] = 1` es el caso base, el bucle de fuera recorre las monedas y el de dentro las cantidades de menor a mayor. Al terminar, `ways[200]` es $W(8, 200)$.
 

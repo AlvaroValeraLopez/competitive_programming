@@ -6,13 +6,15 @@ sidebar:
   order: 18
 fuente: project-euler
 numero: 18
+soluciones:
+  - archivo: 'project_euler/problems_1_to_hundred/11_20/18_maximumPathSum.js'
 temas: [Programación dinámica, Caminos]
 conceptos: [principio-de-optimalidad]
 ---
 
-import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
-import solucion from '@soluciones/11_20/18_maximumPathSum.js?raw';
+import Solucion from '../../../components/Solucion.astro';
 
 ## El problema
 
@@ -94,7 +96,7 @@ Por ejemplo, $10 = 2 + \max(8, 5)$ y $20 = 7 + \max(10, 13)$. Arriba queda $23$,
 <Tabs>
 <TabItem label="JavaScript (repositorio)">
 
-<Code code={solucion} lang="js" title="18_maximumPathSum.js" />
+<Solucion />
 
 Es el paso 3, hecho **sobre el propio triángulo**: empieza en la penúltima fila y sube, sumando a cada número el mayor de los dos de debajo. Al terminar, `triangle[0][0]` es $M(0, 0)$. No necesita memoria extra, pero modifica el triángulo que recibe; si hubiera que usarlo después, convendría trabajar sobre una copia.
 

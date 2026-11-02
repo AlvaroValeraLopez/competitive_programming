@@ -6,13 +6,15 @@ sidebar:
   order: 26
 fuente: project-euler
 numero: 26
+soluciones:
+  - archivo: 'project_euler/problems_1_to_hundred/21_30/26_reciprocalCycles.js'
 temas: [Aritmética modular, Decimales periódicos]
 conceptos: [orden-multiplicativo]
 ---
 
-import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
-import solucion from '@soluciones/21_30/26_reciprocalCycles.js?raw';
+import Solucion from '../../../components/Solucion.astro';
 
 ## El problema
 
@@ -85,7 +87,7 @@ Con $d \le 10$: los primos son 2, 3, 5 y 7. El 2 y el 5 dividen a 10 y no tienen
 <Tabs>
 <TabItem label="JavaScript (repositorio)">
 
-<Code code={solucion} lang="js" title="26_reciprocalCycles.js" />
+<Solucion />
 
 Es el primer intento. Para cada `d`, el `Map` llamado `remainders` guarda en qué posición apareció cada resto. El bucle multiplica el resto por 10 y lo reduce módulo `d` (paso 1) hasta que sale un resto repetido o el 0. Si no es 0, la longitud del ciclo es la posición actual menos la posición en que apareció ese resto por primera vez. Se queda con el primer `d` que bate el récord.
 

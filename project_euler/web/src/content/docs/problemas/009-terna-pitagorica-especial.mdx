@@ -6,13 +6,15 @@ sidebar:
   order: 9
 fuente: project-euler
 numero: 9
+soluciones:
+  - archivo: 'project_euler/problems_1_to_hundred/1_10/9_specialPythagoreanTriplet.js'
 temas: [Ternas pitagóricas, Ecuaciones diofánticas]
 conceptos: [ternas-pitagoricas]
 ---
 
-import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
-import solucion from '@soluciones/1_10/9_specialPythagoreanTriplet.js?raw';
+import Solucion from '../../../components/Solucion.astro';
 
 ## El problema
 
@@ -113,7 +115,7 @@ Con $s = 1000$ hay que repartir $500 = 2^2 \cdot 5^3$, que tiene 12 divisores. R
 <Tabs>
 <TabItem label="JavaScript (repositorio)">
 
-<Code code={solucion} lang="js" title="9_specialPythagoreanTriplet.js" />
+<Solucion />
 
 Es el paso 1: recorre $a < s/3$ y $b < s/2$, calcula `c = sum - a - b` y comprueba la ecuación de Pitágoras. Empieza en `b = a + 1`, así que garantiza $a < b$; y si $b \ge c$ la terna no puede cumplir $a^2 + b^2 = c^2$, así que no hace falta comprobarlo. Devuelve la primera terna que encuentra, que es la única.
 

@@ -6,13 +6,15 @@ sidebar:
   order: 28
 fuente: project-euler
 numero: 28
+soluciones:
+  - archivo: 'project_euler/problems_1_to_hundred/21_30/28_numberSpiralDiagonals.js'
 temas: [Sumas, Patrones]
 conceptos: [suma-de-cuadrados]
 ---
 
-import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
-import solucion from '@soluciones/21_30/28_numberSpiralDiagonals.js?raw';
+import Solucion from '../../../components/Solucion.astro';
 
 ## El problema
 
@@ -107,7 +109,7 @@ En total $1 + 24 + 76 = 101$, como dice el enunciado. Con la fórmula, $S(2) = \
 <Tabs>
 <TabItem label="JavaScript (repositorio)">
 
-<Code code={solucion} lang="js" title="28_numberSpiralDiagonals.js" />
+<Solucion />
 
 El repositorio recorre las esquinas sin construir la espiral. `stepSize` es la distancia entre dos esquinas del anillo actual, $2k$ en el paso 2, y empieza en 2. En cada anillo avanza cuatro veces esa distancia desde la última esquina del anillo anterior, $(2k - 1)^2$, sumando cada esquina que alcanza. El bucle sigue mientras `stepSize < spiralSize`, es decir, para $2k = 2, 4, \dots, s - 1$: justo los anillos del 1 al $m$.
 

@@ -6,13 +6,15 @@ sidebar:
   order: 25
 fuente: project-euler
 numero: 25
+soluciones:
+  - archivo: 'project_euler/problems_1_to_hundred/21_30/25_1000DigitFibonacciNumber.js'
 temas: [Fibonacci, Números grandes]
 conceptos: [fibonacci]
 ---
 
-import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
-import solucion from '@soluciones/21_30/25_1000DigitFibonacciNumber.js?raw';
+import Solucion from '../../../components/Solucion.astro';
 
 ## El problema
 
@@ -114,7 +116,7 @@ El cálculo se hace con números de coma flotante, que tienen unas 16 cifras sig
 <Tabs>
 <TabItem label="JavaScript (repositorio)">
 
-<Code code={solucion} lang="js" title="25_1000DigitFibonacciNumber.js" />
+<Solucion />
 
 El repositorio resuelve el problema de los números grandes guardando cada término como una **cadena de cifras**, de modo que `current.length` es justo su número de cifras. `addBigIntStrings` suma dos cadenas como se suma a mano: recorre las cifras de derecha a izquierda, suma las dos cifras y la llevada, escribe `digitsSum % 10` y se lleva `Math.floor(digitsSum / 10)`. El bucle principal es la recurrencia de Fibonacci con `index` como contador, que empieza en 2 porque `current` empieza siendo $F_2$.
 

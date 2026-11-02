@@ -1,5 +1,4 @@
 // @ts-check
-import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import { unified } from '@astrojs/markdown-remark';
@@ -7,9 +6,9 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import { envolverTablas } from './src/lib/tablas.ts';
 
-// Las soluciones viven fuera de la web (en ../problems_1_to_hundred) y las
-// páginas las importan con `?raw`, así el código nunca se duplica.
-const solutionsDir = fileURLToPath(new URL('../problems_1_to_hundred', import.meta.url));
+// Las soluciones viven fuera de la web, en cualquier carpeta del repositorio:
+// cada página las lista en su frontmatter y el componente <Solucion /> las lee
+// al compilar (src/lib/soluciones.ts), así el código nunca se duplica.
 
 // https://astro.build/config
 export default defineConfig({
@@ -22,14 +21,6 @@ export default defineConfig({
 			remarkPlugins: [remarkMath],
 			rehypePlugins: [rehypeKatex, envolverTablas],
 		}),
-	},
-	vite: {
-		resolve: {
-			alias: { '@soluciones': solutionsDir },
-		},
-		server: {
-			fs: { allow: ['..'] },
-		},
 	},
 	integrations: [
 		starlight({

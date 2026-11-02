@@ -6,13 +6,15 @@ sidebar:
   order: 29
 fuente: project-euler
 numero: 29
+soluciones:
+  - archivo: 'project_euler/problems_1_to_hundred/21_30/29_distinctPowers.js'
 temas: [Potencias, Factorización]
 conceptos: [factorizacion-en-primos, precision-arbitraria]
 ---
 
-import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
-import solucion from '@soluciones/21_30/29_distinctPowers.js?raw';
+import Solucion from '../../../components/Solucion.astro';
 
 ## El problema
 
@@ -87,7 +89,7 @@ En total $7 + 4 + 4 = 15$, como dice el enunciado.
 <Tabs>
 <TabItem label="JavaScript (repositorio)">
 
-<Code code={solucion} lang="js" title="29_distinctPowers.js" />
+<Solucion />
 
 Es el primer intento: calcula cada potencia exactamente con `BigInt(i) ** BigInt(j)` y la añade a un `Set`, que ignora las repetidas. El tamaño del conjunto es la respuesta.
 

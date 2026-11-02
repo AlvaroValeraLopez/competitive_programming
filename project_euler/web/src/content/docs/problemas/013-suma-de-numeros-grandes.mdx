@@ -6,13 +6,15 @@ sidebar:
   order: 13
 fuente: project-euler
 numero: 13
+soluciones:
+  - archivo: 'project_euler/problems_1_to_hundred/11_20/13_largeSum.js'
 temas: [Números grandes, Cotas de error]
 conceptos: [precision-arbitraria]
 ---
 
-import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
-import solucion from '@soluciones/11_20/13_largeSum.js?raw';
+import Solucion from '../../../components/Solucion.astro';
 
 ## El problema
 
@@ -91,7 +93,7 @@ En el primer caso las dos cotas empiezan por 177, y en efecto $S = 1\,777\,776$.
 <Tabs>
 <TabItem label="JavaScript (repositorio)">
 
-<Code code={solucion} lang="js" title="13_largeSum.js" />
+<Solucion />
 
 Es el paso 2: convierte cada línea en un `BigInt`, los suma todos exactamente y se queda con los diez primeros caracteres del resultado. El paso 1 garantiza que no hace falta preocuparse por el signo ni por ceros a la izquierda.
 

@@ -6,13 +6,15 @@ sidebar:
   order: 33
 fuente: project-euler
 numero: 33
+soluciones:
+  - archivo: 'project_euler/problems_1_to_hundred/31_40/33_digitCancellingFractions.js'
 temas: [Fracciones, Máximo común divisor]
 conceptos: [mcd-y-mcm]
 ---
 
-import { Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import { TabItem, Tabs } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
-import solucion from '@soluciones/31_40/33_digitCancellingFractions.js?raw';
+import Solucion from '../../../components/Solucion.astro';
 
 ## El problema
 
@@ -133,7 +135,7 @@ Con el ejemplo: $\operatorname{mcd}(49, 98) = 49$ y $\operatorname{mcd}(4, 8) = 
 <Tabs>
 <TabItem label="JavaScript (repositorio)">
 
-<Code code={solucion} lang="js" title="33_digitCancellingFractions.js" />
+<Solucion />
 
 Es la fuerza bruta con los cuatro patrones del paso 1, en el orden A (`numStr[0] === denStr[0]`), B (`numStr[1] === denStr[1]`), D (`numStr[0] === denStr[1]`) y C (`numStr[1] === denStr[0]`). La comprobación final compara multiplicando en cruz, como en el paso 2, para no dividir con decimales. Para el producto multiplica las cifras que quedan después de tachar, es decir, las fracciones $\frac{a}{c}$, y al final simplifica con `gcd`, que es el algoritmo de Euclides del paso 6.
 

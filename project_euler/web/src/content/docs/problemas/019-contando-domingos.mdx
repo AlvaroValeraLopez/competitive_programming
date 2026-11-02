@@ -6,13 +6,15 @@ sidebar:
   order: 19
 fuente: project-euler
 numero: 19
+soluciones:
+  - archivo: 'project_euler/problems_1_to_hundred/11_20/19_countingSundays.js'
 temas: [Aritmética modular, Calendario]
 conceptos: [congruencias]
 ---
 
-import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
-import solucion from '@soluciones/11_20/19_countingSundays.js?raw';
+import Solucion from '../../../components/Solucion.astro';
 
 ## El problema
 
@@ -105,7 +107,7 @@ es decir, lunes, como dice el enunciado.
 <Tabs>
 <TabItem label="JavaScript (repositorio)">
 
-<Code code={solucion} lang="js" title="19_countingSundays.js" />
+<Solucion />
 
 `dayOfWeek` es el día de la semana del paso 1, con 0 para el domingo, y empieza en 1, el lunes 1 de enero de 1900. La línea `(dayOfWeek + 365) % 7` es el paso 3. Después recorre los meses de 1901 a 2000: para cada uno, primero comprueba si su día 1 es domingo y después avanza la longitud del mes, con febrero según la regla de los bisiestos (paso 5).
 

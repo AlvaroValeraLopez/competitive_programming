@@ -6,14 +6,16 @@ sidebar:
   order: 15
 fuente: project-euler
 numero: 15
+soluciones:
+  - archivo: 'project_euler/problems_1_to_hundred/11_20/15_latticePaths.js'
 temas: [Combinatoria, Triángulo de Pascal]
 conceptos: [coeficientes-binomiales]
 ---
 
-import { Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import { TabItem, Tabs } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
+import Solucion from '../../../components/Solucion.astro';
 import LatticePaths from '../../../components/LatticePaths.astro';
-import solucion from '@soluciones/11_20/15_latticePaths.js?raw';
 
 ## El problema
 
@@ -80,7 +82,7 @@ que es justo la [identidad de Pascal](../../conceptos/coeficientes-binomiales/#i
 <Tabs>
 <TabItem label="JavaScript (repositorio)">
 
-<Code code={solucion} lang="js" title="15_latticePaths.js" />
+<Solucion />
 
 Aplica directamente $\frac{(2n)!}{n!\,n!}$. Usa `BigInt` porque $40! \approx 8{,}16 \cdot 10^{47}$ supera con mucho a $2^{53}$, el mayor entero exacto de un `Number`. El resultado final sí cabe en un `Number`, pero los factoriales intermedios no.
 
