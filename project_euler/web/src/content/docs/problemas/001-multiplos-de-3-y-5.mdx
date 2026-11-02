@@ -1,0 +1,166 @@
+---
+title: 'Problema 1: Múltiplos de 3 y 5'
+description: Sumar los múltiplos de 3 o de 5 menores que 1000 sin recorrerlos, con la suma de Gauss y el principio de inclusión-exclusión.
+sidebar:
+  label: '1 · Múltiplos de 3 y 5'
+  order: 1
+---
+
+import { Aside, Badge, CardGrid, Code, LinkCard, TabItem, Tabs } from '@astrojs/starlight/components';
+import solucion from '@soluciones/1_10/1_multiplesOfThreeAndFive.js?raw';
+
+<Badge text="Sumas" variant="note" /> <Badge text="Inclusión-exclusión" variant="note" />
+
+## El problema
+
+Los números naturales menores que 10 que son múltiplos de 3 o de 5 son 3, 5, 6 y 9, y suman 23. **¿Cuánto suman todos los múltiplos de 3 o de 5 menores que 1000?**
+
+[Enunciado original en Project Euler](https://projecteuler.net/problem=1)
+
+## La idea en una frase
+
+En vez de recorrer los 999 números, sumamos tres progresiones con la fórmula de Gauss y corregimos con inclusión-exclusión los números que se cuentan dos veces.
+
+## Primer intento: fuerza bruta
+
+Lo más directo es probar cada número:
+
+```js
+function sumaBruta(limite) {
+  let suma = 0;
+  for (let n = 1; n < limite; n++) {
+    if (n % 3 === 0 || n % 5 === 0) suma += n;
+  }
+  return suma;
+}
+```
+
+Para un límite de 1000 es instantáneo, pero el coste crece con el límite: con $10^{18}$, a mil millones de comprobaciones por segundo, tardaría unos **30 años**. Las matemáticas permiten calcularlo con una docena de operaciones, sea cual sea el límite.
+
+## Desarrollo matemático
+
+Llamemos $N$ al límite (aquí, $N = 1000$).
+
+### Paso 1: sumar los múltiplos de un solo número
+
+Los múltiplos de $k$ menores que $N$ son $k, 2k, 3k, \dots, mk$, donde $m$ es el mayor entero con $mk \le N - 1$:
+
+$$
+m = \left\lfloor \frac{N - 1}{k} \right\rfloor
+$$
+
+Sacando $k$ factor común, lo que queda es la [suma de los primeros $m$ números](../../conceptos/suma-de-gauss/):
+
+$$
+S_k = k + 2k + \cdots + mk = k\,(1 + 2 + \cdots + m) = k\,\frac{m(m+1)}{2}
+$$
+
+### Paso 2: no contar dos veces
+
+Si sumamos $S_3 + S_5$, los números que son múltiplos de 3 **y** de 5 (15, 30, 45…) entran dos veces. ¿Qué números son esos? Si $3 \mid n$ y $5 \mid n$, como 3 y 5 son primos distintos, los dos aparecen en la factorización de $n$, así que $15 \mid n$. Es decir, son exactamente los múltiplos de 15.
+
+Basta con restarlos una vez, que es el [principio de inclusión-exclusión](../../conceptos/inclusion-exclusion/):
+
+$$
+S = S_3 + S_5 - S_{15}
+$$
+
+### Paso 3: comprobarlo con el ejemplo
+
+Con $N = 10$:
+
+| $k$ | $m$ | Múltiplos | $S_k$ |
+| --- | --- | --- | --- |
+| 3 | 3 | 3, 6, 9 | $3 \cdot \frac{3 \cdot 4}{2} = 18$ |
+| 5 | 1 | 5 | $5 \cdot \frac{1 \cdot 2}{2} = 5$ |
+| 15 | 0 | ninguno | $0$ |
+
+$S = 18 + 5 - 0 = 23$, que coincide con el enunciado.
+
+### Fórmula final
+
+$$
+S(N) = 3\,\frac{m_3(m_3+1)}{2} + 5\,\frac{m_5(m_5+1)}{2} - 15\,\frac{m_{15}(m_{15}+1)}{2},
+\qquad m_k = \left\lfloor \frac{N - 1}{k} \right\rfloor
+$$
+
+## El código
+
+<Tabs>
+<TabItem label="JavaScript (repositorio)">
+
+<Code code={solucion} lang="js" title="1_multiplesOfThreeAndFive.js" />
+
+La función `sumMultiples(n)` es $S_k$ del paso 1: `Math.floor((LIMIT - 1) / n)` es $m$ y `Math.floor((LIMIT - 1) / n + 1)` es $m + 1$. La última línea aplica el paso 2.
+
+</TabItem>
+<TabItem label="Python">
+
+```python
+def suma_multiplos(k, limite):
+    m = (limite - 1) // k
+    return k * m * (m + 1) // 2
+
+LIMITE = 1000
+print(suma_multiplos(3, LIMITE) + suma_multiplos(5, LIMITE) - suma_multiplos(15, LIMITE))
+```
+
+En Python los enteros no tienen límite de tamaño, así que esta versión funciona igual con `LIMITE = 10**18`.
+
+</TabItem>
+<TabItem label="JavaScript (BigInt)">
+
+```js
+const sumaMultiplos = (k, limite) => {
+  const m = (limite - 1n) / k; // la división de BigInt ya redondea hacia abajo
+  return (k * m * (m + 1n)) / 2n;
+};
+
+const LIMITE = 10n ** 18n;
+console.log(sumaMultiplos(3n, LIMITE) + sumaMultiplos(5n, LIMITE) - sumaMultiplos(15n, LIMITE));
+```
+
+</TabItem>
+</Tabs>
+
+<Aside type="caution" title="Límites enormes en JavaScript">
+Con $N = 10^{18}$ el resultado ronda $2 \cdot 10^{35}$, muy por encima de $2^{53} \approx 9 \cdot 10^{15}$, el mayor entero que un `Number` representa con exactitud. La versión del repositorio daría un resultado redondeado; para límites así hay que usar `BigInt`.
+</Aside>
+
+## Complejidad
+
+| Método | Coste | $N = 10^3$ | $N = 10^9$ | $N = 10^{18}$ |
+| --- | --- | --- | --- | --- |
+| Fuerza bruta | $O(N)$ | ~1 000 pasos | ~$10^9$ pasos | ~$10^{18}$ pasos |
+| Fórmula | $O(1)$ | ~12 operaciones | ~12 operaciones | ~12 operaciones |
+
+## Generalización
+
+Con cualquier lista de divisores $a_1, \dots, a_r$ la idea es la misma: se recorren todos los subconjuntos no vacíos $T$ de la lista, sumando o restando según su tamaño, y se usa el mínimo común múltiplo de cada subconjunto:
+
+$$
+S = \sum_{\emptyset \neq T \subseteq \{a_1, \dots, a_r\}} (-1)^{|T|+1}\, S_{\operatorname{mcm}(T)}
+$$
+
+Por ejemplo, para los múltiplos de 3, 5 o 7:
+
+$$
+S = S_3 + S_5 + S_7 - S_{15} - S_{21} - S_{35} + S_{105}
+$$
+
+Hay $2^r - 1$ términos, así que con pocos divisores sigue siendo inmediato.
+
+## Conceptos utilizados
+
+<CardGrid>
+	<LinkCard
+		title="Suma de Gauss"
+		description="1 + 2 + … + m = m(m+1)/2"
+		href="../../conceptos/suma-de-gauss/"
+	/>
+	<LinkCard
+		title="Inclusión-exclusión"
+		description="Contar una unión sin repetir elementos."
+		href="../../conceptos/inclusion-exclusion/"
+	/>
+</CardGrid>

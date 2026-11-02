@@ -1,0 +1,70 @@
+---
+// Demostración visual de 1 + 2 + ... + n = n(n+1)/2: dos escaleras iguales
+// encajan en un rectángulo de n × (n + 1).
+interface Props {
+	n?: number;
+}
+
+const { n = 5 } = Astro.props;
+const size = 32;
+const width = (n + 1) * size;
+const height = n * size;
+const rows = Array.from({ length: n }, (_, r) => r + 1);
+const columns = Array.from({ length: n + 1 }, (_, c) => c);
+const triangular = (n * (n + 1)) / 2;
+const sumText = rows.join(' + ');
+---
+
+<figure class="gauss not-content">
+	<svg
+		viewBox={`-2 -2 ${width + 4} ${height + 4}`}
+		width={width + 4}
+		role="img"
+		aria-label={`Dos escaleras de ${triangular} cuadrados forman un rectángulo de ${n} por ${n + 1}`}
+	>
+		{
+			rows.map((r) =>
+				columns.map((c) => (
+					<rect
+						x={c * size}
+						y={(r - 1) * size}
+						width={size}
+						height={size}
+						class={c < r ? 'first' : 'second'}
+					/>
+				)),
+			)
+		}
+	</svg>
+	<figcaption>
+		Para <em>n</em> = {n}: la escalera de color tiene {sumText} = {triangular} cuadrados y la gris,
+		otros tantos. Juntas forman un rectángulo de {n} × {n + 1} = {n * (n + 1)}, así que cada
+		escalera mide {n * (n + 1)} / 2 = {triangular}.
+	</figcaption>
+</figure>
+
+<style>
+	.gauss {
+		margin-block: 1.5rem;
+		text-align: center;
+	}
+	svg {
+		max-width: 100%;
+		height: auto;
+	}
+	rect {
+		stroke: var(--sl-color-bg);
+		stroke-width: 2;
+	}
+	.first {
+		fill: var(--sl-color-accent);
+	}
+	.second {
+		fill: var(--sl-color-gray-4);
+	}
+	figcaption {
+		margin-top: 0.75rem;
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-2);
+	}
+</style>

@@ -1,0 +1,157 @@
+---
+title: 'Problema 15: Caminos en una cuadrícula'
+description: Contar los caminos que cruzan una cuadrícula de 20 × 20 traduciéndolos a palabras y usando coeficientes binomiales.
+sidebar:
+  label: '15 · Caminos en una cuadrícula'
+  order: 15
+---
+
+import { Badge, CardGrid, Code, LinkCard, TabItem, Tabs } from '@astrojs/starlight/components';
+import LatticePaths from '../../../components/LatticePaths.astro';
+import solucion from '@soluciones/11_20/15_latticePaths.js?raw';
+
+<Badge text="Combinatoria" variant="note" /> <Badge text="Triángulo de Pascal" variant="note" />
+
+## El problema
+
+Empezando en la esquina superior izquierda de una cuadrícula de $2 \times 2$, y moviéndonos solo hacia la derecha y hacia abajo, hay exactamente 6 caminos hasta la esquina inferior derecha. **¿Cuántos caminos hay en una cuadrícula de $20 \times 20$?**
+
+[Enunciado original en Project Euler](https://projecteuler.net/problem=15)
+
+## La idea en una frase
+
+Cada camino es una palabra de 40 flechas con exactamente 20 → y 20 ↓, así que contar caminos es elegir en qué posiciones van las →: $\binom{40}{20}$.
+
+## Primer intento: recorrer todos los caminos
+
+Una función recursiva que pruebe ir a la derecha y hacia abajo en cada punto encuentra todos los caminos, pero tiene que **visitarlos uno a uno**. Su número crece aproximadamente como $4^n / \sqrt{\pi n}$, así que para $n = 20$ habría que recorrer más de cien mil millones de caminos. Hay que contarlos sin enumerarlos.
+
+## Desarrollo matemático
+
+Llamaremos $n$ al lado de la cuadrícula. Un punto se identifica por $(i, j)$: $i$ pasos a la derecha y $j$ pasos hacia abajo desde la salida.
+
+### Idea 1: contar cuántos caminos llegan a cada punto
+
+Al punto $(i, j)$ solo se puede llegar desde la izquierda, $(i-1, j)$, o desde arriba, $(i, j-1)$. Así que los caminos que llegan a él son la suma de los que llegan a esos dos:
+
+$$
+P(i, j) = P(i-1, j) + P(i, j-1)
+$$
+
+A los puntos del borde superior y del izquierdo solo llega un camino (todo recto), así que $P(i, 0) = P(0, j) = 1$. Rellenando la cuadrícula con esta regla aparece el **triángulo de Pascal**, girado 45°. Prueba a cambiar el tamaño:
+
+<LatticePaths initial={4} max={8} />
+
+### Idea 2: cada camino es una palabra
+
+Para ir de $(0, 0)$ a $(n, n)$ hay que dar exactamente $n$ pasos → y $n$ pasos ↓, en algún orden. Un camino queda determinado por la secuencia de flechas, y al revés: **cualquier** secuencia con $n$ flechas de cada tipo es un camino válido, porque nunca se sale de la cuadrícula.
+
+Para $n = 2$ salen las seis palabras del enunciado:
+
+$$
+\to\to\downarrow\downarrow \qquad \to\downarrow\to\downarrow \qquad \to\downarrow\downarrow\to \qquad \downarrow\to\to\downarrow \qquad \downarrow\to\downarrow\to \qquad \downarrow\downarrow\to\to
+$$
+
+### Contar las palabras
+
+Una palabra de $2n$ flechas queda fijada al decidir **qué $n$ posiciones llevan →** (las demás llevan ↓). Eso es elegir $n$ elementos de $2n$, un [coeficiente binomial](../../conceptos/coeficientes-binomiales/):
+
+$$
+\text{caminos}(n) = \binom{2n}{n} = \frac{(2n)!}{n!\; n!}
+$$
+
+Comprobación: $\binom{4}{2} = \frac{24}{2 \cdot 2} = 6$. El mismo argumento sirve para una cuadrícula rectangular de $a \times b$: hay $\binom{a+b}{a}$ caminos.
+
+### Las dos ideas son la misma
+
+Según la idea 2, a cada punto llegan $P(i, j) = \binom{i+j}{i}$ caminos. Sustituyendo en la regla de la idea 1 se obtiene
+
+$$
+\binom{i+j}{i} = \binom{i+j-1}{i-1} + \binom{i+j-1}{i},
+$$
+
+que es justo la [identidad de Pascal](../../conceptos/coeficientes-binomiales/#identidad-de-pascal-y-el-triángulo). Por eso los números de la cuadrícula forman el triángulo de Pascal.
+
+## El código
+
+<Tabs>
+<TabItem label="JavaScript (repositorio)">
+
+<Code code={solucion} lang="js" title="15_latticePaths.js" />
+
+Aplica directamente $\frac{(2n)!}{n!\,n!}$. Usa `BigInt` porque $40! \approx 8{,}16 \cdot 10^{47}$ supera con mucho a $2^{53}$, el mayor entero exacto de un `Number`. El resultado final sí cabe en un `Number`, pero los factoriales intermedios no.
+
+</TabItem>
+<TabItem label="JavaScript (multiplicativa)">
+
+```js
+function binomial(n, k) {
+  let resultado = 1n;
+  for (let i = 1n; i <= k; i++) {
+    // Multiplicar antes de dividir: el resultado pasa a valer C(n - k + i, i), siempre entero.
+    resultado = (resultado * (n - k + i)) / i;
+  }
+  return resultado;
+}
+
+console.log(binomial(40n, 20n));
+```
+
+Nunca calcula un factorial completo: los valores intermedios son coeficientes binomiales más pequeños. [Por qué las divisiones son exactas](../../conceptos/coeficientes-binomiales/#cómo-calcularlos-en-un-ordenador).
+
+</TabItem>
+<TabItem label="JavaScript (idea 1)">
+
+```js
+function caminos(n) {
+  const fila = new Array(n + 1).fill(1); // primera fila: un camino a cada punto
+  for (let i = 1; i <= n; i++) {
+    for (let j = 1; j <= n; j++) {
+      fila[j] += fila[j - 1]; // P(i, j) = P(i - 1, j) + P(i, j - 1)
+    }
+  }
+  return fila[n];
+}
+
+console.log(caminos(20));
+```
+
+Rellena la cuadrícula fila a fila guardando solo la fila actual. No necesita la fórmula, y la misma idea sirve cuando hay casillas prohibidas, donde la fórmula deja de valer.
+
+</TabItem>
+<TabItem label="Python">
+
+```python
+from math import comb
+
+print(comb(40, 20))
+```
+
+Python trae los coeficientes binomiales en la biblioteca estándar desde la versión 3.8.
+
+</TabItem>
+</Tabs>
+
+## Complejidad
+
+| Método | Coste | Para $n = 20$ |
+| --- | --- | --- |
+| Recorrer todos los caminos | $O\!\left(\binom{2n}{n}\right) \approx O(4^n / \sqrt{n})$ | más de $10^{11}$ caminos |
+| Rellenar la cuadrícula (idea 1) | $O(n^2)$ | 400 sumas |
+| Fórmula con factoriales | $O(n)$ multiplicaciones de números enormes | unas 80 multiplicaciones |
+| Fórmula multiplicativa | $O(n)$ | 20 multiplicaciones y 20 divisiones |
+
+## Para profundizar
+
+- **Sin cruzar la diagonal.** Si los caminos pueden tocar la diagonal que une las dos esquinas pero no cruzarla, el número de caminos es $\frac{1}{n+1}\binom{2n}{n}$: los **números de Catalan**, que también cuentan paréntesis bien emparejados y árboles binarios.
+- **En tres dimensiones.** En un cubo de $n \times n \times n$ cada camino es una palabra con $n$ letras de cada uno de tres tipos, y hay $\frac{(3n)!}{(n!)^3}$, un coeficiente multinomial.
+
+## Conceptos utilizados
+
+<CardGrid>
+	<LinkCard
+		title="Coeficientes binomiales"
+		description="Elegir k entre n, el triángulo de Pascal y cómo calcularlos."
+		href="../../conceptos/coeficientes-binomiales/"
+	/>
+</CardGrid>
