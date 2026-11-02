@@ -10,6 +10,7 @@ area: Aritmética modular
 
 import { Aside } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
+import Video from '../../../components/Video.astro';
 
 ## Qué es una congruencia
 
@@ -74,6 +75,12 @@ $$
 $$
 
 **Cada 400 años el calendario se repite exactamente**, con los mismos días de la semana en las mismas fechas.
+
+<Video
+	archivo="congruencias.mp4"
+	titulo="Los números del 0 al 27 en una espiral de siete radios: los que dejan el mismo resto al dividir entre 7 caen en el mismo radio, como 3, 10, 17 y 24. Después, un reloj de siete días: el 1 de enero de 1901 fue martes, y el día 1 de cada mes avanza la longitud del mes módulo 7 (31 días son 3, 30 son 2, 28 son 0); en 1901 cayeron en domingo el 1 de septiembre y el 1 de diciembre. Al final, las potencias de 7 módulo 10 repiten 7, 9, 3, 1, así que 7¹⁰⁰ acaba en 1."
+	pie="Vídeo generado con código (Manim). Antes de renderizarlo se comprueba, contra el calendario real, el día de la semana del día 1 de cada mes de 1890 a 2109."
+/>
 
 ## Potencias módulo n
 

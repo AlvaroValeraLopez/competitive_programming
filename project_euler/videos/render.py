@@ -32,6 +32,8 @@ VIDEOS = {
     "precision-arbitraria": ("escenas/precision.py", "PrecisionArbitraria"),
     "principio-de-optimalidad": ("escenas/optimalidad.py", "PrincipioOptimalidad"),
     "cambio-de-monedas": ("escenas/monedas.py", "CambioMonedas"),
+    "congruencias": ("escenas/congruencias.py", "Congruencias"),
+    "orden-multiplicativo": ("escenas/orden.py", "OrdenMultiplicativo"),
 }
 
 CALIDADES = {"baja": "l", "media": "m", "alta": "h"}

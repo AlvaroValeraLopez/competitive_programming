@@ -10,6 +10,7 @@ area: Aritmética modular
 
 import { Aside } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
+import Video from '../../../components/Video.astro';
 
 ## Las potencias acaban en ciclo
 
@@ -49,6 +50,8 @@ y como $(p-1)!$ no es múltiplo de $p$, se puede tachar.
 
 Juntando las dos cosas: **el orden de $a$ módulo un primo $p$ divide a $p - 1$**. Con 7: $\operatorname{ord}_7(10) = 6$, que divide a $6$. Para un $n$ cualquiera vale lo mismo con $\varphi(n)$, el número de enteros entre 1 y $n$ coprimos con $n$: $a^{\varphi(n)} \equiv 1 \pmod n$ (teorema de Euler), así que el orden divide a $\varphi(n)$.
 
+**Otra forma de verlo.** Multiplicar por $a$ reparte los restos $1, 2, \dots, p - 1$ en ciclos: desde un resto $c$ se pasa a $ca$, luego a $ca^2$…, y se vuelve a $c$ por primera vez cuando $c\,a^k \equiv c$, es decir, tachando $c$, cuando $a^k \equiv 1$. Así que **todos los ciclos miden lo mismo, $\operatorname{ord}_p(a)$**. Como entre todos cubren los $p - 1$ restos sin repetir ninguno, el orden divide a $p - 1$. En el vídeo de más abajo se ve con $p = 13$ y $a = 10$: los doce restos forman dos ciclos de 6.
+
 ## Decimales periódicos
 
 Al dividir $1$ entre $d$ a mano, en cada paso se multiplica el resto por 10, se escribe una cifra y queda un resto nuevo:
@@ -76,6 +79,12 @@ $$
 | 7 | $0{,}\overline{142857}$ | 6 | $\operatorname{ord}_7(10) = 6$ |
 | 11 | $0{,}\overline{09}$ | 2 | $\operatorname{ord}_{11}(10) = 2$ |
 | 13 | $0{,}\overline{076923}$ | 6 | $\operatorname{ord}_{13}(10) = 6$ |
+
+<Video
+	archivo="orden-multiplicativo.mp4"
+	titulo="La división de 1 entre 7 sobre un círculo con los restos del 0 al 6: cada paso multiplica el resto por 10 y lo reduce módulo 7, saltando de 1 a 3, 2, 6, 4, 5 y de vuelta a 1, mientras aparecen las cifras 1, 4, 2, 8, 5 y 7; el periodo es 6, el orden de 10 módulo 7. Después, módulo 13, los doce restos se reparten en dos ciclos de 6, el de 1/13 = 0,076923… y el de 2/13 = 0,153846…, así que el orden de 10 módulo 13 es 6, que divide a 12."
+	pie="Vídeo generado con código (Manim). Antes de renderizarlo se comprueba que, para cada primo hasta 400 salvo 2 y 5, que dividen a 10, los ciclos de multiplicar por 10 cubren todos los restos y miden lo mismo, y que la división larga se repite con periodo igual al orden."
+/>
 
 ## El periodo más largo posible
 
