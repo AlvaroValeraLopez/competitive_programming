@@ -1,0 +1,173 @@
+---
+title: 'Problema 25: Número de Fibonacci de 1000 cifras'
+description: Encontrar el primer término de Fibonacci con 1000 cifras sumando números enormes cifra a cifra, o sin calcular ninguno, con la fórmula de Binet y un logaritmo.
+sidebar:
+  label: '25 · Fibonacci de 1000 cifras'
+  order: 25
+temas: [Fibonacci, Números grandes]
+conceptos: [fibonacci]
+---
+
+import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+import solucion from '@soluciones/21_30/25_1000DigitFibonacciNumber.js?raw';
+
+## El problema
+
+La sucesión de Fibonacci se define con $F_1 = F_2 = 1$ y $F_n = F_{n-1} + F_{n-2}$. Sus doce primeros términos son
+
+$$
+1,\ 1,\ 2,\ 3,\ 5,\ 8,\ 13,\ 21,\ 34,\ 55,\ 89,\ 144
+$$
+
+y $F_{12} = 144$ es el primero con tres cifras. **¿Cuál es el índice del primer término con 1000 cifras?**
+
+[Enunciado original en Project Euler](https://projecteuler.net/problem=25)
+
+## La idea en una frase
+
+El número de cifras de $F_n$ crece casi exactamente en línea recta con $n$, porque $F_n \approx \varphi^n / \sqrt{5}$; así que, en lugar de sumar números de mil cifras, basta con despejar $n$ en una desigualdad con logaritmos.
+
+## Primer intento: fuerza bruta con Number
+
+Lo más directo es generar la sucesión y mirar cuántas cifras tiene cada término:
+
+```js
+let a = 1;
+let b = 1;
+let n = 2;
+while (String(b).length < 1000) {
+  [a, b] = [b, a + b];
+  n++;
+}
+```
+
+**Este bucle no termina nunca.** Un `Number` de JavaScript solo guarda unas 16 cifras significativas, así que a partir de $F_{79}$ los términos ya no son exactos. Peor aún: a partir de $F_{103}$, `String(b)` usa notación científica. El bucle llega a $F_{1476}$ como `"1.3069892237633987e+308"`: 23 caracteres para un número de 309 cifras. Y $F_{1477}$ ya supera el mayor `Number` posible, cerca de $1{,}8 \cdot 10^{308}$, y se convierte en `Infinity`, cuya cadena tiene 8 caracteres. Para llegar a las mil cifras hacen falta enteros de tamaño arbitrario.
+
+## Desarrollo matemático
+
+### Paso 1: cuántas cifras tiene un número
+
+Un entero $N \ge 1$ tiene $d$ cifras exactamente cuando $10^{d-1} \le N < 10^d$. Tomando logaritmos en base 10, eso es $d - 1 \le \log_{10} N < d$, así que
+
+$$
+\text{cifras de } N = \lfloor \log_{10} N \rfloor + 1, \qquad N \text{ tiene al menos } d \text{ cifras} \iff N \ge 10^{d-1}
+$$
+
+### Paso 2: el tamaño de Fₙ
+
+La fórmula de Binet (ver [la sucesión de Fibonacci](../../conceptos/fibonacci/#la-fórmula-de-binet)) dice que
+
+$$
+F_n = \frac{\varphi^n - \psi^n}{\sqrt{5}}, \qquad \varphi = \frac{1 + \sqrt{5}}{2} \approx 1{,}618, \quad \psi = \frac{1 - \sqrt{5}}{2} \approx -0{,}618
+$$
+
+Como $|\psi| < 1$, el término $\psi^n / \sqrt{5}$ se hace minúsculo enseguida, y $F_n$ es el entero más cercano a $\varphi^n / \sqrt{5}$. Tomando logaritmos:
+
+$$
+\log_{10} F_n \approx n \log_{10} \varphi - \log_{10} \sqrt{5}
+$$
+
+**Es una recta en $n$.** Cada término tiene, en logaritmo, unos $0{,}209$ más que el anterior, así que se gana una cifra cada $1 / \log_{10} \varphi \approx 4{,}785$ términos.
+
+### Paso 3: despejar n
+
+En [Fibonacci](../../conceptos/fibonacci/#cuántas-cifras-tiene-cada-término) se demuestra que, para $n \ge 2$, la aproximación da el número de cifras exacto:
+
+$$
+\text{cifras de } F_n = \big\lfloor n \log_{10} \varphi - \log_{10} \sqrt{5} \big\rfloor + 1
+$$
+
+Por tanto $F_n$ tiene al menos $d$ cifras si y solo si $n \log_{10} \varphi - \log_{10} \sqrt{5} \ge d - 1$, es decir,
+
+$$
+n \ge \frac{d - 1 + \log_{10} \sqrt{5}}{\log_{10} \varphi}
+$$
+
+y el primer término con $d$ cifras es
+
+$$
+n(d) = \left\lceil \frac{d - 1 + \log_{10} \sqrt{5}}{\log_{10} \varphi} \right\rceil
+$$
+
+No hace falta calcular ni un solo término de la sucesión.
+
+### Paso 4: comprobarlo con el ejemplo
+
+Con $\log_{10} \varphi \approx 0{,}2089876$ y $\log_{10} \sqrt{5} \approx 0{,}3494850$:
+
+| $d$ | $\dfrac{d - 1 + \log_{10} \sqrt{5}}{\log_{10} \varphi}$ | $n(d)$ | Comprobación |
+| --- | --- | --- | --- |
+| 3 | 11,24 | 12 | $F_{11} = 89$, $F_{12} = 144$ |
+| 10 | 44,74 | 45 | $F_{44} = 701\,408\,733$, $F_{45} = 1\,134\,903\,170$ |
+
+Los dos coinciden: con 3 cifras es el ejemplo del enunciado.
+
+<Aside type="caution" title="Cuidado con la precisión">
+El cálculo se hace con números de coma flotante, que tienen unas 16 cifras significativas. Con $d = 1000$ el cociente es del orden de miles, así que el error queda por debajo de $10^{-11}$. La fórmula solo podría equivocarse si el cociente cayera a menos de esa distancia de un entero. Con $d = 1000$ no pasa, pero conviene comprobarlo, o confirmar el resultado sumando, como hace el repositorio.
+</Aside>
+
+## El código
+
+<Tabs>
+<TabItem label="JavaScript (repositorio)">
+
+<Code code={solucion} lang="js" title="25_1000DigitFibonacciNumber.js" />
+
+El repositorio resuelve el problema de los números grandes guardando cada término como una **cadena de cifras**, de modo que `current.length` es justo su número de cifras. `addBigIntStrings` suma dos cadenas como se suma a mano: recorre las cifras de derecha a izquierda, suma las dos cifras y la llevada, escribe `digitsSum % 10` y se lleva `Math.floor(digitsSum / 10)`. El bucle principal es la recurrencia de Fibonacci con `index` como contador, que empieza en 2 porque `current` empieza siendo $F_2$.
+
+</TabItem>
+<TabItem label="JavaScript (BigInt)">
+
+```js
+function primerFibonacciConCifras(cifras) {
+  let a = 1n;
+  let b = 1n;
+  let n = 2;
+  while (b.toString().length < cifras) {
+    [a, b] = [b, a + b];
+    n++;
+  }
+  return n;
+}
+
+console.log(primerFibonacciConCifras(1000));
+```
+
+Desde 2020 JavaScript tiene `BigInt`, enteros de tamaño arbitrario, así que ya no hace falta programar la suma a mano. Es el mismo bucle que la fuerza bruta, pero con `1n` en lugar de `1`.
+
+</TabItem>
+<TabItem label="Python (logaritmos)">
+
+```python
+from math import ceil, log10, sqrt
+
+def primer_fibonacci_con_cifras(d):
+    phi = (1 + sqrt(5)) / 2
+    return ceil((d - 1 + log10(sqrt(5))) / log10(phi))
+
+print(primer_fibonacci_con_cifras(1000))
+```
+
+Es la fórmula del paso 3. Con `primer_fibonacci_con_cifras(3)` devuelve 12, el ejemplo del enunciado. Vale para $d \ge 2$: con $d = 1$ daría 2, cuando $F_1 = 1$ ya tiene una cifra.
+
+</TabItem>
+</Tabs>
+
+## Complejidad
+
+| Método | Coste | Comentario |
+| --- | --- | --- |
+| Fuerza bruta con `Number` | — | no termina |
+| Sumar cifra a cifra (repositorio) o con `BigInt` | $O(d^2)$ operaciones con cifras | unos $4{,}8\,d$ sumas de hasta $d$ cifras |
+| Logaritmos (paso 3) | $O(1)$ | unas pocas operaciones |
+
+El método del repositorio hace del orden de $4{,}8\,d$ sumas, y cada una recorre hasta $d$ cifras. Con $d = 1000$ son unos pocos millones de operaciones con cifras, que se hacen en una fracción de segundo. La fórmula, en cambio, cuesta lo mismo con $d = 1000$ que con $d = 10^{15}$, aunque para valores tan grandes habría que calcular los logaritmos con más precisión que la de un `Number`.
+
+## Conceptos utilizados
+
+<Relaciones mostrar="conceptos" />
+
+## Problemas relacionados
+
+<Relaciones mostrar="relacionados" />

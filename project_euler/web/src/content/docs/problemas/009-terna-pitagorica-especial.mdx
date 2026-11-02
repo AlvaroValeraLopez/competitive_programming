@@ -1,0 +1,180 @@
+---
+title: 'Problema 9: Terna pitagórica especial'
+description: Encontrar la única terna pitagórica cuyos lados suman 1000 despejando dos de las tres incógnitas, y cómo la fórmula de Euclides convierte la búsqueda en mirar los divisores de 500.
+sidebar:
+  label: '9 · Terna pitagórica especial'
+  order: 9
+temas: [Ternas pitagóricas, Ecuaciones diofánticas]
+conceptos: [ternas-pitagoricas]
+---
+
+import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+import solucion from '@soluciones/1_10/9_specialPythagoreanTriplet.js?raw';
+
+## El problema
+
+Una terna pitagórica son tres números naturales $a < b < c$ que cumplen $a^2 + b^2 = c^2$. Por ejemplo, $3^2 + 4^2 = 9 + 16 = 25 = 5^2$.
+
+Existe exactamente una terna pitagórica con $a + b + c = 1000$. **Calcula el producto $abc$.**
+
+[Enunciado original en Project Euler](https://projecteuler.net/problem=9)
+
+## La idea en una frase
+
+Las dos ecuaciones permiten despejar $c$ y luego $b$ en función de $a$, así que basta con probar los valores de $a$ uno a uno; y con la fórmula de Euclides la búsqueda se reduce a los divisores de la mitad del perímetro.
+
+## Primer intento: fuerza bruta
+
+Probamos todos los tríos $a < b < c$ menores que 1000:
+
+```js
+for (let a = 1; a < 1000; a++) {
+  for (let b = a + 1; b < 1000; b++) {
+    for (let c = b + 1; c < 1000; c++) {
+      if (a + b + c === 1000 && a * a + b * b === c * c) {
+        console.log(a * b * c);
+      }
+    }
+  }
+}
+```
+
+Son $\binom{999}{3} \approx 1{,}7 \cdot 10^8$ tríos, y casi ninguno cumple siquiera que la suma valga 1000. En JavaScript tarda una décima de segundo, así que funciona, pero desperdicia casi todo el trabajo: la condición de la suma no se usa para reducir la búsqueda, solo para descartar al final.
+
+## Desarrollo matemático
+
+Llamemos $s$ al perímetro (aquí, $s = 1000$). Buscamos enteros positivos con
+
+$$
+a^2 + b^2 = c^2, \qquad a + b + c = s, \qquad a < b < c
+$$
+
+### Paso 1: c queda determinado
+
+De la segunda ecuación, $c = s - a - b$: solo hay que recorrer $a$ y $b$. Además podemos acotarlos:
+
+- Como $a < b < c$, los tres sumandos son mayores o iguales que $a$, y dos de ellos estrictamente: $3a < s$, es decir, $a < s/3$.
+- Como $b < c = s - a - b$, se cumple $2b < s - a$, y en particular $b < s/2$.
+
+Con $s = 1000$ quedan como mucho unas 110 000 parejas $(a, b)$, en lugar de 166 millones de tríos.
+
+### Paso 2: b también queda determinado
+
+Sustituimos $c = s - a - b$ en la ecuación de Pitágoras:
+
+$$
+a^2 + b^2 = (s - a - b)^2 = s^2 + a^2 + b^2 - 2sa - 2sb + 2ab
+$$
+
+Los cuadrados $a^2$ y $b^2$ se cancelan, y queda una ecuación **lineal** en $b$:
+
+$$
+2b\,(s - a) = s^2 - 2sa \quad\Longrightarrow\quad b = \frac{s\,(s - 2a)}{2\,(s - a)}
+$$
+
+Así que para cada $a$ solo hay un $b$ posible, y basta con comprobar que la división es exacta y que $b > a$. Que además $b < c$ es automático, porque $c^2 = a^2 + b^2 > b^2$. **La búsqueda pasa a ser un solo bucle**, de menos de $s/3$ vueltas.
+
+**Con el ejemplo del enunciado**, $s = 3 + 4 + 5 = 12$: para $a = 3$ la fórmula da $b = \frac{12 \cdot 6}{2 \cdot 9} = 4$, y $c = 12 - 3 - 4 = 5$.
+
+**Con perímetro 90**, el bucle encuentra dos ternas: $a = 9$ da $b = \frac{90 \cdot 72}{2 \cdot 81} = 40$ y $c = 41$; $a = 15$ da $b = \frac{90 \cdot 60}{2 \cdot 75} = 36$ y $c = 39$. Para los demás valores de $a$ la división no es exacta o sale $b \le a$. No todos los perímetros tienen una sola terna; el enunciado garantiza que 1000 sí.
+
+### Paso 3: con la fórmula de Euclides
+
+La [fórmula de Euclides](../../conceptos/ternas-pitagoricas/#la-fórmula-de-euclides) dice que toda terna es de la forma
+
+$$
+k\,(m^2 - n^2), \qquad 2kmn, \qquad k\,(m^2 + n^2)
+$$
+
+con $m > n \ge 1$ coprimos y de distinta paridad, quizá con los dos primeros intercambiados. Su perímetro es $2km(m + n)$, así que hay que escribir
+
+$$
+k \cdot m \cdot (m + n) = \frac{s}{2}
+$$
+
+con $m + n$ impar, primo con $m$ y entre $m$ y $2m$. Para cada divisor $d$ de $s/2$ que haga de $m(m + n)$, $m$ tiene que dividir a $d$ y cumplir $m^2 < d < 2m^2$, lo que deja muy pocos candidatos.
+
+**Con perímetro 90**, $s/2 = 45$:
+
+| $d = m(m+n)$ | $m$ | $m + n$ | $n$ | $k = 45/d$ | Terna |
+| --- | --- | --- | --- | --- | --- |
+| 45 | 5 | 9 | 4 | 1 | $(9, 40, 41)$ |
+| 15 | 3 | 5 | 2 | 3 | $3 \cdot (5, 12, 13) = (15, 36, 39)$ |
+
+Los demás divisores de 45 (1, 3, 5 y 9) no tienen ningún $m$ válido. Salen las mismas dos ternas que en el paso 2, pero sin recorrer ningún $a$.
+
+Con $s = 1000$ hay que repartir $500 = 2^2 \cdot 5^3$, que tiene 12 divisores. Revisarlos a mano lleva un par de minutos y, como dice el enunciado, solo uno da una terna. Te dejamos terminar la cuenta.
+
+## El código
+
+<Tabs>
+<TabItem label="JavaScript (repositorio)">
+
+<Code code={solucion} lang="js" title="9_specialPythagoreanTriplet.js" />
+
+Es el paso 1: recorre $a < s/3$ y $b < s/2$, calcula `c = sum - a - b` y comprueba la ecuación de Pitágoras. Empieza en `b = a + 1`, así que garantiza $a < b$; y si $b \ge c$ la terna no puede cumplir $a^2 + b^2 = c^2$, así que no hace falta comprobarlo. Devuelve la primera terna que encuentra, que es la única.
+
+</TabItem>
+<TabItem label="Python (un bucle)">
+
+```python
+def terna_con_perimetro(s):
+    for a in range(1, s // 3 + 1):
+        numerador, denominador = s * (s - 2 * a), 2 * (s - a)
+        if numerador % denominador == 0:
+            b = numerador // denominador
+            if b > a:
+                return a, b, s - a - b
+    return None
+
+a, b, c = terna_con_perimetro(1000)
+print(a * b * c)
+```
+
+Es el paso 2. Con `terna_con_perimetro(12)` devuelve `(3, 4, 5)`.
+
+</TabItem>
+<TabItem label="Python (Euclides)">
+
+```python
+from math import gcd
+
+def ternas_con_perimetro(s):
+    ternas = []
+    m = 2
+    while 2 * m * (m + 1) <= s:        # el perímetro más pequeño posible con este m
+        for n in range(1, m):
+            if (m - n) % 2 == 1 and gcd(m, n) == 1 and s % (2 * m * (m + n)) == 0:
+                k = s // (2 * m * (m + n))
+                a, b = sorted((k * (m * m - n * n), 2 * k * m * n))
+                ternas.append((a, b, k * (m * m + n * n)))
+        m += 1
+    return ternas
+
+print(ternas_con_perimetro(90))        # [(15, 36, 39), (9, 40, 41)]
+```
+
+Es el paso 3, recorriendo los pares $(m, n)$ en lugar de los divisores: devuelve **todas** las ternas de perímetro $s$, sin repetir ninguna. Con $s = 1000$ solo prueba 210 pares.
+
+</TabItem>
+</Tabs>
+
+## Complejidad
+
+| Método | Coste | Comprobaciones con $s = 1000$ |
+| --- | --- | --- |
+| Tres bucles | $O(s^3)$ | ~$1{,}7 \cdot 10^8$ |
+| Dos bucles (repositorio) | $O(s^2)$ | como mucho ~110 000 |
+| Un bucle (paso 2) | $O(s)$ | como mucho 333 |
+| Euclides (paso 3) | $O(s)$ pares, u $O(\sqrt{s})$ con los divisores | 210 pares, o 12 divisores |
+
+Para un solo perímetro de 1000 cualquiera de ellos es instantáneo, salvo el primero. La diferencia importa cuando hay que estudiar muchos perímetros a la vez, como en los problemas 39 y 75 de Project Euler: ahí se generan todas las ternas con la fórmula de Euclides y se cuentan por perímetro.
+
+## Conceptos utilizados
+
+<Relaciones mostrar="conceptos" />
+
+## Problemas relacionados
+
+<Relaciones mostrar="relacionados" />
