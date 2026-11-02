@@ -98,51 +98,24 @@ h1#_top,
 	text-underline-offset: 0.2em;
 }
 
-/* ---------- Cabecera y menú lateral ---------- */
+/* ---------- Cabecera ---------- */
 .site-title {
 	color: var(--sl-color-white);
 	font-weight: 700;
 	gap: 0.6rem;
 }
 
-.sidebar-content a[aria-current='page'],
-.sidebar-content a[aria-current='page']:hover,
-.sidebar-content a[aria-current='page']:focus {
-	color: #ffffff;
-	background-color: var(--sl-color-accent);
-	border-radius: 6px;
+/* ---------- Columna de lectura ---------- */
+/* Sin menú lateral, Starlight ensancha la columna hasta 67,5rem. En las páginas
+   de lectura (las que tienen índice a la derecha) se vuelve a una medida cómoda,
+   centrada en el espacio que queda a la izquierda del índice. La portada, los
+   catálogos y el mapa, sin índice, conservan todo el ancho. */
+:root[data-has-toc] {
+	--sl-content-width: 48rem;
 }
 
-.sidebar-content a {
-	border-radius: 6px;
-}
-
-/* Número del problema en una columna alineada, para encontrarlo de un vistazo. */
-.sidebar-content a[data-numero] {
-	display: flex;
-	align-items: baseline;
-}
-
-.sidebar-content a[data-numero]::before {
-	content: attr(data-numero);
-	flex-shrink: 0;
-	width: 2rem;
-	color: var(--sl-color-gray-3);
-	font-variant-numeric: tabular-nums;
-	font-weight: 600;
-}
-
-.sidebar-content a[data-numero][aria-current='page']::before {
-	color: rgba(255, 255, 255, 0.75);
-}
-
-/* Contador de problemas de cada decena («2/10»): discreto, no compite con el título. */
-.sidebar-content .group-label .sl-badge {
-	border-color: transparent;
-	background: var(--sl-color-gray-6);
-	color: var(--sl-color-gray-2);
-	font-size: var(--sl-text-2xs);
-	font-variant-numeric: tabular-nums;
+:root[data-has-toc] .content-panel .sl-container {
+	margin-inline: auto;
 }
 
 /* ---------- Botones ---------- */

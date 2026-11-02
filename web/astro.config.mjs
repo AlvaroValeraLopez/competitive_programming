@@ -50,8 +50,9 @@ export default defineConfig({
 				'./src/styles/tema.css',
 				'./src/styles/custom.css',
 			],
-			routeMiddleware: './src/menu-lateral.ts',
+			routeMiddleware: './src/navegacion.ts',
 			components: {
+				Header: './src/components/Cabecera.astro',
 				Hero: './src/components/Heroe.astro',
 				ThemeSelect: './src/components/SelectorTema.astro',
 				PageTitle: './src/components/TituloPagina.astro',
@@ -59,6 +60,8 @@ export default defineConfig({
 			expressiveCode: {
 				styleOverrides: { borderRadius: '8px' },
 			},
+			// No hay menú lateral (lo quita src/navegacion.ts): esta lista solo fija el
+			// orden de la paginación «Anterior / Siguiente» al pie de cada página.
 			sidebar: [
 				{ label: 'Inicio', link: '/' },
 				{ label: 'Mapa', link: '/mapa/' },
