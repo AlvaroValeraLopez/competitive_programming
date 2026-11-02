@@ -1,0 +1,141 @@
+---
+title: 'Grains: el trigo del tablero de ajedrez'
+description: Contar los granos de un tablero en el que cada casilla duplica la anterior, donde la matemática es una suma geométrica y la dificultad está en que el total cabe justo en un entero de 64 bits.
+sidebar:
+  label: Grains
+  order: 1000
+fuente: exercism
+soluciones:
+  - archivo: 'exercism/path_c/grains/grains_1.c'
+  - archivo: 'exercism/path_c/grains/grains_2.c'
+  - archivo: 'exercism/path_c/grains/grains.h'
+temas: [Potencias de 2, Desbordamiento]
+conceptos: [progresion-geometrica, enteros-de-tamano-fijo, precision-arbitraria]
+---
+
+import { Aside, TabItem, Tabs } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+import Solucion from '../../../components/Solucion.astro';
+
+## El problema
+
+En un tablero de ajedrez se pone un grano de trigo en la primera casilla, dos en la segunda, cuatro en la tercera, y así sucesivamente: cada casilla tiene el doble que la anterior. Hay que escribir dos funciones:
+
+- `square(n)`: cuántos granos hay en la casilla $n$, para $1 \le n \le 64$; con cualquier otro valor, 0.
+- `total()`: cuántos granos hay en todo el tablero.
+
+Es un ejercicio del recorrido de C de Exercism, que da ya escrita la interfaz `grains.h`: los dos tipos de las funciones, `uint64_t square(uint8_t index)` y `uint64_t total(void)`, forman parte del enunciado.
+
+[Enunciado original en Exercism](https://exercism.org/tracks/c/exercises/grains)
+
+## La idea en una frase
+
+La casilla $n$ tiene $2^{n-1}$ granos y el total es una suma geométrica, $2^{64} - 1$; la matemática es inmediata, y la dificultad está en programarlo sin desbordar: ese total es exactamente el mayor número que cabe en un entero sin signo de 64 bits.
+
+## Primer intento: multiplicar por 2
+
+```c
+int granos = 1;
+for (int casilla = 1; casilla < n; casilla++) {
+  granos *= 2;
+}
+```
+
+Funciona hasta la casilla 31. En la 32, $2^{31}$ ya no cabe en un `int` de 32 bits, y desbordar un entero con signo en C es comportamiento indefinido: el resultado puede ser cualquier cosa. Usar `pow(2, n - 1)`, que trabaja con `double`, tampoco arregla el total: $2^{64} - 1$ no se puede representar en un `double`, que lo redondea a $2^{64}$, y $2^{64}$ ya no cabe en ningún entero de 64 bits.
+
+## Desarrollo
+
+### Paso 1: los granos de una casilla
+
+En la casilla 1 hay $1 = 2^0$ granos, y cada casilla duplica la anterior, así que en la casilla $n$ hay
+
+$$
+\text{square}(n) = 2^{n-1}
+$$
+
+La última casilla tiene $2^{63} \approx 9{,}2 \cdot 10^{18}$ granos.
+
+### Paso 2: el total, una progresión geométrica
+
+El total es la suma de una [progresión geométrica](../../conceptos/progresion-geometrica/) de razón 2:
+
+$$
+\text{total} = 1 + 2 + 4 + \cdots + 2^{63} = \sum_{k=0}^{63} 2^k = 2^{64} - 1 = 18\,446\,744\,073\,709\,551\,615
+$$
+
+En binario son 64 unos seguidos. Y cada casilla tiene un grano más que todas las anteriores juntas: la casilla 64 sola tiene más de la mitad del trigo de todo el tablero.
+
+### Paso 3: ¿cabe?
+
+Ahora la parte de programación. Un `uint64_t` va de $0$ a $2^{64} - 1$ (ver [enteros de tamaño fijo](../../conceptos/enteros-de-tamano-fijo/)), así que **el total es exactamente el mayor `uint64_t` posible**, `UINT64_MAX`. No hay margen ni para un grano más.
+
+Si se calcula sumando casilla a casilla, ninguna suma parcial se desborda: después de $k$ casillas van $2^k - 1$ granos, que es menor que $2^{64}$. Pero no queda ni un bit libre.
+
+### Paso 4: calcular 2ⁿ⁻¹ sin desbordar
+
+La forma natural de calcular una potencia de 2 en C es un desplazamiento: `1 << (n - 1)` mueve un 1 binario $n - 1$ posiciones. Dos detalles lo deciden todo:
+
+- **El tipo del 1.** El literal `1` es un `int`, y `1 << 31` ya es comportamiento indefinido con un `int` de 32 bits. Hay que escribir `1ULL`, un `unsigned long long` de al menos 64 bits, para que `1ULL << 63` sea válido.
+- **Cuánto se desplaza.** Desplazar 64 posiciones o más un tipo de 64 bits es indefinido incluso sin signo. Por eso el total no se puede calcular como `(1ULL << 64) - 1`. Se escribe `UINT64_MAX`, o `(uint64_t)-1`, que vale lo mismo porque la conversión a un tipo sin signo es módulo $2^{64}$.
+
+### Paso 5: los valores que no son casillas
+
+El parámetro de `square` es un `uint8_t`, un entero sin signo de 8 bits. Eso tiene dos consecuencias:
+
+- **No puede ser negativo.** La comprobación `i <= 0` equivale a `i == 0`.
+- **Un número mayor que 255 llega truncado.** Al llamar a `square(300)`, el 300 se convierte en $300 \bmod 256 = 44$, y la función devuelve los granos de la casilla 44 en lugar de 0. No es un error de la solución, sino del tipo elegido en la interfaz, que la solución no puede ver.
+
+## El código
+
+<Tabs>
+<TabItem label="C (bucle)">
+
+<Solucion />
+
+`square` es el paso 4: descarta el 0 y lo que pase de 64, y desplaza `1ULL`. `total` suma las casillas una a una en un `unsigned long long`. El bucle empieza en `i = 0`, que no es una casilla, pero `square(0)` vale 0 y no cambia la suma. Al pasar `i`, un `int`, a un parámetro `uint8_t`, el compilador avisa con `-Wconversion` de que la conversión puede perder valores; aquí no pasa nada, porque `i` nunca pasa de 64.
+
+</TabItem>
+<TabItem label="C (fórmula)">
+
+<Solucion indice={1} />
+
+Usa los pasos 2 y 3: como el total es $2^{64} - 1$, devuelve directamente `UINT64_MAX`, sin sumar nada. El comentario `UINT64_MAX == (1ULL << 64) - 1` es cierto como igualdad matemática, pero no se puede escribir así en C, porque `1ULL << 64` es indefinido (paso 4).
+
+</TabItem>
+<TabItem label="La interfaz">
+
+<Solucion indice={2} />
+
+La da Exercism. Los tipos de los parámetros y del resultado son parte del enunciado: `uint64_t` para que quepa el total y `uint8_t` para el número de casilla (paso 5).
+
+</TabItem>
+<TabItem label="JavaScript">
+
+```js
+const square = (n) => (Number.isInteger(n) && n >= 1 && n <= 64 ? 2n ** BigInt(n - 1) : 0n);
+const total = () => 2n ** 64n - 1n;
+
+console.log(square(64), total()); // 9223372036854775808n 18446744073709551615n
+```
+
+En JavaScript, un `Number` solo es exacto hasta $2^{53}$, y `2 ** 64 - 1 === 2 ** 64` es `true`: el $-1$ se pierde al redondear. Con [`BigInt`](../../conceptos/precision-arbitraria/), que es de precisión arbitraria, el resultado es exacto.
+
+</TabItem>
+</Tabs>
+
+## Complejidad
+
+| Solución | `square` | `total` |
+| --- | --- | --- |
+| Bucle | $O(1)$, un desplazamiento | 65 llamadas a `square` y 65 sumas |
+| Fórmula | $O(1)$, un desplazamiento | $O(1)$, una constante |
+
+Las dos son instantáneas. La diferencia no es la velocidad, sino cuánto saben: la de la fórmula usa que la suma es $2^{64} - 1$ y que ese número es justo `UINT64_MAX`; la del bucle llega al mismo sitio sin saberlo, sumando, y solo funciona porque ninguna suma parcial se desborda.
+
+## Conceptos utilizados
+
+<Relaciones mostrar="conceptos" />
+
+## Problemas relacionados
+
+<Relaciones mostrar="relacionados" />
