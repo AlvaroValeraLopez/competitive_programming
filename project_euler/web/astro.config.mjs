@@ -60,6 +60,7 @@ export default defineConfig({
 			routeMiddleware: './src/menu-lateral.ts',
 			components: {
 				Hero: './src/components/Heroe.astro',
+				ThemeSelect: './src/components/SelectorTema.astro',
 				PageTitle: './src/components/TituloPagina.astro',
 			},
 			expressiveCode: {
