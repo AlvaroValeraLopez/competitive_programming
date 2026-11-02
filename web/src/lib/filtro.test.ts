@@ -11,6 +11,7 @@ import {
 	hayFiltro,
 	leerFiltro,
 	puntuacion,
+	recuento,
 	slugDeTema,
 	type Candidato,
 	type Grupo,
@@ -28,36 +29,32 @@ const candidato = (
 	numero,
 	rango,
 	texto: normalizar(`${numero ?? ''} ${texto}`),
-	valores: { dificultad: [], fuente: [], track: [], tema: [], conceptos: [], ...valores },
+	valores: { dificultad: [], tema: [], conceptos: [], fuente: [], ...valores },
 });
 
 // Algunos ejercicios de la web.
 const P1 = candidato(0, 1, 'Múltiplos de 3 y 5 Sumas Inclusión-exclusión', {
 	dificultad: ['facil'],
 	fuente: ['project-euler'],
-	track: ['matematicas'],
-	tema: ['sumas'],
+	tema: ['sumas-y-series', 'combinatoria'],
 	conceptos: ['suma-de-gauss', 'inclusion-exclusion'],
 }, 0);
 const P12 = candidato(1, 12, 'Número triangular muy divisible Divisores Números coprimos', {
 	dificultad: ['dificil'],
 	fuente: ['project-euler'],
-	track: ['matematicas'],
-	tema: ['divisores', 'numeros-coprimos'],
+	tema: ['sumas-y-series', 'teoria-de-numeros'],
 	conceptos: ['suma-de-gauss', 'funcion-divisor'],
 }, 2);
 const P15 = candidato(2, 15, 'Caminos en una cuadrícula Combinatoria Triángulo de Pascal', {
 	dificultad: ['media'],
 	fuente: ['project-euler'],
-	track: ['matematicas'],
 	tema: ['combinatoria'],
 	conceptos: ['coeficientes-binomiales'],
 }, 1);
 const GRAINS = candidato(3, undefined, 'Grains Potencias de 2 Desbordamiento', {
 	dificultad: ['facil'],
 	fuente: ['exercism'],
-	track: ['matematicas', 'implementacion'],
-	tema: ['potencias-de-2', 'desbordamiento'],
+	tema: ['sumas-y-series', 'numeros-grandes'],
 	conceptos: ['progresion-geometrica', 'enteros-de-tamano-fijo'],
 }, 0);
 const TODOS = [P15, GRAINS, P1, P12];
@@ -82,13 +79,13 @@ describe('filtrar por conceptos', () => {
 });
 
 describe('filtrar desde otras vistas', () => {
-	test('por dificultad, fuente, track y tema: basta una opción de cada grupo', () => {
+	test('por dificultad, tema y fuente: basta una opción de cada grupo', () => {
 		const ids = (seleccion: Partial<Record<Grupo, string[]>>) => posiciones(filtrar(TODOS, crearFiltro({ seleccion })));
 		assert.deepEqual(ids({ dificultad: ['facil'] }), [0, 3]);
 		assert.deepEqual(ids({ dificultad: ['media', 'dificil'] }), [1, 2]);
 		assert.deepEqual(ids({ fuente: ['exercism'] }), [3]);
-		assert.deepEqual(ids({ track: ['implementacion'] }), [3]);
-		assert.deepEqual(ids({ tema: ['divisores', 'combinatoria'] }), [1, 2]);
+		assert.deepEqual(ids({ tema: ['numeros-grandes'] }), [3]);
+		assert.deepEqual(ids({ tema: ['teoria-de-numeros', 'combinatoria'] }), [0, 1, 2]);
 	});
 
 	test('los grupos se combinan: hay que cumplirlos todos', () => {
@@ -133,7 +130,7 @@ describe('filtro en la dirección', () => {
 	const conocidas = {
 		conceptos: ['suma-de-gauss', 'funcion-divisor', 'coeficientes-binomiales'],
 		dificultad: ['facil', 'media', 'dificil'],
-		tema: ['numeros-coprimos'],
+		tema: ['teoria-de-numeros'],
 	};
 
 	test('lee cada grupo, la búsqueda y el orden, e ignora opciones desconocidas o repetidas', () => {
@@ -150,7 +147,7 @@ describe('filtro en la dirección', () => {
 	test('escribir y volver a leer da el mismo filtro', () => {
 		const filtro = crearFiltro({
 			consulta: 'número & más',
-			seleccion: { conceptos: ['funcion-divisor', 'suma-de-gauss'], dificultad: ['dificil'], tema: ['numeros-coprimos'] },
+			seleccion: { conceptos: ['funcion-divisor', 'suma-de-gauss'], dificultad: ['dificil'], tema: ['teoria-de-numeros'] },
 			orden: 'dificultad',
 		});
 		assert.deepEqual(leerFiltro(escribirFiltro(filtro), conocidas), filtro);
@@ -177,10 +174,26 @@ describe('alternar y hayFiltro', () => {
 	});
 });
 
+describe('recuento', () => {
+	test('cuántos quedarían eligiendo solo esa opción, con el resto del filtro igual', () => {
+		const facil = crearFiltro({ seleccion: { dificultad: ['facil'] } });
+		assert.equal(recuento(TODOS, facil, 'tema', 'sumas-y-series'), 2);
+		assert.equal(recuento(TODOS, facil, 'tema', 'teoria-de-numeros'), 0);
+		assert.equal(recuento(TODOS, facil, 'fuente', 'exercism'), 1);
+	});
+
+	test('en su propio grupo no cuenta lo ya elegido, y sin opción da el total de ese grupo', () => {
+		const media = crearFiltro({ seleccion: { dificultad: ['media'] } });
+		assert.equal(recuento(TODOS, media, 'dificultad', 'facil'), 2);
+		assert.equal(recuento(TODOS, media, 'dificultad'), 4);
+		assert.equal(recuento(TODOS, crearFiltro({ consulta: 'cuadricula' }), 'dificultad'), 1);
+	});
+});
+
 describe('slugDeTema', () => {
 	test('quita tildes, mayúsculas y signos', () => {
-		assert.equal(slugDeTema('Números coprimos'), 'numeros-coprimos');
-		assert.equal(slugDeTema('Potencias de 2'), 'potencias-de-2');
-		assert.equal(slugDeTema('Inclusión-exclusión'), 'inclusion-exclusion');
+		assert.equal(slugDeTema('Teoría de números'), 'teoria-de-numeros');
+		assert.equal(slugDeTema('Números grandes'), 'numeros-grandes');
+		assert.equal(slugDeTema('Programación dinámica'), 'programacion-dinamica');
 	});
 });

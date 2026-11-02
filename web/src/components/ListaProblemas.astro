@@ -1,24 +1,25 @@
 ---
 // Lista de ejercicios al estilo de la de Exercism: tarjetas con la fuente, el
 // número, el título, la dificultad, la descripción y los conceptos que usa cada
-// ejercicio, con colores por dominio. Se filtra desde varias vistas a la vez
-// (dificultad, track, fuente, conceptos, temas y texto) y se ordena por fuente
-// o por dificultad. El filtro se guarda en la dirección
-// (`?dificultad=facil&conceptos=a,b&q=…`), así que cualquier selección es una
-// página que se puede enlazar.
+// ejercicio, con colores por dominio. Se filtra por dificultad (pestañas), por
+// tema, concepto y fuente (un panel compacto) y por texto, y se ordena por
+// fuente o por dificultad. El recuento de cada opción se recalcula con el resto
+// del filtro. El filtro se guarda en la dirección
+// (`?dificultad=facil&tema=teoria-de-numeros&conceptos=a,b&q=…`), así que
+// cualquier selección es una página que se puede enlazar.
 import { Icon } from '@astrojs/starlight/components';
 import Dificultad from './Dificultad.astro';
 import { DIFICULTADES, rangoDeDificultad } from '../lib/dificultad';
 import { slugDeTema, type Grupo } from '../lib/filtro';
 import { FUENTES, ID_FUENTES, prefijoDeEjercicio } from '../lib/fuentes';
-import { agruparConceptos, agruparEjercicios, normalizar } from '../lib/menu';
+import { agruparEjercicios, AREAS, dominioDe, normalizar } from '../lib/menu';
 import { obtenerPaginas, type PaginaContenido } from '../lib/paginas';
 import { obtenerGrafo } from '../lib/relaciones';
-import { TRACKS, trackDeDominio } from '../lib/tracks';
+import { trackDeDominio } from '../lib/tracks';
 
 interface Props {
 	/** En la página de un track: solo los ejercicios que usan conceptos de su
-	 * dominio, y solo esos conceptos como filtro. */
+	 * dominio, y solo sus temas y conceptos como filtro. */
 	dominio?: string;
 }
 
@@ -30,51 +31,52 @@ const slug = (id: string) => id.replace(/^conceptos\//, '');
 const conceptoPorId = new Map(todo.conceptos.map((c) => [c.id, c]));
 const trackDe = (concepto: string) => trackDeDominio(conceptoPorId.get(concepto)?.dominio)?.slug;
 const conceptosDe = (id: string) => grafo.nodos.get(id)?.padres ?? [];
+const areasDe = (id: string) => [
+	...new Set(conceptosDe(id).map((c) => conceptoPorId.get(c)?.area).filter((a): a is string => a !== undefined)),
+];
 const conceptos = dominio ? todo.conceptos.filter((c) => c.dominio === dominio) : todo.conceptos;
 const delDominio = new Set(conceptos.map((c) => c.id));
 const problemas = dominio ? todo.problemas.filter((p) => conceptosDe(p.id).some((c) => delDominio.has(c))) : todo.problemas;
 const total = problemas.length;
 
-// Las opciones de cada grupo que cumple cada ejercicio.
+// Las opciones de cada grupo que cumple cada ejercicio. Su tema es el área de
+// sus conceptos («Teoría de números»…), así que puede tener varios.
 const valoresDe = (p: PaginaContenido): Record<Grupo, string[]> => ({
 	dificultad: p.dificultad ? [p.dificultad] : [],
-	fuente: p.fuente ? [p.fuente] : [],
-	track: [...new Set(conceptosDe(p.id).map(trackDe).filter((t): t is string => t !== undefined))],
-	tema: p.temas.map(slugDeTema),
+	tema: areasDe(p.id).map(slugDeTema),
 	conceptos: conceptosDe(p.id).map(slug),
+	fuente: p.fuente ? [p.fuente] : [],
 });
 const valores = new Map(problemas.map((p) => [p.id, valoresDe(p)]));
 const cuantos = (grupo: Grupo, opcion: string) => problemas.filter((p) => valores.get(p.id)![grupo].includes(opcion)).length;
+const deMasAMenos = <T extends { cuenta: number }>(a: T, b: T) => b.cuenta - a.cuenta;
 
-// Las opciones de cada grupo, con cuántos ejercicios las cumplen. Un grupo con
-// una sola opción no filtra nada, así que no se muestra.
+// Las opciones de cada grupo, con cuántos ejercicios las cumplen sin filtro (el
+// script los recalcula con cada cambio). Un grupo con una sola opción no filtra
+// nada, así que no se muestra.
 const dificultades = DIFICULTADES.map((d) => ({ ...d, cuenta: cuantos('dificultad', d.id) }));
-const tracks = dominio
-	? []
-	: TRACKS.map((t) => ({ id: t.slug, nombre: t.dominio, cuenta: cuantos('track', t.slug) })).filter((o) => o.cuenta > 0);
+// Los temas de la lista (en un track, solo los suyos), de más a menos ejercicios.
+const temas = AREAS.filter((a) => conceptos.some((c) => c.area === a))
+	.map((a) => ({ id: slugDeTema(a), nombre: a, track: trackDeDominio(dominioDe(a))?.slug, cuenta: cuantos('tema', slugDeTema(a)) }))
+	.filter((o) => o.cuenta > 0)
+	.sort(deMasAMenos);
+// Los conceptos que usa algún ejercicio, por tema y de más a menos ejercicios.
+// Solo se ven los de los temas elegidos.
+const conceptosPorTema = temas.flatMap((t) =>
+	conceptos
+		.filter((c) => c.area === t.nombre)
+		.map((c) => ({ id: slug(c.id), nombre: c.etiqueta, tema: t.id, cuenta: cuantos('conceptos', slug(c.id)) }))
+		.filter((o) => o.cuenta > 0)
+		.sort(deMasAMenos),
+);
 const fuentes = ID_FUENTES.map((id) => ({ id, nombre: FUENTES[id].nombre, cuenta: cuantos('fuente', id) })).filter(
 	(o) => o.cuenta > 0,
 );
-const temas = [...new Map(problemas.flatMap((p) => p.temas).map((t) => [slugDeTema(t), t]))]
-	.map(([id, nombre]) => ({ id, nombre, cuenta: cuantos('tema', id) }))
-	.sort((a, b) => b.cuenta - a.cuenta || a.nombre.localeCompare(b.nombre, 'es'));
-
-// Los conceptos que usa algún ejercicio, agrupados por dominio y área.
-const dominios = agruparConceptos(conceptos)
-	.map((d) => ({
-		dominio: d.dominio,
-		track: trackDeDominio(d.dominio)?.slug,
-		areas: d.areas
-			.map((g) => ({ area: g.area, conceptos: g.conceptos.filter((c) => cuantos('conceptos', slug(c.id)) > 0) }))
-			.filter((g) => g.conceptos.length > 0),
-	}))
-	.filter((d) => d.areas.length > 0);
 
 const vistas = [
-	tracks.length > 1 && 'track',
-	fuentes.length > 1 && 'fuente',
-	dominios.length > 0 && 'concepto',
 	temas.length > 0 && 'tema',
+	conceptosPorTema.length > 0 && 'concepto',
+	fuentes.length > 1 && 'fuente',
 ].filter((v): v is string => Boolean(v));
 const resumenPanel = `Filtrar por ${vistas.slice(0, -1).join(', ')}${vistas.length > 1 ? ' o ' : ''}${vistas.at(-1) ?? ''}`;
 
@@ -101,7 +103,7 @@ const ordenados = agruparEjercicios(problemas).flatMap((f) => f.ejercicios);
 
 	<div class="pestanas" role="group" aria-label="Dificultad">
 		<button type="button" aria-pressed="true" data-todas>
-			Todas <span class="cuenta">{total}</span>
+			Todas <span class="cuenta" data-cuenta>{total}</span>
 		</button>
 		{
 			dificultades.map((d) => (
@@ -117,7 +119,9 @@ const ordenados = agruparEjercicios(problemas).flatMap((f) => f.ejercicios);
 				>
 					<span class="punto" aria-hidden="true" />
 					{d.nombre}
-					<span class="cuenta">{d.cuenta}</span>
+					<span class="cuenta" data-cuenta>
+						{d.cuenta}
+					</span>
 				</button>
 			))
 		}
@@ -131,72 +135,62 @@ const ordenados = agruparEjercicios(problemas).flatMap((f) => f.ejercicios);
 					{resumenPanel}
 					<span class="activos-panel" hidden data-activos-panel />
 				</summary>
-				<div class="grupos">
-					{tracks.length > 1 && (
-						<fieldset class="grupo">
-							<legend>Track</legend>
+				<div class="filas">
+					{temas.length > 0 && (
+						<div class="fila" role="group" aria-labelledby="filtro-tema">
+							<span class="nombre-fila" id="filtro-tema">
+								Tema
+							</span>
 							<div class="chips">
-								{tracks.map((o) => (
-									<button type="button" class="chip" aria-pressed="false" data-grupo="track" data-opcion={o.id} data-etiqueta={o.nombre} data-track={o.id}>
+								{temas.map((o) => (
+									<button type="button" class="chip" aria-pressed="false" data-grupo="tema" data-opcion={o.id} data-etiqueta={o.nombre} data-track={o.track}>
 										<span class="punto" aria-hidden="true" />
 										{o.nombre}
-										<span class="usos">{o.cuenta}</span>
+										<span class="usos" data-cuenta>
+											{o.cuenta}
+										</span>
 									</button>
 								))}
 							</div>
-						</fieldset>
+						</div>
+					)}
+					{conceptosPorTema.length > 0 && (
+						<div class="fila" role="group" aria-labelledby="filtro-concepto" data-fila-conceptos>
+							<span class="nombre-fila" id="filtro-concepto">
+								Concepto
+								<span class="de-temas" data-de-temas />
+							</span>
+							<div class="chips">
+								<p class="pista" data-pista>
+									Elige un tema para ver sus conceptos.
+								</p>
+								{conceptosPorTema.map((o) => (
+									<button type="button" class="chip" aria-pressed="false" hidden data-grupo="conceptos" data-opcion={o.id} data-etiqueta={o.nombre} data-tema={o.tema}>
+										{o.nombre}
+										<span class="usos" data-cuenta>
+											{o.cuenta}
+										</span>
+									</button>
+								))}
+							</div>
+						</div>
 					)}
 					{fuentes.length > 1 && (
-						<fieldset class="grupo">
-							<legend>Fuente</legend>
+						<div class="fila" role="group" aria-labelledby="filtro-fuente">
+							<span class="nombre-fila" id="filtro-fuente">
+								Fuente
+							</span>
 							<div class="chips">
 								{fuentes.map((o) => (
 									<button type="button" class="chip" aria-pressed="false" data-grupo="fuente" data-opcion={o.id} data-etiqueta={o.nombre}>
 										{o.nombre}
-										<span class="usos">{o.cuenta}</span>
+										<span class="usos" data-cuenta>
+											{o.cuenta}
+										</span>
 									</button>
 								))}
 							</div>
-						</fieldset>
-					)}
-					{dominios.length > 0 && (
-						<fieldset class="grupo ancho">
-							<legend>Conceptos</legend>
-							{dominios.map((d) => (
-								<div class="dominio" data-track={d.track}>
-									<span class="nombre-dominio">
-										<span class="punto" aria-hidden="true" />
-										{d.dominio}
-									</span>
-									{d.areas.map((grupo) => (
-										<div class="area">
-											<span class="nombre-area">{grupo.area}</span>
-											<div class="chips">
-												{grupo.conceptos.map((c) => (
-													<button type="button" class="chip" aria-pressed="false" data-grupo="conceptos" data-opcion={slug(c.id)} data-etiqueta={c.etiqueta}>
-														{c.etiqueta}
-														<span class="usos">{cuantos('conceptos', slug(c.id))}</span>
-													</button>
-												))}
-											</div>
-										</div>
-									))}
-								</div>
-							))}
-						</fieldset>
-					)}
-					{temas.length > 0 && (
-						<fieldset class="grupo ancho">
-							<legend>Temas</legend>
-							<div class="chips">
-								{temas.map((o) => (
-									<button type="button" class="chip" aria-pressed="false" data-grupo="tema" data-opcion={o.id} data-etiqueta={o.nombre}>
-										{o.nombre}
-										<span class="usos">{o.cuenta}</span>
-									</button>
-								))}
-							</div>
-						</fieldset>
+						</div>
 					)}
 				</div>
 			</details>
@@ -223,7 +217,7 @@ const ordenados = agruparEjercicios(problemas).flatMap((f) => f.ejercicios);
 						data-posicion={posicion}
 						data-numero={p.numero ?? ''}
 						data-rango={rangoDeDificultad(p.dificultad)}
-						data-texto={normalizar([p.numero, p.etiqueta, p.descripcion, ...p.temas].filter(Boolean).join(' '))}
+						data-texto={normalizar([p.numero, p.etiqueta, p.descripcion, ...p.temas, ...areasDe(p.id)].filter(Boolean).join(' '))}
 						data-valores={JSON.stringify(valores.get(p.id))}
 					>
 						<span class="insignia" aria-hidden="true">
@@ -280,12 +274,15 @@ const ordenados = agruparEjercicios(problemas).flatMap((f) => f.ejercicios);
 		GRUPOS,
 		hayFiltro,
 		leerFiltro,
+		recuento,
 		type Filtro,
 		type Grupo,
 		type Orden,
 	} from '../lib/filtro';
 
 	const ejercicios = (n: number) => `${n} ${n === 1 ? 'ejercicio' : 'ejercicios'}`;
+	const enumerar = (nombres: string[]) =>
+		nombres.length > 1 ? `${nombres.slice(0, -1).join(', ')} y ${nombres.at(-1)}` : (nombres[0] ?? '');
 
 	class ListaProblemas extends HTMLElement {
 		connectedCallback() {
@@ -293,11 +290,18 @@ const ordenados = agruparEjercicios(problemas).flatMap((f) => f.ejercicios);
 			const orden = this.querySelector<HTMLSelectElement>('[data-orden]')!;
 			const todas = this.querySelector<HTMLButtonElement>('[data-todas]')!;
 			const activosPanel = this.querySelector<HTMLElement>('[data-activos-panel]');
-			const recuento = this.querySelector<HTMLElement>('[data-recuento]')!;
+			const textoRecuento = this.querySelector<HTMLElement>('[data-recuento]')!;
 			const activos = this.querySelector<HTMLElement>('[data-activos]')!;
 			const limpiar = this.querySelector<HTMLButtonElement>('[data-limpiar]')!;
 			const vacio = this.querySelector<HTMLElement>('[data-vacio]')!;
 			const botones = [...this.querySelectorAll<HTMLButtonElement>('button[data-grupo]')];
+			// Las opciones del panel y de las pestañas llevan su recuento; las etiquetas
+			// de concepto de las tarjetas, no.
+			const conRecuento = botones.filter((b) => b.querySelector('[data-cuenta]'));
+			const conceptosDelPanel = [...this.querySelectorAll<HTMLButtonElement>('[data-fila-conceptos] button[data-grupo]')];
+			const temaDeConcepto = new Map(conceptosDelPanel.map((b) => [b.dataset.opcion!, b.dataset.tema!]));
+			const deTemas = this.querySelector<HTMLElement>('[data-de-temas]');
+			const pista = this.querySelector<HTMLElement>('[data-pista]');
 			const tarjetas = [...this.querySelectorAll<HTMLElement>('[data-ejercicio]')].map((elemento) => ({
 				elemento,
 				posicion: Number(elemento.dataset.posicion),
@@ -369,10 +373,32 @@ const ordenados = agruparEjercicios(problemas).flatMap((f) => f.ejercicios);
 					b.setAttribute('aria-pressed', String(filtro.seleccion[grupoDe(b)].includes(b.dataset.opcion!)));
 				}
 				todas.setAttribute('aria-pressed', String(filtro.seleccion.dificultad.length === 0));
+				// Cada opción dice cuántos ejercicios quedarían al elegirla, con el resto del
+				// filtro; las que no dejarían ninguno se desactivan (salvo si ya están elegidas).
+				for (const b of conRecuento) {
+					const n = recuento(tarjetas, filtro, grupoDe(b), b.dataset.opcion);
+					b.querySelector('[data-cuenta]')!.textContent = String(n);
+					b.disabled = n === 0 && !filtro.seleccion[grupoDe(b)].includes(b.dataset.opcion!);
+				}
+				todas.querySelector('[data-cuenta]')!.textContent = String(recuento(tarjetas, filtro, 'dificultad'));
+				// La fila de conceptos muestra los de los temas elegidos y los de los
+				// conceptos que ya estén elegidos (por ejemplo, al llegar desde un concepto).
+				const temasVisibles = [
+					...new Set([
+						...filtro.seleccion.tema,
+						...filtro.seleccion.conceptos.map((c) => temaDeConcepto.get(c)).filter((t): t is string => t !== undefined),
+					]),
+				];
+				for (const b of conceptosDelPanel) b.hidden = !temasVisibles.includes(b.dataset.tema!);
+				if (pista) pista.hidden = temasVisibles.length > 0;
+				if (deTemas) {
+					const nombres = temasVisibles.map((t) => etiquetas.get(`tema:${t}`) ?? t);
+					deTemas.textContent = nombres.length ? `de ${enumerar(nombres)}` : '';
+				}
 				pintarActivos();
 				vacio.hidden = visibles.length > 0;
 				limpiar.hidden = !activo;
-				recuento.textContent =
+				textoRecuento.textContent =
 					visibles.length === tarjetas.length ? ejercicios(tarjetas.length) : `${visibles.length} de ${ejercicios(tarjetas.length)}`;
 				if (guardar) history.replaceState(history.state, '', location.pathname + escribirFiltro(filtro) + location.hash);
 			};
@@ -546,48 +572,51 @@ const ordenados = agruparEjercicios(problemas).flatMap((f) => f.ejercicios);
 	.activos-panel[hidden] {
 		display: none;
 	}
-	.grupos {
+	.filas {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
-		gap: 1.25rem 2rem;
+		gap: 0.85rem;
 		padding: 0.25rem 1.25rem 1.25rem;
 	}
-	.grupo {
+	/* Cada fila: su nombre a la izquierda y sus opciones a la derecha. */
+	.fila {
 		display: grid;
-		gap: 0.6rem;
-		align-content: start;
-		min-width: 0;
-		margin: 0;
-		padding: 0;
-		border: 0;
+		grid-template-columns: 8.5rem 1fr;
+		gap: 0.4rem 1rem;
+		align-items: start;
 	}
-	.grupo.ancho {
-		grid-column: 1 / -1;
-	}
-	legend {
-		float: left;
-		margin-bottom: 0.25rem;
+	.nombre-fila {
+		display: grid;
+		gap: 0.1rem;
+		padding-top: 0.35rem;
 		font-size: var(--sl-text-xs);
 		font-weight: 700;
 		letter-spacing: 0.04em;
 		text-transform: uppercase;
 		color: var(--sl-color-gray-2);
 	}
-	.dominio {
-		display: grid;
-		gap: 0.5rem;
+	.de-temas {
+		font-size: var(--sl-text-2xs);
+		font-weight: 500;
+		letter-spacing: 0;
+		text-transform: none;
+		color: var(--sl-color-gray-3);
 	}
-	.dominio + .dominio {
-		padding-top: 0.6rem;
-		border-top: 1px solid var(--sl-color-gray-6);
-	}
-	.nombre-dominio {
-		display: inline-flex;
-		gap: 0.45rem;
-		align-items: center;
+	.pista {
+		margin: 0;
+		padding-top: 0.35rem;
 		font-size: var(--sl-text-sm);
-		font-weight: 700;
-		color: var(--sl-color-white);
+		color: var(--sl-color-gray-3);
+	}
+	.pista[hidden] {
+		display: none;
+	}
+	@media (max-width: 40rem) {
+		.fila {
+			grid-template-columns: 1fr;
+		}
+		.nombre-fila {
+			padding-top: 0;
+		}
 	}
 	.punto {
 		flex-shrink: 0;
@@ -595,26 +624,6 @@ const ordenados = agruparEjercicios(problemas).flatMap((f) => f.ejercicios);
 		height: 0.55rem;
 		border-radius: 50%;
 		background: var(--dominio, var(--sl-color-gray-4));
-	}
-	.area {
-		display: grid;
-		grid-template-columns: 9.5rem 1fr;
-		gap: 0.4rem 1rem;
-		align-items: start;
-	}
-	.nombre-area {
-		padding-top: 0.4rem;
-		font-size: var(--sl-text-xs);
-		font-weight: 500;
-		color: var(--sl-color-gray-3);
-	}
-	@media (max-width: 40rem) {
-		.area {
-			grid-template-columns: 1fr;
-		}
-		.nombre-area {
-			padding-top: 0;
-		}
 	}
 	.chips {
 		display: flex;
@@ -635,8 +644,15 @@ const ordenados = agruparEjercicios(problemas).flatMap((f) => f.ejercicios);
 		font-weight: 500;
 		cursor: pointer;
 	}
-	.chip:hover {
+	.chip[hidden] {
+		display: none;
+	}
+	.chip:hover:not(:disabled) {
 		border-color: var(--sl-color-accent);
+	}
+	.chip:disabled {
+		opacity: 0.45;
+		cursor: default;
 	}
 	.usos {
 		min-width: 1.4rem;
@@ -653,6 +669,9 @@ const ordenados = agruparEjercicios(problemas).flatMap((f) => f.ejercicios);
 	}
 	.chip[aria-pressed='true'] .usos {
 		background: rgba(255, 255, 255, 0.25);
+	}
+	.chip[aria-pressed='true'] .punto {
+		background: #ffffff;
 	}
 
 	/* ---------- Recuento y filtros activos ---------- */
