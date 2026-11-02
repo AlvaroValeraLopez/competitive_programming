@@ -403,3 +403,55 @@ def formas_de_pagar(monedas: list[int], n: int) -> list[tuple[int, ...]]:
         for forma in formas_de_pagar(resto, n - usadas * mayor):
             formas.append((mayor,) * usadas + forma)
     return formas
+
+
+# --- Congruencias ---
+
+MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+
+
+def es_bisiesto(anio: int) -> bool:
+    """Regla gregoriana: múltiplo de 4, salvo los múltiplos de 100 que no lo son de 400."""
+    return anio % 4 == 0 and (anio % 100 != 0 or anio % 400 == 0)
+
+
+def primeros_de_mes(anio: int, dia_del_1_de_enero: int) -> list[tuple[str, int, int]]:
+    """(mes, día de la semana de su día 1 con 0 = domingo, días del mes) para los doce meses."""
+    longitudes = [31, 29 if es_bisiesto(anio) else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    filas, dia = [], dia_del_1_de_enero
+    for mes, dias in zip(MESES, longitudes):
+        filas.append((mes, dia, dias))
+        dia = (dia + dias) % 7
+    return filas
+
+
+# --- Orden multiplicativo ---
+
+
+def ciclo_multiplicativo(a: int, n: int, inicio: int) -> list[int]:
+    """inicio, inicio·a, inicio·a², … módulo n, hasta justo antes de volver a inicio."""
+    ciclo, r = [inicio % n], inicio * a % n
+    while r != inicio % n:
+        ciclo.append(r)
+        r = r * a % n
+    return ciclo
+
+
+def ciclos_multiplicativos(a: int, n: int) -> list[list[int]]:
+    """Los restos de 1 a n − 1 coprimos con n, repartidos en los ciclos de multiplicar por a."""
+    pendientes = [r for r in range(1, n) if gcd(r, n) == 1]
+    ciclos = []
+    while pendientes:
+        ciclo = ciclo_multiplicativo(a, n, pendientes[0])
+        ciclos.append(ciclo)
+        pendientes = [r for r in pendientes if r not in ciclo]
+    return ciclos
+
+
+def division_larga(d: int, cifras: int, numerador: int = 1) -> list[tuple[int, int, int]]:
+    """Los pasos de dividir numerador entre d, con 0 < numerador < d: (resto anterior, cifra, resto nuevo)."""
+    pasos, r = [], numerador
+    for _ in range(cifras):
+        pasos.append((r, 10 * r // d, 10 * r % d))
+        r = 10 * r % d
+    return pasos
