@@ -1,0 +1,79 @@
+---
+title: Principio de inclusión-exclusión
+description: Cómo contar (o sumar) los elementos de una unión de conjuntos sin contar nada dos veces.
+sidebar:
+  label: Inclusión-exclusión
+  order: 2
+---
+
+import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## Dos conjuntos
+
+Si queremos contar los elementos que están en $A$ **o** en $B$, sumar $|A| + |B|$ se pasa: los elementos que están en los dos se cuentan dos veces. Basta con restarlos una vez:
+
+$$
+|A \cup B| = |A| + |B| - |A \cap B|
+$$
+
+**Ejemplo.** En una clase, 12 alumnos juegan al fútbol, 8 al baloncesto y 3 a los dos deportes. Juegan a algo $12 + 8 - 3 = 17$ alumnos.
+
+## No solo sirve para contar
+
+El mismo razonamiento vale si a cada elemento le asignamos un valor $f(x)$ y queremos **sumar** esos valores en vez de contarlos:
+
+$$
+\sum_{x \in A \cup B} f(x) = \sum_{x \in A} f(x) + \sum_{x \in B} f(x) - \sum_{x \in A \cap B} f(x)
+$$
+
+Contar es el caso particular $f(x) = 1$. El [problema 1](../../problemas/001-multiplos-de-3-y-5/) usa esta versión con $f(x) = x$.
+
+## Tres conjuntos
+
+Con tres conjuntos, al restar las intersecciones de dos en dos quitamos de más los elementos que están en los tres, y hay que devolverlos:
+
+$$
+|A \cup B \cup C| = |A| + |B| + |C| - |A \cap B| - |A \cap C| - |B \cap C| + |A \cap B \cap C|
+$$
+
+Un elemento que está en los tres conjuntos se cuenta $3 - 3 + 1 = 1$ vez, como debe ser.
+
+## Fórmula general
+
+Para $m$ conjuntos, se suman las intersecciones de un conjunto, se restan las de dos, se suman las de tres, y así alternando:
+
+$$
+\left|\, \bigcup_{i=1}^{m} A_i \right| = \sum_{\substack{S \subseteq \{1, \dots, m\} \\ S \neq \emptyset}} (-1)^{|S|+1} \left|\, \bigcap_{i \in S} A_i \right|
+$$
+
+**Por qué funciona.** Tomemos un elemento que está exactamente en $r \geq 1$ de los conjuntos. Aparece en $\binom{r}{1}$ intersecciones de un conjunto, en $\binom{r}{2}$ de dos, etc. En total se cuenta
+
+$$
+\binom{r}{1} - \binom{r}{2} + \binom{r}{3} - \cdots \pm \binom{r}{r} = 1 - (1 - 1)^r = 1 \text{ vez},
+$$
+
+donde el segundo paso es el [teorema del binomio](../coeficientes-binomiales/#el-teorema-del-binomio) aplicado a $(1 - 1)^r$. Un elemento que no está en ningún conjunto no aparece en ningún término.
+
+## Aplicación: múltiplos de varios números
+
+Llamemos $M_k$ al conjunto de múltiplos de $k$ en un rango. Un número es múltiplo de $a$ y de $b$ a la vez si y solo si es múltiplo de su **mínimo común múltiplo**:
+
+$$
+M_a \cap M_b = M_{\operatorname{mcm}(a,\, b)}
+$$
+
+Así, los múltiplos de 3 o de 5 son $M_3 \cup M_5$, y su intersección es $M_{15}$.
+
+<Aside type="caution" title="Cuidado con los números que comparten factores">
+El mínimo común múltiplo solo coincide con el producto cuando los números no comparten factores. Los múltiplos de 4 y de 6 a la vez son los múltiplos de $\operatorname{mcm}(4, 6) = 12$, **no** los de 24.
+</Aside>
+
+## Dónde aparece
+
+<CardGrid>
+	<LinkCard
+		title="Problema 1: Múltiplos de 3 y 5"
+		description="Sumar los múltiplos de 3 o de 5 sin contar dos veces los de 15."
+		href="../../problemas/001-multiplos-de-3-y-5/"
+	/>
+</CardGrid>

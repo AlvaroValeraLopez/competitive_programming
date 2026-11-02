@@ -1,0 +1,92 @@
+---
+title: La función divisor
+description: Cuántos divisores tiene un número, cómo calcularlo a partir de su factorización y por qué es una función multiplicativa.
+sidebar:
+  label: Función divisor
+  order: 3
+---
+
+import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## Definición
+
+La **función divisor** $d(n)$ cuenta los divisores positivos de $n$. En algunos libros aparece como $\tau(n)$ o $\sigma_0(n)$.
+
+| $n$ | Divisores | $d(n)$ |
+| --- | --- | --- |
+| 1 | 1 | 1 |
+| 7 | 1, 7 | 2 |
+| 12 | 1, 2, 3, 4, 6, 12 | 6 |
+| 28 | 1, 2, 4, 7, 14, 28 | 6 |
+| 36 | 1, 2, 3, 4, 6, 9, 12, 18, 36 | 9 |
+
+## Fórmula a partir de la factorización
+
+Todo número $n > 1$ se escribe de forma única como producto de primos (es el **teorema fundamental de la aritmética**):
+
+$$
+n = p_1^{e_1}\, p_2^{e_2} \cdots p_r^{e_r}
+$$
+
+Entonces:
+
+$$
+d(n) = (e_1 + 1)(e_2 + 1) \cdots (e_r + 1)
+$$
+
+**Por qué.** Un divisor de $n$ no puede tener primos que no estén en $n$, ni exponentes mayores. Por tanto, cada divisor es de la forma $p_1^{f_1} p_2^{f_2} \cdots p_r^{f_r}$ con $0 \le f_i \le e_i$. Para cada primo hay $e_i + 1$ exponentes posibles y se eligen de forma independiente, así que se multiplican.
+
+**Ejemplo.** $12 = 2^2 \cdot 3^1$, luego $d(12) = (2+1)(1+1) = 6$. Los seis divisores salen de combinar los exponentes:
+
+| | $3^0$ | $3^1$ |
+| --- | --- | --- |
+| $2^0$ | 1 | 3 |
+| $2^1$ | 2 | 6 |
+| $2^2$ | 4 | 12 |
+
+## Es una función multiplicativa
+
+Si $a$ y $b$ **no comparten ningún factor primo**, es decir, $\operatorname{mcd}(a, b) = 1$, entonces
+
+$$
+d(a \cdot b) = d(a) \cdot d(b)
+$$
+
+**Por qué.** Los primos de $a$ y los de $b$ son distintos, así que la factorización de $ab$ es simplemente la de $a$ seguida de la de $b$. En el producto $(e_1 + 1) \cdots (e_r + 1)$, los factores de $a$ y los de $b$ quedan separados.
+
+<Aside type="caution" title="La condición es necesaria">
+Sin ella la fórmula falla: $d(2 \cdot 2) = d(4) = 3$, pero $d(2) \cdot d(2) = 4$. El divisor 2 se contaría dos veces.
+</Aside>
+
+## Contar divisores sin factorizar
+
+Los divisores van **por parejas**: si $i$ divide a $n$, también lo hace $n / i$. En cada pareja, el menor de los dos es como mucho $\sqrt{n}$, porque si los dos fueran mayores su producto superaría a $n$.
+
+Por tanto basta probar los $i$ desde 1 hasta $\lfloor \sqrt{n} \rfloor$:
+
+- cada $i$ que divide a $n$ aporta **dos** divisores, $i$ y $n / i$;
+- salvo si $i = \sqrt{n}$, que aporta **uno** (la pareja es $i$ consigo mismo).
+
+**Ejemplo.** Para $n = 36$ las parejas son $(1, 36)$, $(2, 18)$, $(3, 12)$, $(4, 9)$ y $(6, 6)$: en total $4 \cdot 2 + 1 = 9$ divisores, después de probar solo 6 candidatos en vez de 36.
+
+Esto cuesta del orden de $\sqrt{n}$ operaciones. Como consecuencia, **$d(n)$ es impar si y solo si $n$ es un cuadrado perfecto**: es el único caso con una pareja de un solo elemento.
+
+## ¿Cuántos divisores tiene un número típico?
+
+Pocos. Dirichlet demostró que el número medio de divisores de los enteros hasta $x$ crece como un logaritmo:
+
+$$
+\frac{1}{x} \sum_{k \le x} d(k) \approx \ln x + 2\gamma - 1,
+$$
+
+donde $\gamma \approx 0{,}5772$ es la constante de Euler-Mascheroni. Los enteros hasta un millón tienen, de media, unos 14 divisores. Los números con muchísimos divisores necesitan muchos factores primos pequeños y son raros: Ramanujan los estudió con el nombre de **números altamente compuestos**.
+
+## Dónde aparece
+
+<CardGrid>
+	<LinkCard
+		title="Problema 12: Número triangular muy divisible"
+		description="Buscar el primer número triangular con más de 500 divisores."
+		href="../../problemas/012-numero-triangular-muy-divisible/"
+	/>
+</CardGrid>

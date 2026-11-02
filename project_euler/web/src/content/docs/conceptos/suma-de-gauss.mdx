@@ -1,0 +1,103 @@
+---
+title: Suma de los primeros n números
+description: La fórmula 1 + 2 + … + n = n(n+1)/2, los números triangulares y tres formas de demostrarla.
+sidebar:
+  label: Suma de Gauss
+  order: 1
+---
+
+import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import GaussStaircase from '../../../components/GaussStaircase.astro';
+
+## El resultado
+
+$$
+1 + 2 + 3 + \cdots + n \;=\; \sum_{k=1}^{n} k \;=\; \frac{n(n+1)}{2}
+$$
+
+Los valores de esta suma se llaman **números triangulares** y se escriben $T_n$:
+
+$$
+T_1 = 1, \quad T_2 = 3, \quad T_3 = 6, \quad T_4 = 10, \quad T_5 = 15, \quad \dots
+$$
+
+Se llaman así porque $T_n$ puntos se pueden colocar formando un triángulo con $n$ puntos de lado.
+
+<Aside type="tip" title="Por qué importa">
+La fórmula convierte una suma de $n$ términos, que costaría $n$ operaciones, en un cálculo de tres operaciones. Da igual que $n$ sea 10 o $10^{18}$: el coste es el mismo.
+</Aside>
+
+## Demostración 1: emparejar los extremos
+
+Según una anécdota muy repetida (y probablemente adornada), a Gauss le pidieron de niño sumar los números del 1 al 100 y respondió en segundos. La idea es escribir la suma dos veces, una de ellas al revés:
+
+$$
+\begin{aligned}
+S &= 1 + 2 + \cdots + (n-1) + n \\
+S &= n + (n-1) + \cdots + 2 + 1
+\end{aligned}
+$$
+
+Si sumamos columna a columna, **todas las columnas valen $n + 1$**, y hay $n$ columnas:
+
+$$
+2S = n(n+1) \quad\Longrightarrow\quad S = \frac{n(n+1)}{2}
+$$
+
+El resultado siempre es un número entero: de dos números consecutivos $n$ y $n+1$, uno es par, así que $n(n+1)$ siempre se puede dividir entre 2.
+
+## Demostración 2: con un dibujo
+
+La misma idea, dibujada. Cada fila $r$ tiene $r$ cuadrados de color y $n + 1 - r$ grises, así que todas las filas miden $n + 1$:
+
+<GaussStaircase n={5} />
+
+## Demostración 3: por inducción
+
+- **Caso base.** Para $n = 1$: $1 = \frac{1 \cdot 2}{2}$.
+- **Paso inductivo.** Si $T_n = \frac{n(n+1)}{2}$, entonces
+
+$$
+T_{n+1} = T_n + (n+1) = \frac{n(n+1)}{2} + (n+1) = \frac{(n+1)(n+2)}{2},
+$$
+
+que es justo la fórmula para $n + 1$.
+
+## Variaciones que aparecen a menudo
+
+**Múltiplos de un número.** Los múltiplos de $k$ hasta $mk$ son $k$ veces los números del 1 al $m$:
+
+$$
+k + 2k + \cdots + mk = k\,(1 + 2 + \cdots + m) = k\,\frac{m(m+1)}{2}
+$$
+
+**Progresión aritmética cualquiera.** Si una suma tiene $m$ términos que aumentan siempre en la misma cantidad, vale
+
+$$
+\text{suma} = m \cdot \frac{\text{primero} + \text{último}}{2}
+$$
+
+Es la demostración 1 otra vez: cada pareja de extremos suma lo mismo.
+
+**Potencias más altas.** Existen fórmulas parecidas para cuadrados y cubos:
+
+$$
+\sum_{k=1}^{n} k^2 = \frac{n(n+1)(2n+1)}{6}, \qquad \sum_{k=1}^{n} k^3 = \left(\frac{n(n+1)}{2}\right)^2 = T_n^2
+$$
+
+La segunda dice que la suma de los primeros cubos es el cuadrado de un número triangular.
+
+## Dónde aparece
+
+<CardGrid>
+	<LinkCard
+		title="Problema 1: Múltiplos de 3 y 5"
+		description="Sumar múltiplos sin recorrerlos uno a uno."
+		href="../../problemas/001-multiplos-de-3-y-5/"
+	/>
+	<LinkCard
+		title="Problema 12: Número triangular muy divisible"
+		description="Los números triangulares y su factorización."
+		href="../../problemas/012-numero-triangular-muy-divisible/"
+	/>
+</CardGrid>

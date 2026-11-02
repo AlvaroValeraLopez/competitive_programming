@@ -17,7 +17,7 @@ function findTriangularOver500Divisors() {
             countDivisors(n / 2) * countDivisors(n + 1) :
             countDivisors(n) * countDivisors((n + 1) / 2);
 
-        if (divisors > 5) {
+        if (divisors > 500) {
             return triangular;
         }
         n++;

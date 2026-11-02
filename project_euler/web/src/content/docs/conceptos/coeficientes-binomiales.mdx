@@ -1,0 +1,126 @@
+---
+title: Coeficientes binomiales
+description: De cuántas formas se pueden elegir k elementos entre n, el triángulo de Pascal y cómo calcularlos sin desbordar.
+sidebar:
+  label: Coeficientes binomiales
+  order: 4
+---
+
+import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## Definición
+
+El **coeficiente binomial** $\binom{n}{k}$, que se lee «$n$ sobre $k$», es el número de formas de elegir $k$ elementos de un conjunto de $n$ cuando el orden no importa.
+
+**Ejemplo.** De las letras $\{a, b, c, d\}$ se pueden elegir dos de 6 formas: $ab$, $ac$, $ad$, $bc$, $bd$, $cd$. Por tanto $\binom{4}{2} = 6$.
+
+## La fórmula
+
+$$
+\binom{n}{k} = \frac{n!}{k!\,(n-k)!}
+$$
+
+**De dónde sale.** Si el orden importara, para el primer elemento habría $n$ opciones, para el segundo $n - 1$, y así hasta $n - k + 1$ para el último:
+
+$$
+n (n-1) \cdots (n-k+1) = \frac{n!}{(n-k)!}
+$$
+
+Pero así cada grupo de $k$ elementos aparece $k!$ veces, una por cada forma de ordenarlo. Dividiendo entre $k!$ queda la fórmula.
+
+**Simetría.** Elegir los $k$ que se quedan equivale a elegir los $n - k$ que no se quedan:
+
+$$
+\binom{n}{k} = \binom{n}{n-k}
+$$
+
+## Identidad de Pascal y el triángulo
+
+$$
+\binom{n}{k} = \binom{n-1}{k-1} + \binom{n-1}{k}
+$$
+
+**Demostración combinatoria.** Fijamos un elemento concreto $x$. Los grupos de $k$ elementos se dividen en dos tipos:
+
+- los que **contienen** a $x$: falta elegir $k - 1$ elementos entre los otros $n - 1$, de $\binom{n-1}{k-1}$ formas;
+- los que **no contienen** a $x$: hay que elegir los $k$ entre los otros $n - 1$, de $\binom{n-1}{k}$ formas.
+
+Si colocamos los coeficientes en filas, cada número es la suma de los dos que tiene encima. Es el **triángulo de Pascal** (filas $n = 0$ a $6$):
+
+$$
+\begin{array}{ccccccccccccc}
+&&&&&&1&&&&&& \\
+&&&&&1&&1&&&&& \\
+&&&&1&&2&&1&&&& \\
+&&&1&&3&&3&&1&&& \\
+&&1&&4&&6&&4&&1&& \\
+&1&&5&&10&&10&&5&&1& \\
+1&&6&&15&&20&&15&&6&&1
+\end{array}
+$$
+
+## El teorema del binomio
+
+Los coeficientes binomiales deben su nombre a que son los coeficientes de las potencias de un binomio:
+
+$$
+(x + y)^n = \sum_{k=0}^{n} \binom{n}{k} x^k y^{n-k}
+$$
+
+Al desarrollar $(x + y)(x + y) \cdots (x + y)$, el término $x^k y^{n-k}$ aparece una vez por cada forma de escoger de qué $k$ paréntesis sale la $x$. Dando valores concretos se obtienen dos consecuencias útiles:
+
+$$
+\sum_{k=0}^{n} \binom{n}{k} = 2^n \quad (x = y = 1), \qquad \sum_{k=0}^{n} (-1)^k \binom{n}{k} = 0 \quad (x = -1,\ y = 1,\ n \ge 1)
+$$
+
+La segunda es la clave de la demostración del [principio de inclusión-exclusión](../inclusion-exclusion/#fórmula-general).
+
+## Cómo calcularlos en un ordenador
+
+La fórmula con factoriales es correcta, pero los factoriales crecen muy deprisa. Por ejemplo, $40! \approx 8{,}16 \cdot 10^{47}$, mientras que el mayor entero que JavaScript representa con exactitud en un `Number` es $2^{53} \approx 9 \cdot 10^{15}$. Aunque el resultado final sea pequeño, los pasos intermedios desbordan.
+
+La solución es la **fórmula multiplicativa**, que va multiplicando y dividiendo de forma alterna:
+
+$$
+\binom{n}{k} = \prod_{i=1}^{k} \frac{n - k + i}{i}
+$$
+
+Si en cada paso se multiplica primero y después se divide, **todas las divisiones son exactas**. Tras el paso $i$, el resultado acumulado vale exactamente $\binom{n-k+i}{i}$, que es un entero:
+
+$$
+\binom{n-k+i-1}{i-1} \cdot \frac{n-k+i}{i} = \binom{n-k+i}{i}
+$$
+
+<Aside type="tip">
+Por la simetría, conviene usar el menor de $k$ y $n - k$: así el bucle da como mucho $n/2$ vueltas.
+</Aside>
+
+## El coeficiente central crece como 4ⁿ
+
+A partir de la fórmula de Stirling para $n!$ se obtiene
+
+$$
+\binom{2n}{n} \approx \frac{4^n}{\sqrt{\pi n}}
+$$
+
+| $n$ | $\binom{2n}{n}$ | $4^n / \sqrt{\pi n}$ |
+| --- | --- | --- |
+| 5 | 252 | 258,4 |
+| 10 | 184 756 | 187 079 |
+
+El error relativo es de alrededor de $\frac{1}{8n}$, así que la aproximación mejora al crecer $n$.
+
+## Dónde aparece
+
+<CardGrid>
+	<LinkCard
+		title="Problema 15: Caminos en una cuadrícula"
+		description="Contar caminos es elegir en qué pasos se va a la derecha."
+		href="../../problemas/015-caminos-en-una-cuadricula/"
+	/>
+	<LinkCard
+		title="Principio de inclusión-exclusión"
+		description="El teorema del binomio explica por qué la fórmula funciona."
+		href="../inclusion-exclusion/"
+	/>
+</CardGrid>

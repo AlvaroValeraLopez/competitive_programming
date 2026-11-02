@@ -1,0 +1,181 @@
+---
+title: 'Problema 12: Número triangular muy divisible'
+description: Encontrar el primer número triangular con más de 500 divisores partiéndolo en dos factores sin divisores comunes.
+sidebar:
+  label: '12 · Triangular muy divisible'
+  order: 12
+---
+
+import { Aside, Badge, CardGrid, Code, LinkCard, TabItem, Tabs } from '@astrojs/starlight/components';
+import solucion from '@soluciones/11_20/12_highlyDivisibleTriangularNumber.js?raw';
+
+<Badge text="Divisores" variant="note" /> <Badge text="Números coprimos" variant="note" />
+
+## El problema
+
+Los **números triangulares** se obtienen sumando los naturales consecutivos: el séptimo es $1 + 2 + 3 + 4 + 5 + 6 + 7 = 28$. Los diez primeros son
+
+$$
+1,\ 3,\ 6,\ 10,\ 15,\ 21,\ 28,\ 36,\ 45,\ 55,\ \dots
+$$
+
+Contando los divisores de los siete primeros, 28 es el primero que tiene más de cinco: $1, 2, 4, 7, 14, 28$. **¿Cuál es el primer número triangular con más de 500 divisores?**
+
+[Enunciado original en Project Euler](https://projecteuler.net/problem=12)
+
+## La idea en una frase
+
+$T_n = \frac{n(n+1)}{2}$ se parte en dos factores sin divisores comunes, así que su número de divisores es el **producto** de los divisores de dos números mucho más pequeños.
+
+## Primer intento: fuerza bruta
+
+Ir generando $T_1, T_2, T_3, \dots$ y contar los divisores de cada uno probando candidatos hasta $\sqrt{T_n}$. Funciona, pero cada paso cuesta del orden de $\sqrt{T_n} \approx n / \sqrt{2}$ operaciones, y como los números con muchos divisores son raros (lo vemos [más abajo](#por-qué-hay-que-llegar-tan-lejos)), hacen falta muchos pasos.
+
+## Desarrollo matemático
+
+### Paso 1: fórmula cerrada para los números triangulares
+
+Por la [suma de Gauss](../../conceptos/suma-de-gauss/), no hace falta ir sumando:
+
+$$
+T_n = 1 + 2 + \cdots + n = \frac{n(n+1)}{2}
+$$
+
+### Paso 2: contar divisores a partir de la factorización
+
+Si $m = p_1^{e_1} \cdots p_r^{e_r}$, su número de divisores es (ver [función divisor](../../conceptos/funcion-divisor/))
+
+$$
+d(m) = (e_1 + 1) \cdots (e_r + 1)
+$$
+
+Comprobación con el ejemplo: $28 = 2^2 \cdot 7$, luego $d(28) = 3 \cdot 2 = 6$. Coincide con los seis divisores del enunciado.
+
+### Paso 3: dos números consecutivos no comparten factores
+
+$$
+\operatorname{mcd}(n,\, n+1) = 1
+$$
+
+**Demostración.** Si un número $p > 1$ dividiera a $n$ y a $n + 1$, dividiría también a su diferencia, $(n + 1) - n = 1$. Imposible.
+
+### Paso 4: repartir el 2
+
+De $n$ y $n + 1$, exactamente uno es par. Dividimos ese entre 2 y $T_n$ queda como producto de dos factores:
+
+$$
+T_n =
+\begin{cases}
+\dfrac{n}{2} \cdot (n+1) & \text{si } n \text{ es par} \\[3mm]
+n \cdot \dfrac{n+1}{2} & \text{si } n \text{ es impar}
+\end{cases}
+$$
+
+Estos dos factores **siguen sin compartir divisores**: un divisor común de $\frac{n}{2}$ y $n+1$ dividiría también a $n$ y a $n + 1$, y por el paso 3 eso es imposible (igual en el caso impar).
+
+### Paso 5: la función divisor es multiplicativa
+
+Si $\operatorname{mcd}(a, b) = 1$, entonces $d(ab) = d(a)\, d(b)$. Aplicándolo a los factores del paso 4:
+
+$$
+d(T_n) =
+\begin{cases}
+d\!\left(\frac{n}{2}\right) \cdot d(n+1) & \text{si } n \text{ es par} \\[2mm]
+d(n) \cdot d\!\left(\frac{n+1}{2}\right) & \text{si } n \text{ es impar}
+\end{cases}
+$$
+
+### Paso 6: comprobarlo con los primeros casos
+
+| $n$ | $T_n$ | Factores $a \cdot b$ | $d(a)$ | $d(b)$ | $d(T_n) = d(a)\,d(b)$ |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 1 | $1 \cdot 1$ | 1 | 1 | 1 |
+| 2 | 3 | $1 \cdot 3$ | 1 | 2 | 2 |
+| 3 | 6 | $3 \cdot 2$ | 2 | 2 | 4 |
+| 4 | 10 | $2 \cdot 5$ | 2 | 2 | 4 |
+| 5 | 15 | $5 \cdot 3$ | 2 | 2 | 4 |
+| 6 | 21 | $3 \cdot 7$ | 2 | 2 | 4 |
+| 7 | 28 | $7 \cdot 4$ | 2 | 3 | **6** |
+| 8 | 36 | $4 \cdot 9$ | 3 | 3 | 9 |
+
+La fila $n = 7$ es la primera con más de cinco divisores, como dice el enunciado.
+
+### Paso 7: contar los divisores de cada factor
+
+Para cada factor basta con probar candidatos hasta su raíz cuadrada, porque los divisores van por parejas $(i,\ m / i)$ y el menor de cada pareja no pasa de $\sqrt{m}$. Cada $i$ que divide a $m$ aporta dos divisores, salvo cuando $i^2 = m$, que aporta uno. Está explicado en detalle en [contar divisores sin factorizar](../../conceptos/funcion-divisor/#contar-divisores-sin-factorizar).
+
+## El código
+
+<Tabs>
+<TabItem label="JavaScript (repositorio)">
+
+<Code code={solucion} lang="js" title="12_highlyDivisibleTriangularNumber.js" />
+
+`countDivisors` es el paso 7 y el operador ternario de `findTriangularOver500Divisors` es el paso 5: elige qué factor dividir entre 2 según la paridad de `n`.
+
+</TabItem>
+<TabItem label="Python">
+
+```python
+from math import isqrt
+
+def num_divisores(m):
+    cuenta = 0
+    for i in range(1, isqrt(m) + 1):
+        if m % i == 0:
+            cuenta += 1 if i * i == m else 2
+    return cuenta
+
+def primer_triangular_con_mas_de(k):
+    n = 1
+    while True:
+        if n % 2 == 0:
+            d = num_divisores(n // 2) * num_divisores(n + 1)
+        else:
+            d = num_divisores(n) * num_divisores((n + 1) // 2)
+        if d > k:
+            return n * (n + 1) // 2
+        n += 1
+
+print(primer_triangular_con_mas_de(500))
+```
+
+Con `primer_triangular_con_mas_de(5)` devuelve 28, el ejemplo del enunciado.
+
+</TabItem>
+</Tabs>
+
+## Complejidad
+
+Lo que cambia es el coste de **cada paso**:
+
+| Método | Candidatos que se prueban en el paso $n$ | Para $n = 10^4$ |
+| --- | --- | --- |
+| Contar divisores de $T_n$ directamente | $\sqrt{T_n} \approx n / \sqrt{2}$ | ~7 071 |
+| Partir en dos factores | $\sqrt{n/2} + \sqrt{n+1}$ | ~170 |
+
+Para $n$ del orden de $10^4$ se prueban unas **40 veces menos** candidatos, y la ventaja crece con $n$: cada paso pasa de costar $O(n)$ a costar $O(\sqrt{n})$.
+
+## Por qué hay que llegar tan lejos
+
+Los números con muchos divisores son raros. El número medio de divisores de los enteros hasta $x$ crece como $\ln x$: los enteros hasta un millón tienen, de media, unos 14 ([más detalles](../../conceptos/funcion-divisor/#cuántos-divisores-tiene-un-número-típico)). Para superar los 500 hace falta un número con muchos factores primos pequeños, y además triangular.
+
+## Mejoras posibles
+
+- **Reutilizar un factor.** El factor grande de un paso es el pequeño del siguiente. Si $n$ es par, el paso $n$ usa $d(n + 1)$ y el paso $n + 1$ vuelve a usar $d(n + 1)$. Si $n$ es impar, ocurre lo mismo con $d\!\left(\frac{n+1}{2}\right)$. Guardando ese valor se calcula un solo factor por paso, la mitad de trabajo.
+- **Criba de divisores.** Si conocemos un límite $K$ para los factores, podemos calcular $d(1), \dots, d(K)$ de una vez: para cada $i$ se suma 1 a todos sus múltiplos. Cuesta $O(K \log K)$ en total, y después cada paso es inmediato.
+
+## Conceptos utilizados
+
+<CardGrid>
+	<LinkCard
+		title="Suma de Gauss"
+		description="La fórmula cerrada de los números triangulares."
+		href="../../conceptos/suma-de-gauss/"
+	/>
+	<LinkCard
+		title="Función divisor"
+		description="Factorización, multiplicatividad y conteo por parejas."
+		href="../../conceptos/funcion-divisor/"
+	/>
+</CardGrid>

@@ -1,0 +1,74 @@
+---
+title: Euler, paso a paso
+description: Las matemáticas detrás de los problemas de Project Euler, explicadas con detalle y con el código que las aplica.
+template: splash
+hero:
+  tagline: Las matemáticas que hay detrás de los problemas de Project Euler, explicadas con detalle y con el código que las aplica.
+  actions:
+    - text: Empezar por el problema 1
+      link: problemas/001-multiplos-de-3-y-5/
+      icon: right-arrow
+    - text: Ver los conceptos
+      link: conceptos/suma-de-gauss/
+      variant: minimal
+---
+
+import { Aside, Card, CardGrid, LinkCard, Steps } from '@astrojs/starlight/components';
+
+## Qué vas a encontrar
+
+<CardGrid>
+	<Card title="Problemas" icon="puzzle">
+		Cada página parte de la solución más directa y llega, paso a paso, a la idea matemática que
+		la hace rápida.
+	</Card>
+	<Card title="Conceptos" icon="open-book">
+		La teoría que se repite entre problemas, explicada una sola vez y con sus demostraciones.
+	</Card>
+	<Card title="Código real" icon="laptop">
+		El código de cada problema se lee directamente del repositorio, junto a versiones en otros
+		lenguajes cuando aportan algo.
+	</Card>
+	<Card title="Visualizaciones" icon="star">
+		Algunas ideas se entienden mejor viéndolas: hay dibujos y componentes interactivos donde
+		ayudan.
+	</Card>
+</CardGrid>
+
+## Cómo está organizada cada página de problema
+
+<Steps>
+
+1. **El problema**: el enunciado resumido y un enlace al original.
+2. **La idea en una frase**: el truco matemático, antes de los detalles.
+3. **Primer intento**: la solución por fuerza bruta y por qué no escala.
+4. **Desarrollo matemático**: el razonamiento completo, paso a paso y comprobado con el ejemplo del enunciado.
+5. **El código**: la solución del repositorio y alguna alternativa.
+6. **Complejidad**: cuánto se gana con las matemáticas.
+7. **Conceptos utilizados**: enlaces a la teoría de fondo.
+
+</Steps>
+
+## Problemas disponibles
+
+<CardGrid>
+	<LinkCard
+		title="1 · Múltiplos de 3 y 5"
+		description="Suma de Gauss e inclusión-exclusión."
+		href="problemas/001-multiplos-de-3-y-5/"
+	/>
+	<LinkCard
+		title="12 · Número triangular muy divisible"
+		description="Función divisor y números coprimos."
+		href="problemas/012-numero-triangular-muy-divisible/"
+	/>
+	<LinkCard
+		title="15 · Caminos en una cuadrícula"
+		description="Coeficientes binomiales y triángulo de Pascal."
+		href="problemas/015-caminos-en-una-cuadricula/"
+	/>
+</CardGrid>
+
+<Aside title="Sobre Project Euler">
+[Project Euler](https://projecteuler.net) pide no publicar soluciones de sus problemas, salvo de los 100 primeros, y siempre que el objetivo sea enseñar el método. Por eso aquí se explica el razonamiento y no se destacan los resultados. Si todavía no has resuelto un problema, merece la pena intentarlo antes de leer su página.
+</Aside>
