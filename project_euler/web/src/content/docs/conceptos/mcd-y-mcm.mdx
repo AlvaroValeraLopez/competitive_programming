@@ -10,6 +10,7 @@ area: Teoría de números
 
 import { Aside } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
+import Video from '../../../components/Video.astro';
 
 ## Definiciones
 
@@ -69,6 +70,14 @@ print(mcd(1071, 462))  # 21
 ```
 
 Si $a < b$ no hace falta ordenarlos: en la primera vuelta $a \bmod b = a$ y los dos números simplemente se intercambian.
+
+El algoritmo tiene una versión geométrica: en un rectángulo de $a \times b$ se recortan los cuadrados más grandes que caben, y cada tanda de cuadrados es una división. El último cuadrado mide el mcd, y cabe un número exacto de veces en los dos lados. Aquí con $48$ y $18$, que también sirven después para ver el mcm con exponentes:
+
+<Video
+	archivo="mcd-y-mcm.mp4"
+	titulo="Un rectángulo de 48 por 18 se llena con dos cuadrados de 18, uno de 12 y dos de 6, que son las divisiones del algoritmo de Euclides; el cuadrado de 6 cubre el rectángulo exactamente, así que mcd(48, 18) = 6. Con exponentes, el mcd toma el menor de cada primo y el mcm el mayor: mcm(48, 18) = 144."
+	pie="Vídeo generado con código (Manim). Antes de renderizarlo se comprueba que los cuadrados llenan el rectángulo sin solaparse y que coinciden con las divisiones de Euclides."
+/>
 
 ## Cuántos pasos da
 
