@@ -1,0 +1,135 @@
+---
+title: Programación dinámica y principio de optimalidad
+description: Cómo resolver un problema de optimización partiéndolo en subproblemas que se repiten, por qué el mejor camino está hecho de mejores caminos y cómo pasar de 2ⁿ posibilidades a unas pocas miles de cuentas.
+sidebar:
+  label: Principio de optimalidad
+  order: 13
+area: Programación dinámica
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+
+## Un ejemplo: el mejor camino en un triángulo
+
+Partimos de lo alto de un triángulo de números y bajamos fila a fila; en cada paso podemos ir a uno de los dos números que hay justo debajo, a la izquierda o a la derecha. ¿Qué camino da la suma más grande?
+
+$$
+\begin{array}{ccccccc}
+&&&\mathbf{3}&&& \\
+&&\mathbf{7}&&4&& \\
+&2&&\mathbf{4}&&6& \\
+8&&5&&\mathbf{9}&&3
+\end{array}
+$$
+
+En este triángulo, el mejor camino es el de la negrita: $3 + 7 + 4 + 9 = 23$.
+
+### Probar todos los caminos no escala
+
+En cada una de las $n - 1$ bajadas hay dos opciones, así que un triángulo de $n$ filas tiene $2^{n-1}$ caminos. Con 15 filas son 16 384, y se pueden probar todos. Con 100 filas son $2^{99} \approx 6{,}3 \cdot 10^{29}$: aunque se comprobaran $10^{12}$ caminos por segundo, harían falta unos 20 000 millones de años.
+
+### Elegir siempre el mayor tampoco sirve
+
+La idea **voraz**, bajar siempre hacia el número más grande, falla en cuanto un número pequeño esconde uno grande debajo:
+
+$$
+\begin{array}{ccccc}
+&&1&& \\
+&2&&3& \\
+9&&1&&1
+\end{array}
+$$
+
+El voraz va de 1 a 3, porque $3 > 2$, y suma $1 + 3 + 1 = 5$. El mejor camino es $1 + 2 + 9 = 12$. Una decisión que parece buena ahora puede cerrar el paso a algo mucho mejor después.
+
+## El principio de optimalidad
+
+> **Principio de optimalidad.** Un camino óptimo desde una casilla está formado por un primer paso y, a continuación, un camino óptimo desde la casilla a la que llega ese paso.
+
+**Demostración.** Supongamos que el resto del camino, a partir de la casilla a la que llega el primer paso, no fuera óptimo. Entonces habría otro camino mejor desde esa misma casilla. Cambiando el resto por ese otro, el camino completo mejoraría, en contra de que era óptimo.
+
+El argumento funciona porque **lo que se puede hacer desde una casilla no depende de cómo se ha llegado a ella**: las opciones y los números que quedan por delante son los mismos. Es lo que permite resumir todo el pasado en un **estado**, aquí la casilla en la que estamos.
+
+Así que, si llamamos $t(i, j)$ al número de la fila $i$ y posición $j$ (contando desde 0), y $M(i, j)$ a la mejor suma posible desde esa casilla hasta la última fila, el principio da una **recurrencia**:
+
+$$
+M(i, j) = t(i, j) + \max\big(M(i+1, j),\ M(i+1, j+1)\big)
+$$
+
+y en la última fila, donde ya no hay que elegir, $M(n-1, j) = t(n-1, j)$. La respuesta es $M(0, 0)$.
+
+## Los subproblemas se repiten
+
+Programada tal cual, como una función que se llama a sí misma, la recurrencia sigue siendo exponencial: vuelve a calcular las mismas casillas una y otra vez. A la casilla $(i, j)$ se llega desde lo alto por $\binom{i}{j}$ caminos distintos (ver [coeficientes binomiales](../coeficientes-binomiales/)), y la recursión ingenua la recalcula una vez por cada uno.
+
+Pero solo hay $1 + 2 + \cdots + n = \frac{n(n+1)}{2}$ casillas distintas. **Si cada $M(i, j)$ se calcula una sola vez y se guarda**, el coste total es de una suma y una comparación por casilla. Con 100 filas, 5050 casillas en lugar de $6{,}3 \cdot 10^{29}$ caminos.
+
+Esta es la **programación dinámica**: un problema que se parte en subproblemas, que cumplen el principio de optimalidad y que se repiten, de modo que guardar sus soluciones ahorra casi todo el trabajo.
+
+## De abajo arriba
+
+Si se recorren las filas de abajo arriba, cuando se llega a una casilla ya están calculadas las dos de debajo. En el ejemplo, cada número se sustituye por $M(i, j)$:
+
+$$
+\begin{array}{ccccccc}
+&&&23&&& \\
+&&20&&19&& \\
+&10&&13&&15& \\
+8&&5&&9&&3
+\end{array}
+$$
+
+La fila de abajo se queda igual. Encima, $2 + \max(8, 5) = 10$, $4 + \max(5, 9) = 13$ y $6 + \max(9, 3) = 15$. Luego $7 + \max(10, 13) = 20$ y $4 + \max(13, 15) = 19$. Y arriba, $3 + \max(20, 19) = 23$.
+
+```python
+def mejor_camino(triangulo):
+    mejor = list(triangulo[-1])
+    for fila in reversed(triangulo[:-1]):
+        mejor = [x + max(mejor[j], mejor[j + 1]) for j, x in enumerate(fila)]
+    return mejor[0]
+
+print(mejor_camino([[3], [7, 4], [2, 4, 6], [8, 5, 9, 3]]))  # 23
+```
+
+**Para recuperar el camino**, no solo su suma, basta con bajar desde arriba yendo cada vez hacia la casilla con mayor $M$: de 3 a 7, porque $20 > 19$; de 7 a 4, porque $13 > 10$; y de 4 a 9, porque $9 > 5$.
+
+## De arriba abajo, con memoria
+
+La otra forma de hacerlo es programar la recurrencia tal cual, pero **apuntando cada resultado** la primera vez que se calcula y consultándolo las siguientes. Se llama **memoización**:
+
+```python
+from functools import cache
+
+def mejor_camino(triangulo):
+    @cache
+    def M(i, j):
+        if i == len(triangulo) - 1:
+            return triangulo[i][j]
+        return triangulo[i][j] + max(M(i + 1, j), M(i + 1, j + 1))
+    return M(0, 0)
+
+print(mejor_camino([[3], [7, 4], [2, 4, 6], [8, 5, 9, 3]]))  # 23
+```
+
+Cuesta lo mismo, porque cada casilla se calcula una vez. Es cómodo cuando no está claro en qué orden recorrer los estados; a cambio, usa la pila de llamadas, que en algunos lenguajes tiene un límite de profundidad.
+
+## Cuándo se puede aplicar
+
+La receta tiene siempre los mismos pasos:
+
+1. **Elegir el estado**: la información mínima que hace falta para decidir lo que queda. Aquí, la casilla.
+2. **Escribir la recurrencia**, que expresa la solución de un estado a partir de las de otros más pequeños.
+3. **Elegir un orden** en el que, al llegar a un estado, los que necesita ya estén calculados.
+
+El coste es el número de estados por el trabajo de cada uno.
+
+<Aside type="caution" title="Cuando el pasado importa">
+Si una restricción depende de cómo se ha llegado, el estado se queda corto y el principio deja de valer tal cual. Por ejemplo, si estuviera prohibido girar a la izquierda más de tres veces, el mejor camino desde una casilla dependería de cuántos giros se llevan. La solución es **ampliar el estado**: guardar $M(i, j, g)$ para cada número $g$ de giros ya hechos. Hay problemas en los que eso no basta: el camino simple más largo en un grafo no cumple el principio, porque lo que se puede hacer después depende de todos los vértices ya visitados.
+</Aside>
+
+La misma idea resuelve problemas muy distintos: el [cambio de monedas](../cambio-de-monedas/), los caminos más cortos en un mapa, la distancia de edición entre dos palabras o la mochila, en la que hay que elegir objetos de peso limitado con el máximo valor.
+
+## Dónde aparece
+
+<Relaciones mostrar="aparece" />
