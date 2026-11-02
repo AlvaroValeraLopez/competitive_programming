@@ -105,3 +105,44 @@ def triangulo_pascal(filas: int) -> list[list[int]]:
 def subconjuntos(elementos: str, k: int) -> list[str]:
     """Las formas de elegir k elementos sin importar el orden: «abcd», 2 → ab, ac, ad, bc, bd, cd."""
     return ["".join(c) for c in combinations(elementos, k)]
+
+
+# --- Máximo común divisor y mínimo común múltiplo ---
+
+Cuadrado = tuple[int, int, int]
+"""Un cuadrado dentro de un rectángulo: (x, y, lado), con (0, 0) en la esquina inferior izquierda."""
+
+
+def pasos_euclides(a: int, b: int) -> list[tuple[int, int, int, int]]:
+    """Las divisiones del algoritmo de Euclides: (a, b, cociente, resto), hasta que el resto es 0."""
+    pasos = []
+    while b:
+        cociente, resto = divmod(a, b)
+        pasos.append((a, b, cociente, resto))
+        a, b = b, resto
+    return pasos
+
+
+def cuadrados_euclides(ancho: int, alto: int) -> list[list[Cuadrado]]:
+    """Llena un rectángulo ancho × alto con los cuadrados más grandes que quepan, como Euclides.
+
+    Devuelve un grupo de cuadrados por cada división del algoritmo: en cada paso
+    se quitan del lado largo tantos cuadrados del lado corto como quepan.
+    """
+    grupos = []
+    x, y, w, h = 0, 0, ancho, alto
+    while w and h:
+        if w >= h:
+            cuantos = w // h
+            grupos.append([(x + i * h, y, h) for i in range(cuantos)])
+            x, w = x + cuantos * h, w - cuantos * h
+        else:
+            cuantos = h // w
+            grupos.append([(x, y + i * w, w) for i in range(cuantos)])
+            y, h = y + cuantos * w, h - cuantos * w
+    return grupos
+
+
+def exponentes(n: int) -> dict[int, int]:
+    """Exponente de cada primo en la factorización de n."""
+    return dict(factorizar(n))

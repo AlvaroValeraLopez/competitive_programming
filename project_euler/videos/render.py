@@ -22,6 +22,7 @@ VIDEOS = {
     "inclusion-exclusion": ("escenas/inclusion_exclusion.py", "InclusionExclusion"),
     "funcion-divisor": ("escenas/funcion_divisor.py", "FuncionDivisor"),
     "coeficientes-binomiales": ("escenas/coeficientes_binomiales.py", "CoeficientesBinomiales"),
+    "mcd-y-mcm": ("escenas/mcd_mcm.py", "McdMcm"),
 }
 
 CALIDADES = {"baja": "l", "media": "m", "alta": "h"}
