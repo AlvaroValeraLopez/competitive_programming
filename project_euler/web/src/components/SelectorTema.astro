@@ -1,0 +1,99 @@
+---
+// Sustituye al desplegable de tema de Starlight por un botón con un sol (día,
+// modo claro) y una luna (noche, modo oscuro). Usa la misma clave de
+// localStorage que Starlight («starlight-theme»), así que el tema elegido se
+// aplica antes de pintar la página (lo hace ThemeProvider) y no hay parpadeo.
+// Mientras no se pulse, sigue la preferencia del sistema.
+import { Icon } from '@astrojs/starlight/components';
+---
+
+<selector-tema>
+	<button type="button" class="selector-tema" title="Cambiar entre modo claro y oscuro">
+		<Icon name="sun" class="sol" size="1.25rem" />
+		<Icon name="moon" class="luna" size="1.25rem" />
+		<span class="sr-only solo-claro">Modo claro activado. Cambiar a modo oscuro</span>
+		<span class="sr-only solo-oscuro">Modo oscuro activado. Cambiar a modo claro</span>
+	</button>
+</selector-tema>
+
+<script>
+	const CLAVE = 'starlight-theme';
+	type Tema = 'light' | 'dark';
+
+	const guardado = (): Tema | null => {
+		const valor = localStorage.getItem(CLAVE);
+		return valor === 'light' || valor === 'dark' ? valor : null;
+	};
+	const delSistema = (): Tema => (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+	const aplicar = (tema: Tema) => {
+		document.documentElement.dataset.theme = tema;
+	};
+
+	// Mientras el usuario no haya elegido, el tema sigue al del sistema.
+	matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+		if (!guardado()) aplicar(delSistema());
+	});
+
+	class SelectorTema extends HTMLElement {
+		connectedCallback() {
+			this.querySelector('button')!.addEventListener('click', () => {
+				const nuevo: Tema = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+				aplicar(nuevo);
+				localStorage.setItem(CLAVE, nuevo);
+			});
+		}
+	}
+
+	customElements.define('selector-tema', SelectorTema);
+</script>
+
+<style>
+	selector-tema {
+		display: inline-flex;
+	}
+	.selector-tema {
+		position: relative;
+		display: grid;
+		place-items: center;
+		width: 2.25rem;
+		height: 2.25rem;
+		margin: -0.25rem;
+		padding: 0;
+		border: 0;
+		border-radius: 999rem;
+		background: transparent;
+		color: var(--sl-color-text-accent);
+		cursor: pointer;
+		transition: background-color 0.15s;
+	}
+	.selector-tema:hover {
+		background: var(--sl-color-gray-6);
+		color: var(--sl-color-white);
+	}
+	.selector-tema:focus-visible {
+		outline: 2px solid var(--sl-color-accent);
+		outline-offset: 2px;
+	}
+
+	/* Los dos iconos ocupan el mismo sitio: el del tema actual gira y crece, el otro se esconde. */
+	.selector-tema :global(svg) {
+		grid-area: 1 / 1;
+		transition:
+			transform 0.3s ease,
+			opacity 0.3s ease;
+	}
+	:global(:root[data-theme='light'] .selector-tema .luna),
+	:global(:root:not([data-theme='light']) .selector-tema .sol) {
+		opacity: 0;
+		transform: rotate(-90deg) scale(0.4);
+	}
+	:global(:root[data-theme='light'] .selector-tema .solo-oscuro),
+	:global(:root:not([data-theme='light']) .selector-tema .solo-claro) {
+		display: none;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.selector-tema :global(svg) {
+			transition: none;
+		}
+	}
+</style>
