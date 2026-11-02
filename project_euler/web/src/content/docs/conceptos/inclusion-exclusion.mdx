@@ -9,6 +9,7 @@ requiere: [coeficientes-binomiales]
 
 import { Aside } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
+import Video from '../../../components/Video.astro';
 
 ## Dos conjuntos
 
@@ -19,6 +20,14 @@ $$
 $$
 
 **Ejemplo.** En una clase, 12 alumnos juegan al fútbol, 8 al baloncesto y 3 a los dos deportes. Juegan a algo $12 + 8 - 3 = 17$ alumnos.
+
+La misma idea, con los múltiplos de 3 y de 5 del 1 al 30: los comunes, 15 y 30, se cuentan dos veces si se suman los dos conjuntos.
+
+<Video
+	archivo="inclusion-exclusion.mp4"
+	titulo="Diagrama de Venn con los múltiplos de 3 y de 5 del 1 al 30: 10 más 6 cuenta dos veces el 15 y el 30, así que hay 10 + 6 − 2 = 14 números."
+	pie="Vídeo generado con código (Manim). Antes de renderizarlo se comprueba que cada número está en la región que le corresponde."
+/>
 
 ## No solo sirve para contar
 

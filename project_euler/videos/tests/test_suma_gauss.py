@@ -73,6 +73,7 @@ VARIABLES_WEB = {
     "FONDO": "--sl-color-black",  # el fondo de página en modo oscuro
     "ACENTO": "--sl-color-accent",
     "ACENTO_CLARO": "--sl-color-accent-high",
+    "AZUL": "--sl-color-text-accent",
     "GRIS": "--sl-color-gray-4",
     "TEXTO": "--sl-color-gray-2",
     "BLANCO": "--sl-color-white",

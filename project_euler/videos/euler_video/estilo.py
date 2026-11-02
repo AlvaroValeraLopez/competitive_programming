@@ -10,6 +10,7 @@ from manim import UP, Animation, FadeIn, FadeOut, MathTex, ManimColor, Scene, Te
 FONDO = ManimColor("#211D2F")  # --sl-color-black (fondo de página)
 ACENTO = ManimColor("#604FCD")  # --sl-color-accent
 ACENTO_CLARO = ManimColor("#B0A8E3")  # --sl-color-accent-high
+AZUL = ManimColor("#7097FF")  # --sl-color-text-accent (enlaces)
 GRIS = ManimColor("#6A6781")  # --sl-color-gray-4
 TEXTO = ManimColor("#CBC9D9")  # --sl-color-gray-2
 BLANCO = ManimColor("#FFFFFF")  # --sl-color-white
