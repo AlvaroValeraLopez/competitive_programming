@@ -1,6 +1,7 @@
 // Datos de las páginas de problemas y conceptos, leídos del frontmatter. Los
 // usan el menú lateral, los catálogos, la portada y el mapa.
 import { getCollection, type CollectionEntry } from 'astro:content';
+import { FUENTES } from './fuentes';
 import { dominioDe } from './menu';
 import { lenguajeDe } from './soluciones';
 
@@ -29,7 +30,11 @@ export function urlDe(id: string): string {
 }
 
 export function etiquetaDe({ id, data }: CollectionEntry<'docs'>): string {
-	return id.startsWith('problemas/') ? data.title.replace(/^Problema \d+:\s*/, '') : (data.sidebar.label ?? data.title);
+	if (!id.startsWith('problemas/')) return data.sidebar.label ?? data.title;
+	// En las fuentes numeradas el título empieza por «Problema 3: », y la etiqueta es
+	// lo que sigue; en las demás, la etiqueta es la del menú.
+	const fuente = data.fuente ? FUENTES[data.fuente] : undefined;
+	return fuente?.numerada ? data.title.replace(/^[^:]*\d+:\s*/, '') : (data.sidebar.label ?? data.title);
 }
 
 function aPagina(entrada: CollectionEntry<'docs'>): PaginaContenido {
