@@ -1,12 +1,14 @@
 ---
 // Secciones de relaciones de una página, generadas a partir del frontmatter
 // (las mismas relaciones que dibuja el mapa).
-//   conceptos    → conceptos que usa este problema
+//   conceptos    → conceptos que usa este problema, separados por dominio
 //   relacionados → otros problemas que comparten conceptos con este
 //   requiere     → conceptos previos de este concepto
 //   aparece      → problemas y conceptos que se apoyan en este concepto
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { nombreDeEjercicio } from '../lib/fuentes';
 import { problemasRelacionados } from '../lib/grafo';
+import { DOMINIOS } from '../lib/menu';
 import { obtenerGrafo, urlDe } from '../lib/relaciones';
 
 interface Props {
@@ -21,7 +23,7 @@ if (!nodo) throw new Error(`<Relaciones> solo funciona en páginas de problemas 
 
 const nombre = (otro: string) => {
 	const n = grafo.nodos.get(otro)!;
-	return n.tipo === 'problema' ? `Problema ${n.numero}: ${n.etiqueta}` : n.etiqueta;
+	return n.tipo === 'problema' ? nombreDeEjercicio(n) : n.etiqueta;
 };
 
 let tarjetas: { id: string; descripcion?: string }[];
@@ -43,16 +45,42 @@ tarjetas.sort((a, b) => {
 	if (na.tipo !== nb.tipo) return na.tipo === 'problema' ? -1 : 1;
 	return (na.numero ?? 0) - (nb.numero ?? 0) || na.etiqueta.localeCompare(nb.etiqueta, 'es');
 });
+
+// Los conceptos de un problema se separan por dominio: qué matemáticas hacen
+// falta, qué algoritmia y qué hay que saber para implementarlo.
+const porDominio =
+	mostrar === 'conceptos'
+		? DOMINIOS.map((d) => ({
+				dominio: d.nombre,
+				tarjetas: tarjetas.filter((t) => grafo.nodos.get(t.id)!.dominio === d.nombre),
+			})).filter((g) => g.tarjetas.length > 0)
+		: [{ dominio: undefined, tarjetas }];
 ---
 
 {
-	tarjetas.length > 0 ? (
-		<CardGrid>
-			{tarjetas.map((t) => (
-				<LinkCard title={nombre(t.id)} description={t.descripcion} href={urlDe(t.id)} />
-			))}
-		</CardGrid>
-	) : (
+	tarjetas.length === 0 ? (
 		<p>{vacio}</p>
+	) : (
+		porDominio.map((grupo) => (
+			<>
+				{grupo.dominio && <p class="dominio">{grupo.dominio}</p>}
+				<CardGrid>
+					{grupo.tarjetas.map((t) => (
+						<LinkCard title={nombre(t.id)} description={t.descripcion} href={urlDe(t.id)} />
+					))}
+				</CardGrid>
+			</>
+		))
 	)
 }
+
+<style>
+	.dominio {
+		margin-bottom: 0.5rem;
+		font-size: var(--sl-text-xs);
+		font-weight: 600;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: var(--sl-color-gray-3);
+	}
+</style>

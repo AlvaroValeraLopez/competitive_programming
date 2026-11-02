@@ -4,6 +4,7 @@
 // la izquierda), que crece hacia abajo al añadir problemas. Al pasar el ratón (o
 // el foco) por una tarjeta se resaltan sus relaciones directas.
 import { Icon } from '@astrojs/starlight/components';
+import { nombreDeEjercicio, prefijoDeEjercicio } from '../lib/fuentes';
 import { abreviatura, disponer, type Medidas } from '../lib/grafo';
 import { obtenerGrafo, urlDe } from '../lib/relaciones';
 
@@ -82,10 +83,10 @@ const lista = [...grafo.nodos.values()]
 						>
 							<span class="cabecera">
 								<span class:list={['icono', nodo.tipo]} aria-hidden="true">
-									{nodo.tipo === 'problema' ? nodo.numero : abreviatura(nodo.etiqueta)}
+									{nodo.tipo === 'problema' && nodo.numero !== undefined ? nodo.numero : abreviatura(nodo.etiqueta)}
 								</span>
 								<span class="titulo">
-									{nodo.tipo === 'problema' && <span class="sr-only">Problema {nodo.numero}: </span>}
+									{nodo.tipo === 'problema' && <span class="sr-only">{prefijoDeEjercicio(nodo)}</span>}
 									{nodo.etiqueta}
 								</span>
 							</span>
@@ -108,7 +109,7 @@ const lista = [...grafo.nodos.values()]
 			{
 				lista.map((n) => (
 					<li>
-						<a href={urlDe(n.id)}>{n.tipo === 'problema' ? `Problema ${n.numero}: ${n.etiqueta}` : n.etiqueta}</a>
+						<a href={urlDe(n.id)}>{n.tipo === 'problema' ? nombreDeEjercicio(n) : n.etiqueta}</a>
 						{' se apoya en '}
 						{n.padres.map((p, i) => (
 							<>
