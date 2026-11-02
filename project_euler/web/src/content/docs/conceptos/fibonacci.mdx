@@ -9,6 +9,7 @@ area: Sumas y series
 
 import { Aside } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
+import Video from '../../../components/Video.astro';
 
 ## Definición
 
@@ -79,6 +80,26 @@ $$
 $$
 
 Por ejemplo, $1 + 1 + 2 + 3 + 5 + 8 = 20 = 21 - 1$.
+
+## Un rectángulo hecho de cuadrados
+
+La recurrencia tiene un dibujo. Se empieza con dos cuadrados de lado 1, uno al lado del otro, y cada cuadrado nuevo se pega al lado largo del rectángulo que forman los anteriores, girando en espiral. Ese lado largo está hecho de los dos últimos cuadrados, así que **el cuadrado nuevo mide la suma de los dos anteriores**: sus lados son $1, 1, 2, 3, 5, 8, \dots$ Con $n$ cuadrados, el rectángulo mide $F_n \times F_{n+1}$.
+
+Al contar el área de dos formas sale gratis otra identidad: los cuadrados llenan el rectángulo sin huecos, así que
+
+$$
+F_1^2 + F_2^2 + \cdots + F_n^2 = F_n\,F_{n+1}
+$$
+
+También se comprueba por inducción: vale para $n = 1$, y si vale para $n$, al sumar $F_{n+1}^2$ queda $F_n F_{n+1} + F_{n+1}^2 = F_{n+1}\,(F_n + F_{n+1}) = F_{n+1}\,F_{n+2}$.
+
+La forma del rectángulo, $F_{n+1} / F_n$, se acerca cada vez más a un número concreto, $1{,}618\ldots$, quedando por encima y por debajo alternativamente. La fórmula de Binet explica por qué.
+
+<Video
+	archivo="fibonacci.mp4"
+	titulo="Cuadrados de lados 1, 1, 2, 3, 5, 8, 13 y 21 pegados en espiral: cada uno se apoya en el lado formado por los dos anteriores, así que mide su suma. Los de lado par, 2 y 8, son uno de cada tres. El rectángulo final mide 21 por 34, y las proporciones 1, 2, 1,5, 1,667, 1,6, 1,625, 1,615 y 1,619 se acercan a la razón áurea, 1,618. El área de los cuadrados es la del rectángulo: 1² + 1² + 2² + … + 21² = 21 · 34."
+	pie="Vídeo generado con código (Manim). Antes de renderizarlo se comprueba que los cuadrados no se solapan, que llenan sin huecos un rectángulo de Fₙ × Fₙ₊₁ y que cada lado es la suma de los dos anteriores."
+/>
 
 ## La fórmula de Binet
 
