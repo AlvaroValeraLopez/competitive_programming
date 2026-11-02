@@ -1,9 +1,26 @@
 ---
 // Título de página de Starlight con los temas de la página (frontmatter `temas`)
 // como etiquetas debajo, al estilo de las etiquetas de los ejercicios de Exercism.
+// En los conceptos añade además un botón para practicarlos: la lista de
+// problemas filtrada por ese concepto.
 import Default from '@astrojs/starlight/components/PageTitle.astro';
+import { LinkButton } from '@astrojs/starlight/components';
+import { obtenerGrafo, urlDe } from '../lib/relaciones';
 
-const temas = Astro.locals.starlightRoute.entry.data.temas ?? [];
+const { id, data } = Astro.locals.starlightRoute.entry;
+const temas = data.temas ?? [];
+
+let practicar: { href: string; texto: string } | undefined;
+if (id.startsWith('conceptos/')) {
+	const grafo = await obtenerGrafo();
+	const problemas = (grafo.nodos.get(id)?.hijos ?? []).filter((h) => grafo.nodos.get(h)?.tipo === 'problema');
+	if (problemas.length > 0) {
+		practicar = {
+			href: `${urlDe('problemas')}?conceptos=${id.replace(/^conceptos\//, '')}`,
+			texto: `Practicar: ${problemas.length} ${problemas.length === 1 ? 'problema' : 'problemas'}`,
+		};
+	}
+}
 ---
 
 <Default />
@@ -14,6 +31,15 @@ const temas = Astro.locals.starlightRoute.entry.data.temas ?? [];
 				<li>{tema}</li>
 			))}
 		</ul>
+	)
+}
+{
+	practicar && (
+		<div class="practicar">
+			<LinkButton href={practicar.href} variant="secondary" icon="right-arrow">
+				{practicar.texto}
+			</LinkButton>
+		</div>
 	)
 }
 
@@ -34,5 +60,8 @@ const temas = Astro.locals.starlightRoute.entry.data.temas ?? [];
 		color: var(--sl-color-gray-1);
 		font-size: var(--sl-text-xs);
 		font-weight: 500;
+	}
+	.practicar {
+		margin-top: 1rem;
 	}
 </style>

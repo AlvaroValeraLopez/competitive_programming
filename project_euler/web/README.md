@@ -59,13 +59,16 @@ El menú no se escribe a mano: `src/menu-lateral.ts` (un *route middleware* de S
 - **Conceptos**, agrupados por área según el campo `area`, que es obligatorio en los conceptos y debe ser una de las áreas de `AREAS` en `src/lib/menu.ts` (para añadir una área nueva, añádela ahí).
 - Todos los grupos van plegados, salvo el que contiene la página actual.
 
-Cada sección tiene su catálogo completo, con buscador (por número, título o tema, sin que importen las tildes): **Todos los problemas** (`/problemas/`), que además filtra por el área de los conceptos que usa cada problema, y **Todos los conceptos** (`/conceptos/`). La portada solo muestra las primeras tarjetas y enlaza a ellos.
+Cada sección tiene su catálogo completo, con buscador sin que importen las tildes. La portada solo muestra las primeras tarjetas y enlaza a ellos.
+
+- **Todos los problemas** (`/problemas/`, `ListaProblemas.astro`), al estilo de la lista de ejercicios de Exercism. Cada tarjeta muestra el número, el título, la descripción y los conceptos que usa. Se puede **practicar por conceptos**: al elegir uno o varios, aparecen los problemas que los usan, primero los que usan más. El filtro queda en la dirección (`/problemas/?conceptos=suma-de-gauss,funcion-divisor&q=…`), así que cualquier selección se puede enlazar. Cada concepto tiene bajo su título un botón «Practicar: N problemas» que lleva a esa lista filtrada. La lógica del filtro está en `src/lib/filtro.ts`.
+- **Todos los conceptos** (`/conceptos/`, `Catalogo.astro`), agrupados por área.
 
 Si a un concepto le falta el área, o dos problemas tienen el mismo número, la compilación falla diciendo dónde.
 
 ## Tests
 
-La lógica del grafo (`src/lib/grafo.ts`) y del menú (`src/lib/menu.ts`) no depende de Astro y tiene tests:
+La lógica del grafo (`src/lib/grafo.ts`), del menú (`src/lib/menu.ts`) y del filtro de problemas (`src/lib/filtro.ts`) no depende de Astro y tiene tests:
 
 ```bash
 npm test
