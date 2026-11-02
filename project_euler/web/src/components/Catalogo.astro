@@ -28,21 +28,23 @@ const textoDe = (p: PaginaContenido) =>
 		<p class="recuento" aria-live="polite" data-recuento>{conceptos.length} conceptos</p>
 	</div>
 
-	{
-		grupos.map((grupo) => (
-			<section data-grupo>
-				<h2>
-					{grupo.titulo}
-					<span class="cuenta">{grupo.cuenta}</span>
-				</h2>
-				<ul class="rejilla-tarjetas">
-					{grupo.paginas.map((pagina) => (
-						<TarjetaPagina pagina={pagina} compacta data-texto={textoDe(pagina)} />
-					))}
-				</ul>
-			</section>
-		))
-	}
+	<div class="tablero">
+		{
+			grupos.map((grupo) => (
+				<section class="columna" data-grupo>
+					<h2>
+						{grupo.titulo}
+						<span class="cuenta">{grupo.cuenta}</span>
+					</h2>
+					<ul class="lista">
+						{grupo.paginas.map((pagina) => (
+							<TarjetaPagina pagina={pagina} compacta data-texto={textoDe(pagina)} />
+						))}
+					</ul>
+				</section>
+			))
+		}
+	</div>
 
 	<p class="vacio" hidden data-vacio>Ningún concepto coincide con la búsqueda.</p>
 </catalogo-paginas>
@@ -118,25 +120,47 @@ const textoDe = (p: PaginaContenido) =>
 		font-size: var(--sl-text-sm);
 		color: var(--sl-color-gray-3);
 	}
-	section {
-		margin-top: 2.25rem;
+	/* Tablero: una columna por área, una al lado de otra mientras quepan. Al añadir
+	   conceptos las columnas crecen hacia abajo; al añadir áreas, pasan a otra fila. */
+	.tablero {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+		gap: 1.25rem;
+		align-items: start;
+		margin-top: 1.75rem;
+	}
+	.columna {
+		display: grid;
+		gap: 1rem;
+		padding: 1.25rem;
+		border: 1px solid var(--sl-color-gray-6);
+		border-radius: calc(var(--euler-radio) * 1.5);
+		background: var(--sl-color-gray-7);
+	}
+	.columna[hidden] {
+		display: none;
 	}
 	h2 {
 		display: flex;
 		gap: 0.75rem;
 		align-items: baseline;
+		justify-content: space-between;
 		margin: 0;
-		font-size: var(--sl-text-2xl);
+		font-size: var(--sl-text-lg);
 		font-weight: 700;
 		color: var(--sl-color-white);
 	}
 	.cuenta {
-		font-size: var(--sl-text-sm);
+		font-size: var(--sl-text-xs);
 		font-weight: 500;
 		color: var(--sl-color-gray-3);
 	}
-	.rejilla-tarjetas {
-		margin-top: 1rem;
+	.lista {
+		display: grid;
+		gap: 0.75rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
 	}
 	.vacio {
 		margin-top: 2rem;
