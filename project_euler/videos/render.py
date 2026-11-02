@@ -19,6 +19,9 @@ DESTINO_WEB = RAIZ.parent / "web" / "public" / "videos"
 # nombre del vídeo en la web -> (archivo de la escena, clase de la escena)
 VIDEOS = {
     "suma-de-gauss": ("escenas/suma_gauss.py", "SumaGauss"),
+    "inclusion-exclusion": ("escenas/inclusion_exclusion.py", "InclusionExclusion"),
+    "funcion-divisor": ("escenas/funcion_divisor.py", "FuncionDivisor"),
+    "coeficientes-binomiales": ("escenas/coeficientes_binomiales.py", "CoeficientesBinomiales"),
 }
 
 CALIDADES = {"baja": "l", "media": "m", "alta": "h"}

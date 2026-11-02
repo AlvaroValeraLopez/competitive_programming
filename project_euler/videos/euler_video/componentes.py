@@ -5,7 +5,7 @@ escritas a mano, y se puede comprobar después dónde ha quedado cada pieza.
 """
 
 import numpy as np
-from manim import DOWN, LEFT, ORIGIN, RIGHT, UP, Mobject, Square, VGroup
+from manim import DL, DOWN, DR, LEFT, ORIGIN, RIGHT, UL, UP, UR, Circle, Mobject, Square, VGroup
 
 from .estilo import FONDO
 from .matematicas import Celda
@@ -66,3 +66,20 @@ def comprobar_casillas(cuadricula: Cuadricula, grupo: Mobject, esperadas: set[Ce
         sobran = sorted(set(ocupadas) - esperadas)
         faltan = sorted(esperadas - set(ocupadas))
         raise AssertionError(f"Las casillas no encajan. Sobran: {sobran}. Faltan: {faltan}")
+
+
+def comprobar_region(nombre: str, objeto: Mobject, dentro: list[Circle], fuera: list[Circle]) -> None:
+    """Comprueba que `objeto` cae entero dentro de los círculos `dentro` y fuera de los de `fuera`.
+
+    Para diagramas de Venn: un número de A ∩ B tiene que estar en los dos
+    círculos; uno solo de A, en A y no en B.
+    """
+    esquinas = [objeto.get_corner(d) for d in (UL, UR, DL, DR)]
+    for circulo in dentro:
+        radio = circulo.width / 2
+        if any(np.linalg.norm(p - circulo.get_center()) > radio - TOLERANCIA for p in esquinas):
+            raise AssertionError(f"{nombre} se sale de un círculo en el que debería estar")
+    for circulo in fuera:
+        radio = circulo.width / 2
+        if any(np.linalg.norm(p - circulo.get_center()) < radio + TOLERANCIA for p in esquinas):
+            raise AssertionError(f"{nombre} invade un círculo en el que no debería estar")

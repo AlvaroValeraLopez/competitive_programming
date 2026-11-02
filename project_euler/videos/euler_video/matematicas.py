@@ -7,6 +7,9 @@ vídeo está verificado antes de renderizarlo.
 Este módulo no importa Manim, para que los tests sean rápidos.
 """
 
+from itertools import combinations
+from math import prod
+
 Celda = tuple[int, int]
 """Una casilla de una cuadrícula: (fila, columna), con la fila 0 arriba."""
 
@@ -33,3 +36,72 @@ def rectangulo(filas: int, columnas: int) -> set[Celda]:
 def girar_180(celdas: set[Celda], filas: int, columnas: int) -> set[Celda]:
     """Gira las casillas media vuelta alrededor del centro de un rectángulo filas × columnas."""
     return {(filas - 1 - f, columnas - 1 - c) for f, c in celdas}
+
+
+# --- Inclusión-exclusión ---
+
+
+def multiplos(k: int, hasta: int) -> list[int]:
+    """Múltiplos de k entre 1 y `hasta`, ambos incluidos."""
+    return list(range(k, hasta + 1, k))
+
+
+def tamano_union(a: set[int], b: set[int]) -> int:
+    """|A ∪ B| contado con inclusión-exclusión: |A| + |B| − |A ∩ B|."""
+    return len(a) + len(b) - len(a & b)
+
+
+# --- Función divisor ---
+
+
+def factorizar(n: int) -> list[tuple[int, int]]:
+    """Factorización en primos: [(p, e), …] con los primos en orden creciente."""
+    factores = []
+    p = 2
+    while p * p <= n:
+        e = 0
+        while n % p == 0:
+            n //= p
+            e += 1
+        if e:
+            factores.append((p, e))
+        p += 1
+    if n > 1:
+        factores.append((n, 1))
+    return factores
+
+
+def divisores(n: int) -> list[int]:
+    """Todos los divisores de n, probando uno a uno (sin usar la factorización)."""
+    return [d for d in range(1, n + 1) if n % d == 0]
+
+
+def numero_divisores(n: int) -> int:
+    """d(n) = (e₁ + 1)(e₂ + 1)⋯ a partir de la factorización."""
+    return prod(e + 1 for _, e in factorizar(n))
+
+
+def tabla_divisores(n: int) -> list[list[int]]:
+    """Para n = pᵃ · qᵇ, la tabla de sus divisores: la fila i y la columna j valen pⁱ · qʲ."""
+    factores = factorizar(n)
+    if len(factores) != 2:
+        raise ValueError(f"{n} no tiene exactamente dos factores primos distintos: {factores}")
+    (p, a), (q, b) = factores
+    return [[p**i * q**j for j in range(b + 1)] for i in range(a + 1)]
+
+
+# --- Coeficientes binomiales ---
+
+
+def triangulo_pascal(filas: int) -> list[list[int]]:
+    """Las filas 0 a filas − 1 del triángulo de Pascal: cada número es la suma de los dos de encima."""
+    triangulo = [[1]]
+    for n in range(1, filas):
+        anterior = triangulo[-1]
+        triangulo.append([1] + [anterior[k - 1] + anterior[k] for k in range(1, n)] + [1])
+    return triangulo
+
+
+def subconjuntos(elementos: str, k: int) -> list[str]:
+    """Las formas de elegir k elementos sin importar el orden: «abcd», 2 → ab, ac, ad, bc, bd, cd."""
+    return ["".join(c) for c in combinations(elementos, k)]
