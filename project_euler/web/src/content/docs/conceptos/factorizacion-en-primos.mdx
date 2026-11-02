@@ -10,6 +10,7 @@ area: Teoría de números
 
 import { Aside } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
+import Video from '../../../components/Video.astro';
 
 ## El teorema fundamental de la aritmética
 
@@ -91,6 +92,12 @@ Es el ejemplo del enunciado del [problema 3](../../problemas/003-mayor-factor-pr
 | 14 | se para: $14^2 = 196 > 29$ | 29 |
 
 El 29 que queda es primo, así que $13195 = 5 \cdot 7 \cdot 13 \cdot 29$. El bucle ha probado 12 valores de $d$, del 2 al 13, cuando sin reducir $m$ habría tenido que llegar hasta $\lfloor \sqrt{13195} \rfloor = 114$.
+
+<Video
+	archivo="factorizacion-en-primos.mp4"
+	titulo="La factorización de 13195 como una escalera de divisiones. El 2, el 3 y el 4 no dividen y el 5 sí: queda 2639. El 5 y el 6 no dividen y el 7 sí: queda 377. Del 7 al 12 no dividen y el 13 sí: queda 29. El 13 no divide a 29 y 14² = 196 > 29, así que 29 es primo. La raíz de lo que queda baja de 114,9 a 5,4. Resultado: 13195 = 5 · 7 · 13 · 29."
+	pie="Vídeo generado con código (Manim). Antes de renderizarlo se comprueba que los pasos son los del código de esta página y que la factorización es correcta para todos los números hasta 5000."
+/>
 
 ### Ejemplo: 2520
 

@@ -9,6 +9,7 @@ area: Teoría de números
 
 import { Aside } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
+import Video from '../../../components/Video.astro';
 
 ## Qué es un número primo
 
@@ -41,6 +42,12 @@ $$
 Dicho al revés: **si ningún $d$ con $2 \le d \le \sqrt{n}$ divide a $n$, entonces $n$ es primo.** Los divisores van por parejas $(a,\ n/a)$, y el menor de cada pareja nunca pasa de $\sqrt{n}$. Si además juntamos esto con el apartado anterior, basta con probar los **primos** hasta $\sqrt{n}$: el menor divisor de un compuesto es primo y no pasa de $\sqrt{n}$.
 
 **Ejemplos.** Para $n = 91$ basta probar hasta $\lfloor \sqrt{91} \rfloor = 9$, y el 7 lo divide: $91 = 7 \cdot 13$. Para $n = 97$ ninguno de los números del 2 al 9 lo divide, así que 97 es primo, tras 8 divisiones en lugar de 95.
+
+<Video
+	archivo="test-de-primalidad.mp4"
+	titulo="Los divisores de 36 en orden, 1, 2, 3, 4, 6, 9, 12, 18 y 36, unidos por arcos en parejas cuyo producto es 36: 1 · 36, 2 · 18, 3 · 12, 4 · 9 y 6 · 6. El menor de cada pareja no pasa de √36 = 6. Después se divide 97 entre 2, 3, …, 9 sin que ningún resto sea 0, así que 97 es primo; y en 91 el 7 da resto 0: 91 = 7 · 13."
+	pie="Vídeo generado con código (Manim). Antes de renderizarlo se comprueba que el menor de cada pareja de divisores nunca pasa de la raíz, para todos los números hasta 3000, y que el test coincide con la definición de primo."
+/>
 
 <Aside type="tip" title="En el código, mejor d · d ≤ n">
 En vez de calcular la raíz, se comprueba la condición $d \cdot d \le n$. Así todo son operaciones con enteros y no hay que preocuparse por el redondeo de la raíz cuadrada cuando $n$ es grande.

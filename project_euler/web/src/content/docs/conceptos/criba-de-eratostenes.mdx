@@ -10,6 +10,7 @@ area: Teoría de números
 
 import { Aside } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
+import Video from '../../../components/Video.astro';
 
 ## La idea
 
@@ -40,6 +41,12 @@ $$
 los 10 primos que hay hasta 30. Solo han hecho falta tres primos, 2, 3 y 5, porque $\sqrt{30} \approx 5{,}48$.
 
 La tabla también enseña dónde se pierde algo de tiempo: los números con varios factores primos se tachan varias veces. El 30 lo tachan el 2, el 3 y el 5.
+
+<Video
+	archivo="criba-de-eratostenes.mp4"
+	titulo="Una cuadrícula con los números del 1 al 100. El 2 tacha sus múltiplos desde 4, el 3 desde 9, el 5 desde 25 y el 7 desde 49, cada uno con su color, y cada compuesto queda del color de su menor factor primo. Como 11² = 121 > 100, ya no hay nada más que tachar: quedan sin tachar los 25 primos hasta 100."
+	pie="Vídeo generado con código (Manim). Antes de renderizarlo se comprueba que lo que queda sin tachar son exactamente los primos y que cada compuesto lo tacha primero su menor factor primo."
+/>
 
 ## Por qué empezar en p² y parar en √N
 
