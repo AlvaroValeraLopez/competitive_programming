@@ -8,6 +8,7 @@ sidebar:
 
 import { Aside } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
+import Video from '../../../components/Video.astro';
 
 ## Definición
 
@@ -44,6 +45,14 @@ $$
 | $2^0$ | 1 | 3 |
 | $2^1$ | 2 | 6 |
 | $2^2$ | 4 | 12 |
+
+Con un número algo mayor, $72 = 2^3 \cdot 3^2$, la tabla tiene $4 \times 3$ casillas:
+
+<Video
+	archivo="funcion-divisor.mp4"
+	titulo="Los divisores de 72 = 2 al cubo por 3 al cuadrado forman una tabla de 4 filas por 3 columnas, así que d(72) = 4 · 3 = 12, lo mismo que probando uno a uno."
+	pie="Vídeo generado con código (Manim). Antes de renderizarlo se comprueba que la tabla contiene exactamente los divisores de 72."
+/>
 
 ## Es una función multiplicativa
 

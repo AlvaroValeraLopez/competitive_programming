@@ -8,6 +8,7 @@ sidebar:
 
 import { Aside } from '@astrojs/starlight/components';
 import Relaciones from '../../../components/Relaciones.astro';
+import Video from '../../../components/Video.astro';
 
 ## Definición
 
@@ -59,6 +60,14 @@ $$
 1&&6&&15&&20&&15&&6&&1
 \end{array}
 $$
+
+Así se construye, y esto es lo que cuenta cada número:
+
+<Video
+	archivo="coeficientes-binomiales.mp4"
+	titulo="El triángulo de Pascal se construye sumando los dos números de encima. El 6 de la fila 4 son las 6 formas de elegir 2 letras de a, b, c y d."
+	pie="Vídeo generado con código (Manim). Antes de renderizarlo se comprueba que cada número es la suma de sus dos padres."
+/>
 
 ## El teorema del binomio
 
