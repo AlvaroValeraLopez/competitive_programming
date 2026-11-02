@@ -1,0 +1,129 @@
+---
+title: 'Problema 26: Ciclos de los inversos'
+description: Encontrar el d menor que 1000 cuyo inverso 1/d tiene el periodo decimal más largo, detectando el primer resto repetido de la división o, mejor, viendo que el periodo es el orden de 10 módulo d.
+sidebar:
+  label: '26 · Ciclos de los inversos'
+  order: 26
+temas: [Aritmética modular, Decimales periódicos]
+conceptos: [orden-multiplicativo]
+---
+
+import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+import solucion from '@soluciones/21_30/26_reciprocalCycles.js?raw';
+
+## El problema
+
+Una fracción unitaria tiene un 1 en el numerador. Los decimales de las que tienen denominador entre 2 y 10 son:
+
+$$
+\begin{array}{lll}
+1/2 = 0{,}5 & 1/3 = 0{,}\overline{3} & 1/4 = 0{,}25 \\
+1/5 = 0{,}2 & 1/6 = 0{,}1\overline{6} & 1/7 = 0{,}\overline{142857} \\
+1/8 = 0{,}125 & 1/9 = 0{,}\overline{1} & 1/10 = 0{,}1
+\end{array}
+$$
+
+donde la raya marca el ciclo que se repite: $1/7$ tiene un ciclo de 6 cifras. **Encuentra el valor de $d < 1000$ para el que $1/d$ tiene el ciclo decimal más largo.**
+
+[Enunciado original en Project Euler](https://projecteuler.net/problem=26)
+
+## La idea en una frase
+
+En la división larga de $1$ entre $d$ cada cifra solo depende del resto anterior, así que el ciclo se cierra en cuanto se repite un resto; y como los restos son las potencias de 10 módulo $d$, el ciclo mide el orden de 10 módulo $d$, que solo puede llegar a $d - 1$ cuando $d$ es primo.
+
+## Primer intento: dividir hasta repetir un resto
+
+Para cada $d$ se hace la división larga apuntando en qué paso aparece cada resto; cuando sale uno ya visto, la longitud del ciclo es la distancia entre las dos apariciones. Si el resto llega a 0, la división es exacta y no hay ciclo. Es lo que hace el repositorio.
+
+Cada $d$ necesita como mucho $d$ pasos, porque solo hay $d$ restos posibles. En total, menos de $1 + 2 + \cdots + 999 \approx 500\,000$ pasos: es instantáneo. Pero no explica **por qué** unos $d$ tienen ciclos largos y otros cortos, ni permite ir directamente al mejor.
+
+## Desarrollo matemático
+
+### Paso 1: los restos de la división larga
+
+Al dividir 1 entre $d$, en cada paso se multiplica el resto por 10, se escribe la cifra $\lfloor 10 r / d \rfloor$ y queda el resto $10 r \bmod d$. Empezando con $r_0 = 1$, el resto del paso $k$ es
+
+$$
+r_k \equiv 10^k \pmod d
+$$
+
+**Cada cifra solo depende del resto anterior**, así que, en cuanto un resto se repite, se repiten también todas las cifras. Con $d = 7$, los restos son $3, 2, 6, 4, 5, 1$ y luego vuelve el $3$: el ciclo mide 6.
+
+### Paso 2: el ciclo es un orden multiplicativo
+
+Si $d$ no tiene los factores 2 ni 5, el ciclo empieza en la primera cifra y mide exactamente el [orden de 10 módulo $d$](../../conceptos/orden-multiplicativo/#decimales-periódicos): el menor $k \ge 1$ con $10^k \equiv 1 \pmod d$.
+
+Si $d = 2^a 5^b m$ con $m$ coprimo con 10, los factores 2 y 5 solo añaden unas cifras iniciales que no se repiten, y **el ciclo mide $\operatorname{ord}_m(10)$**. Por ejemplo, $1/6 = 0{,}1\overline{6}$ tiene el mismo ciclo que $1/3$. En particular, multiplicar $d$ por 2 o por 5 nunca alarga el ciclo.
+
+### Paso 3: ¿cuánto puede medir?
+
+El orden de 10 módulo $m$ divide a $\varphi(m)$, el número de enteros entre 1 y $m$ coprimos con $m$, que es como mucho $m - 1$. Hay tres casos:
+
+- **$d$ primo y 10 raíz primitiva módulo $d$**: el ciclo mide $d - 1$, lo máximo posible. Es lo que pasa con 7, que tiene ciclo $6$.
+- **$d$ primo, pero no de este tipo**: el orden es un divisor propio de $d - 1$, así que como mucho $(d - 1)/2$. Por ejemplo, $\operatorname{ord}_{11}(10) = 2$ y $\operatorname{ord}_{13}(10) = 6$.
+- **$d$ compuesto**: el ciclo es como mucho $\varphi(m) \le \varphi(d) \le d - \sqrt{d}$, porque si $q \le \sqrt{d}$ es un factor primo de $d$, sus $d / q \ge \sqrt{d}$ múltiplos no son coprimos con $d$.
+
+### Paso 4: buscar desde arriba
+
+Así que lo natural es **probar los primos de mayor a menor** hasta encontrar uno, $p$, con $\operatorname{ord}_p(10) = p - 1$. ¿Puede haber otro $d < 1000$ con un ciclo aún más largo? Comparando con los casos del paso 3:
+
+- un $d < p$ tiene ciclo como mucho $d - 1 < p - 1$;
+- un primo $d$ entre $p$ y 999 no es de periodo completo, porque $p$ era el primero desde arriba, así que su ciclo es como mucho $(d - 1)/2 < 500$;
+- un compuesto $d \le 999$ tiene ciclo como mucho $999 - \sqrt{999} < 969$.
+
+Por tanto, **si el primo encontrado cumple $p - 1 \ge 969$, es la respuesta**, y no hace falta mirar ningún otro $d$. Solo queda hacer la cuenta.
+
+### Paso 5: comprobarlo con el ejemplo
+
+Con $d \le 10$: los primos son 2, 3, 5 y 7. El 2 y el 5 dividen a 10 y no tienen ciclo; $\operatorname{ord}_3(10) = 1$, porque $10 \equiv 1 \pmod 3$; y $\operatorname{ord}_7(10) = 6 = 7 - 1$. Así que 7 es de periodo completo y gana, como dice el enunciado. Los primos de periodo completo menores que 100 son 7, 17, 19, 23, 29, 47, 59, 61 y 97.
+
+## El código
+
+<Tabs>
+<TabItem label="JavaScript (repositorio)">
+
+<Code code={solucion} lang="js" title="26_reciprocalCycles.js" />
+
+Es el primer intento. Para cada `d`, el `Map` llamado `remainders` guarda en qué posición apareció cada resto. El bucle multiplica el resto por 10 y lo reduce módulo `d` (paso 1) hasta que sale un resto repetido o el 0. Si no es 0, la longitud del ciclo es la posición actual menos la posición en que apareció ese resto por primera vez. Se queda con el primer `d` que bate el récord.
+
+</TabItem>
+<TabItem label="Python (orden de 10)">
+
+```python
+def ciclo(d):
+    while d % 2 == 0:
+        d //= 2
+    while d % 5 == 0:
+        d //= 5
+    if d == 1:
+        return 0          # decimal exacto
+    k, r = 1, 10 % d
+    while r != 1:         # el orden de 10 módulo d (paso 2)
+        r = r * 10 % d
+        k += 1
+    return k
+
+print(max(range(2, 1000), key=ciclo))
+```
+
+Calcula el ciclo como el orden de 10 tras quitar los factores 2 y 5. Con `ciclo(7)` devuelve 6, y con `ciclo(6)`, 1. `max` devuelve el primer `d` con el ciclo máximo, igual que el repositorio.
+
+</TabItem>
+</Tabs>
+
+## Complejidad
+
+| Método | Pasos para $d < 1000$ |
+| --- | --- |
+| División larga para cada $d$ (repositorio) | la suma de los ciclos más los anteperiodos: menos de 500 000 |
+| Orden de 10 para cada $d$ | la suma de los ciclos: menos de 100 000 |
+| Primos desde arriba (paso 4) | unos pocos primos, de menos de 1000 pasos cada uno |
+
+## Conceptos utilizados
+
+<Relaciones mostrar="conceptos" />
+
+## Problemas relacionados
+
+<Relaciones mostrar="relacionados" />
