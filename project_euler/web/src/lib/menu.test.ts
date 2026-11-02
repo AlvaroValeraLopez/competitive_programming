@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
-import { agruparConceptos, agruparProblemas, AREAS, decena, normalizar } from './menu.ts';
+import { nombreDeEjercicio, prefijoDeEjercicio } from './fuentes.ts';
+import { agruparConceptos, agruparEjercicios, AREAS, decena, DOMINIOS, dominioDe, normalizar } from './menu.ts';
 
 describe('decena', () => {
 	test('agrupa de diez en diez, como las carpetas del repositorio', () => {
@@ -17,59 +18,130 @@ describe('decena', () => {
 	});
 });
 
-describe('agruparProblemas', () => {
-	test('crea solo las decenas con problemas, ordenadas', () => {
-		const grupos = agruparProblemas([
-			{ id: 'problemas/015', titulo: 'C', numero: 15 },
-			{ id: 'problemas/001', titulo: 'A', numero: 1 },
-			{ id: 'problemas/067', titulo: 'D', numero: 67 },
-			{ id: 'problemas/012', titulo: 'B', numero: 12 },
-		]);
+// Un registro de prueba con una fuente numerada y otra que no lo es.
+const FUENTES_PRUEBA = {
+	euler: { nombre: 'Project Euler', numerada: true, prefijo: 'Problema' },
+	exercism: { nombre: 'Exercism', numerada: false },
+};
+
+describe('agruparEjercicios', () => {
+	test('agrupa por fuente, en el orden del registro, y las numeradas por decenas', () => {
+		const grupos = agruparEjercicios(
+			[
+				{ id: 'p/grains', titulo: 'Grains', fuente: 'exercism' },
+				{ id: 'p/015', titulo: 'C', fuente: 'euler', numero: 15 },
+				{ id: 'p/hamming', titulo: 'Hamming', fuente: 'exercism' },
+				{ id: 'p/001', titulo: 'A', fuente: 'euler', numero: 1 },
+				{ id: 'p/067', titulo: 'D', fuente: 'euler', numero: 67 },
+				{ id: 'p/012', titulo: 'B', fuente: 'euler', numero: 12 },
+			],
+			FUENTES_PRUEBA,
+		);
 		assert.deepEqual(
-			grupos.map((g) => [g.etiqueta, g.problemas.map((p) => p.numero)]),
+			grupos.map((g) => [g.nombre, g.ejercicios.map((e) => e.titulo)]),
+			[
+				['Project Euler', ['A', 'B', 'C', 'D']],
+				['Exercism', ['Grains', 'Hamming']],
+			],
+		);
+		assert.deepEqual(
+			grupos[0].decenas!.map((d) => [d.etiqueta, d.problemas.map((p) => p.numero)]),
 			[
 				['1–10', [1]],
 				['11–20', [12, 15]],
 				['61–70', [67]],
 			],
 		);
+		assert.equal(grupos[1].decenas, undefined);
 	});
 
-	test('con los 100 problemas salen exactamente 10 decenas de 10', () => {
-		const todos = Array.from({ length: 100 }, (_, i) => ({ id: `problemas/${i + 1}`, titulo: `P${i + 1}`, numero: i + 1 }));
-		const grupos = agruparProblemas(todos);
-		assert.equal(grupos.length, 10);
-		assert.ok(grupos.every((g) => g.problemas.length === 10));
+	test('con los 100 problemas de una fuente numerada salen exactamente 10 decenas de 10', () => {
+		const todos = Array.from({ length: 100 }, (_, i) => ({ id: `p/${i + 1}`, titulo: `P${i + 1}`, fuente: 'euler', numero: i + 1 }));
+		const [grupo] = agruparEjercicios(todos, FUENTES_PRUEBA);
+		assert.equal(grupo.decenas!.length, 10);
+		assert.ok(grupo.decenas!.every((d) => d.problemas.length === 10));
 	});
 
-	test('falla si un problema no tiene número o está repetido', () => {
-		assert.throws(() => agruparProblemas([{ id: 'problemas/x', titulo: 'X' }]), /falta el número/);
+	test('el mismo número puede repetirse en fuentes distintas, pero no en la misma', () => {
+		const otra = { ...FUENTES_PRUEBA, acepta: { nombre: 'Acepta el reto', numerada: true } };
+		assert.doesNotThrow(() =>
+			agruparEjercicios(
+				[
+					{ id: 'p/a', titulo: 'A', fuente: 'euler', numero: 20 },
+					{ id: 'p/b', titulo: 'B', fuente: 'acepta', numero: 20 },
+				],
+				otra,
+			),
+		);
 		assert.throws(
 			() =>
-				agruparProblemas([
-					{ id: 'problemas/a', titulo: 'A', numero: 3 },
-					{ id: 'problemas/b', titulo: 'B', numero: 3 },
-				]),
-			/el problema 3 ya está en problemas\/a/,
+				agruparEjercicios(
+					[
+						{ id: 'p/a', titulo: 'A', fuente: 'euler', numero: 3 },
+						{ id: 'p/b', titulo: 'B', fuente: 'euler', numero: 3 },
+					],
+					FUENTES_PRUEBA,
+				),
+			/el número 3 de Project Euler ya está en p\/a/,
 		);
+	});
+
+	test('falla si falta la fuente, si no existe o si falta el número en una fuente numerada', () => {
+		assert.throws(() => agruparEjercicios([{ id: 'p/x', titulo: 'X' }], FUENTES_PRUEBA), /p\/x: falta la fuente/);
+		assert.throws(
+			() => agruparEjercicios([{ id: 'p/y', titulo: 'Y', fuente: 'leetcode' }], FUENTES_PRUEBA),
+			/la fuente «leetcode» no existe/,
+		);
+		assert.throws(
+			() => agruparEjercicios([{ id: 'p/z', titulo: 'Z', fuente: 'euler' }], FUENTES_PRUEBA),
+			/p\/z: falta el número del ejercicio en Project Euler/,
+		);
+		assert.doesNotThrow(() => agruparEjercicios([{ id: 'p/w', titulo: 'W', fuente: 'exercism' }], FUENTES_PRUEBA));
+	});
+});
+
+describe('nombreDeEjercicio', () => {
+	test('con número si la fuente lo usa, y si no, solo la etiqueta', () => {
+		assert.equal(nombreDeEjercicio({ fuente: 'euler', numero: 3, etiqueta: 'Mayor factor primo' }, FUENTES_PRUEBA), 'Problema 3: Mayor factor primo');
+		assert.equal(nombreDeEjercicio({ fuente: 'exercism', etiqueta: 'Grains' }, FUENTES_PRUEBA), 'Grains');
+		assert.equal(nombreDeEjercicio({ fuente: 'project-euler', numero: 7, etiqueta: 'El primo número 10 001' }), 'Problema 7: El primo número 10 001');
+		assert.equal(prefijoDeEjercicio({ fuente: 'euler', numero: 3 }, FUENTES_PRUEBA), 'Problema 3: ');
+		assert.equal(prefijoDeEjercicio({ fuente: 'exercism' }, FUENTES_PRUEBA), '');
 	});
 });
 
 describe('agruparConceptos', () => {
-	test('agrupa por área en el orden de AREAS y ordena dentro de cada una', () => {
+	test('agrupa por dominio y área en el orden de DOMINIOS y ordena dentro de cada área', () => {
 		const grupos = agruparConceptos([
 			{ id: 'conceptos/binomiales', titulo: 'Coeficientes binomiales', area: 'Combinatoria', orden: 4 },
+			{ id: 'conceptos/precision', titulo: 'Precisión arbitraria', area: 'Números grandes', orden: 12 },
 			{ id: 'conceptos/gauss', titulo: 'Suma de Gauss', area: 'Sumas y series', orden: 1 },
 			{ id: 'conceptos/inclusion', titulo: 'Inclusión-exclusión', area: 'Combinatoria', orden: 2 },
+			{ id: 'conceptos/optimalidad', titulo: 'Principio de optimalidad', area: 'Programación dinámica', orden: 13 },
 			{ id: 'conceptos/divisor', titulo: 'Función divisor', area: 'Teoría de números', orden: 3 },
 		]);
 		assert.deepEqual(
-			grupos.map((g) => [g.area, g.conceptos.map((c) => c.titulo)]),
+			grupos.map((g) => [g.dominio, g.areas.map((a) => [a.area, a.conceptos.map((c) => c.titulo)])]),
 			[
-				['Sumas y series', ['Suma de Gauss']],
-				['Teoría de números', ['Función divisor']],
-				['Combinatoria', ['Inclusión-exclusión', 'Coeficientes binomiales']],
+				[
+					'Matemáticas',
+					[
+						['Sumas y series', ['Suma de Gauss']],
+						['Teoría de números', ['Función divisor']],
+						['Combinatoria', ['Inclusión-exclusión', 'Coeficientes binomiales']],
+					],
+				],
+				['Algoritmia', [['Programación dinámica', ['Principio de optimalidad']]]],
+				['Implementación', [['Números grandes', ['Precisión arbitraria']]]],
 			],
+		);
+	});
+
+	test('sin dominios ni áreas vacíos', () => {
+		const grupos = agruparConceptos([{ id: 'conceptos/gauss', titulo: 'Suma de Gauss', area: 'Sumas y series' }]);
+		assert.deepEqual(
+			grupos.map((g) => [g.dominio, g.areas.map((a) => a.area)]),
+			[['Matemáticas', ['Sumas y series']]],
 		);
 	});
 
@@ -81,8 +153,13 @@ describe('agruparConceptos', () => {
 		);
 	});
 
-	test('las áreas no se repiten', () => {
+	test('cada área pertenece a un solo dominio, y ningún dominio está vacío', () => {
 		assert.equal(new Set(AREAS).size, AREAS.length);
+		assert.ok(DOMINIOS.every((d) => d.areas.length > 0));
+		assert.equal(dominioDe('Programación dinámica'), 'Algoritmia');
+		assert.equal(dominioDe('Números grandes'), 'Implementación');
+		assert.equal(dominioDe('Teoría de números'), 'Matemáticas');
+		assert.equal(dominioDe('No existe'), undefined);
 	});
 });
 

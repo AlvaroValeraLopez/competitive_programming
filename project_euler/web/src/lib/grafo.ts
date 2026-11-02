@@ -17,7 +17,11 @@ export interface Pagina {
 	/** Nombre corto para el mapa. */
 	etiqueta: string;
 	descripcion?: string;
+	/** Solo problemas: su fuente y, si la fuente los numera, su número. */
+	fuente?: string;
 	numero?: number;
+	/** Solo conceptos: su dominio (matemáticas, algoritmia o implementación). */
+	dominio?: string;
 	temas?: string[];
 	/** Solo problemas: conceptos que usa (sin el prefijo «conceptos/»). */
 	conceptos?: string[];
@@ -31,7 +35,9 @@ export interface Nodo {
 	titulo: string;
 	etiqueta: string;
 	descripcion?: string;
+	fuente?: string;
 	numero?: number;
+	dominio?: string;
 	temas: string[];
 	/** Nodos en los que se apoya. */
 	padres: string[];
@@ -69,7 +75,9 @@ export function construirGrafo(paginas: Pagina[]): Grafo {
 			titulo: pagina.titulo,
 			etiqueta: pagina.etiqueta,
 			descripcion: pagina.descripcion,
+			fuente: pagina.fuente,
 			numero: pagina.numero,
+			dominio: pagina.dominio,
 			temas: pagina.temas ?? [],
 			padres: [],
 			hijos: [],

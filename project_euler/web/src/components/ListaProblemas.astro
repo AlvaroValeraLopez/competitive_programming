@@ -5,7 +5,8 @@
 // dirección (`?conceptos=a,b&q=…`), así que una selección de conceptos es una
 // página que se puede enlazar.
 import { Icon } from '@astrojs/starlight/components';
-import { agruparConceptos, agruparProblemas, normalizar } from '../lib/menu';
+import { prefijoDeEjercicio } from '../lib/fuentes';
+import { agruparConceptos, agruparEjercicios, normalizar } from '../lib/menu';
 import { obtenerPaginas } from '../lib/paginas';
 import { obtenerGrafo } from '../lib/relaciones';
 
@@ -17,12 +18,23 @@ const etiquetaDe = new Map(conceptos.map((c) => [c.id, c.etiqueta]));
 const conceptosDe = (id: string) => grafo.nodos.get(id)?.padres ?? [];
 const usos = (concepto: string) => problemas.filter((p) => conceptosDe(p.id).includes(concepto)).length;
 
-// Solo se ofrecen como filtro los conceptos que usa algún problema, agrupados por área.
-const areas = agruparConceptos(conceptos)
-	.map((g) => ({ area: g.area, conceptos: g.conceptos.filter((c) => usos(c.id) > 0) }))
-	.filter((g) => g.conceptos.length > 0);
+// Solo se ofrecen como filtro los conceptos que usa algún problema, agrupados por
+// dominio y área.
+const dominios = agruparConceptos(conceptos)
+	.map((d) => ({
+		dominio: d.dominio,
+		areas: d.areas
+			.map((g) => ({ area: g.area, conceptos: g.conceptos.filter((c) => usos(c.id) > 0) }))
+			.filter((g) => g.conceptos.length > 0),
+	}))
+	.filter((d) => d.areas.length > 0);
 
-const decenas = agruparProblemas(problemas);
+// Los problemas, por fuente; las fuentes numeradas, además, por decenas.
+const bloques = agruparEjercicios(problemas).flatMap((f) =>
+	f.decenas
+		? f.decenas.map((d) => ({ titulo: `${f.nombre} · ${d.etiqueta}`, detalle: `${d.problemas.length} de 10`, problemas: d.problemas }))
+		: [{ titulo: f.nombre, detalle: `${f.ejercicios.length}`, problemas: f.ejercicios }],
+);
 const total = problemas.length;
 ---
 
@@ -39,17 +51,22 @@ const total = problemas.length;
 	<fieldset class="filtro-conceptos">
 		<legend>Practicar por conceptos</legend>
 		{
-			areas.map((grupo) => (
-				<div class="area">
-					<span class="nombre-area">{grupo.area}</span>
-					<div class="chips">
-						{grupo.conceptos.map((c) => (
-							<button type="button" aria-pressed="false" data-concepto={slug(c.id)}>
-								{c.etiqueta}
-								<span class="usos">{usos(c.id)}</span>
-							</button>
-						))}
-					</div>
+			dominios.map((d) => (
+				<div class="dominio">
+					<span class="nombre-dominio">{d.dominio}</span>
+					{d.areas.map((grupo) => (
+						<div class="area">
+							<span class="nombre-area">{grupo.area}</span>
+							<div class="chips">
+								{grupo.conceptos.map((c) => (
+									<button type="button" aria-pressed="false" data-concepto={slug(c.id)}>
+										{c.etiqueta}
+										<span class="usos">{usos(c.id)}</span>
+									</button>
+								))}
+							</div>
+						</div>
+					))}
 				</div>
 			))
 		}
@@ -61,11 +78,11 @@ const total = problemas.length;
 
 	<div class="rejilla" data-rejilla>
 		{
-			decenas.map((d) => (
+			bloques.map((d) => (
 				<>
 					<h2 class="decena" data-decena>
-						{d.etiqueta}
-						<span>{d.problemas.length} de 10</span>
+						{d.titulo}
+						<span>{d.detalle}</span>
 					</h2>
 					{d.problemas.map((p) => {
 						const usados = conceptosDe(p.id);
@@ -78,12 +95,12 @@ const total = problemas.length;
 								data-conceptos={usados.map(slug).join(' ')}
 							>
 								<span class="numero" aria-hidden="true">
-									{p.numero}
+									{p.numero ?? p.etiqueta.slice(0, 2)}
 								</span>
 								<div class="cuerpo">
 									<h3>
 										<a href={p.href} class="enlace">
-											<span class="sr-only">Problema {p.numero}: </span>
+											<span class="sr-only">{prefijoDeEjercicio(p)}</span>
 											{p.etiqueta}
 										</a>
 									</h3>
@@ -240,6 +257,19 @@ const total = problemas.length;
 		float: left;
 		margin-bottom: 0.25rem;
 		font-weight: 600;
+		color: var(--sl-color-white);
+	}
+	.dominio {
+		display: grid;
+		gap: 0.6rem;
+	}
+	.dominio + .dominio {
+		padding-top: 0.75rem;
+		border-top: 1px solid var(--sl-color-gray-6);
+	}
+	.nombre-dominio {
+		font-size: var(--sl-text-sm);
+		font-weight: 700;
 		color: var(--sl-color-white);
 	}
 	.area {

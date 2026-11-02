@@ -1,6 +1,6 @@
 ---
-// Catálogo completo de conceptos, agrupados por área, con buscador. (Los
-// problemas tienen su propia lista, con filtro por conceptos: ListaProblemas.)
+// Catálogo completo de conceptos, agrupados por dominio y área, con buscador.
+// (Los problemas tienen su propia lista, con filtro por conceptos: ListaProblemas.)
 import { Icon } from '@astrojs/starlight/components';
 import TarjetaPagina from './TarjetaPagina.astro';
 import { agruparConceptos, normalizar } from '../lib/menu';
@@ -8,14 +8,17 @@ import { obtenerPaginas, type PaginaContenido } from '../lib/paginas';
 
 const { conceptos } = await obtenerPaginas();
 
-const grupos = agruparConceptos(conceptos).map((g) => ({
-	titulo: g.area,
-	cuenta: `${g.conceptos.length} ${g.conceptos.length === 1 ? 'concepto' : 'conceptos'}`,
-	paginas: g.conceptos,
+const dominios = agruparConceptos(conceptos).map((d) => ({
+	titulo: d.dominio,
+	grupos: d.areas.map((g) => ({
+		titulo: g.area,
+		cuenta: `${g.conceptos.length} ${g.conceptos.length === 1 ? 'concepto' : 'conceptos'}`,
+		paginas: g.conceptos,
+	})),
 }));
 
 const textoDe = (p: PaginaContenido) =>
-	normalizar([p.etiqueta, p.descripcion, ...p.temas, p.area].filter(Boolean).join(' '));
+	normalizar([p.etiqueta, p.descripcion, ...p.temas, p.area, p.dominio].filter(Boolean).join(' '));
 ---
 
 <catalogo-paginas class="catalogo not-content">
@@ -28,23 +31,28 @@ const textoDe = (p: PaginaContenido) =>
 		<p class="recuento" aria-live="polite" data-recuento>{conceptos.length} conceptos</p>
 	</div>
 
-	<div class="tablero">
-		{
-			grupos.map((grupo) => (
-				<section class="columna" data-grupo>
-					<h2>
-						{grupo.titulo}
-						<span class="cuenta">{grupo.cuenta}</span>
-					</h2>
-					<ul class="lista">
-						{grupo.paginas.map((pagina) => (
-							<TarjetaPagina pagina={pagina} compacta data-texto={textoDe(pagina)} />
-						))}
-					</ul>
-				</section>
-			))
-		}
-	</div>
+	{
+		dominios.map((dominio) => (
+			<section class="dominio" data-dominio>
+				<h2 class="titulo-dominio">{dominio.titulo}</h2>
+				<div class="tablero">
+					{dominio.grupos.map((grupo) => (
+						<section class="columna" data-grupo>
+							<h3>
+								{grupo.titulo}
+								<span class="cuenta">{grupo.cuenta}</span>
+							</h3>
+							<ul class="lista">
+								{grupo.paginas.map((pagina) => (
+									<TarjetaPagina pagina={pagina} compacta data-texto={textoDe(pagina)} />
+								))}
+							</ul>
+						</section>
+					))}
+				</div>
+			</section>
+		))
+	}
 
 	<p class="vacio" hidden data-vacio>Ningún concepto coincide con la búsqueda.</p>
 </catalogo-paginas>
@@ -57,6 +65,7 @@ const textoDe = (p: PaginaContenido) =>
 			const buscador = this.querySelector<HTMLInputElement>('[data-buscador]')!;
 			const tarjetas = [...this.querySelectorAll<HTMLElement>('li[data-texto]')];
 			const grupos = [...this.querySelectorAll<HTMLElement>('[data-grupo]')];
+			const dominios = [...this.querySelectorAll<HTMLElement>('[data-dominio]')];
 			const recuento = this.querySelector<HTMLElement>('[data-recuento]')!;
 			const vacio = this.querySelector<HTMLElement>('[data-vacio]')!;
 
@@ -68,6 +77,7 @@ const textoDe = (p: PaginaContenido) =>
 					if (!tarjeta.hidden) visibles++;
 				}
 				for (const grupo of grupos) grupo.hidden = !grupo.querySelector('li[data-texto]:not([hidden])');
+				for (const dominio of dominios) dominio.hidden = !dominio.querySelector('[data-grupo]:not([hidden])');
 				vacio.hidden = visibles > 0;
 				recuento.textContent =
 					visibles === tarjetas.length ? `${tarjetas.length} conceptos` : `${visibles} de ${tarjetas.length} conceptos`;
@@ -120,6 +130,19 @@ const textoDe = (p: PaginaContenido) =>
 		font-size: var(--sl-text-sm);
 		color: var(--sl-color-gray-3);
 	}
+	/* Un bloque por dominio, con su título encima del tablero de sus áreas. */
+	.dominio {
+		margin-top: 2.25rem;
+	}
+	.dominio[hidden] {
+		display: none;
+	}
+	.titulo-dominio {
+		margin: 0;
+		font-size: var(--sl-text-xl);
+		font-weight: 700;
+		color: var(--sl-color-white);
+	}
 	/* Tablero: una columna por área, una al lado de otra mientras quepan. Al añadir
 	   conceptos las columnas crecen hacia abajo; al añadir áreas, pasan a otra fila. */
 	.tablero {
@@ -127,7 +150,7 @@ const textoDe = (p: PaginaContenido) =>
 		grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
 		gap: 1.25rem;
 		align-items: start;
-		margin-top: 1.75rem;
+		margin-top: 1rem;
 	}
 	.columna {
 		display: grid;
@@ -140,7 +163,7 @@ const textoDe = (p: PaginaContenido) =>
 	.columna[hidden] {
 		display: none;
 	}
-	h2 {
+	h3 {
 		display: flex;
 		gap: 0.75rem;
 		align-items: baseline;

@@ -1,6 +1,7 @@
 // Grafo de relaciones construido a partir del frontmatter de las páginas.
 import { getCollection } from 'astro:content';
 import { construirGrafo, type Grafo } from './grafo';
+import { dominioDe } from './menu';
 import { etiquetaDe } from './paginas';
 
 export { urlDe } from './paginas';
@@ -15,7 +16,9 @@ async function construir(): Promise<Grafo> {
 				titulo: data.title,
 				etiqueta: etiquetaDe(entrada),
 				descripcion: data.description,
-				numero: id.startsWith('problemas/') ? data.sidebar.order : undefined,
+				fuente: data.fuente,
+				numero: data.numero,
+				dominio: dominioDe(data.area),
 				temas: data.temas,
 				conceptos: data.conceptos,
 				requiere: data.requiere,

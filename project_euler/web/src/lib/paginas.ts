@@ -1,6 +1,7 @@
 // Datos de las páginas de problemas y conceptos, leídos del frontmatter. Los
 // usan el menú lateral, los catálogos, la portada y el mapa.
 import { getCollection, type CollectionEntry } from 'astro:content';
+import { dominioDe } from './menu';
 
 export interface PaginaContenido {
 	id: string;
@@ -8,10 +9,13 @@ export interface PaginaContenido {
 	/** Nombre corto: «Múltiplos de 3 y 5», «Suma de Gauss». */
 	etiqueta: string;
 	descripcion?: string;
-	/** Problemas: su número en Project Euler. */
+	/** Ejercicios: la fuente de la que vienen (ver fuentes.ts). */
+	fuente?: string;
+	/** Ejercicios de una fuente numerada: su número en ella. */
 	numero?: number;
-	/** Conceptos: su área matemática. */
+	/** Conceptos: su área y el dominio al que pertenece. */
 	area?: string;
+	dominio?: string;
 	/** Orden dentro de su sección (`sidebar.order`). */
 	orden?: number;
 	temas: string[];
@@ -32,8 +36,10 @@ function aPagina(entrada: CollectionEntry<'docs'>): PaginaContenido {
 		href: urlDe(id),
 		etiqueta: etiquetaDe(entrada),
 		descripcion: data.description,
-		numero: id.startsWith('problemas/') ? data.sidebar.order : undefined,
+		fuente: data.fuente,
+		numero: data.numero,
 		area: data.area,
+		dominio: dominioDe(data.area),
 		orden: data.sidebar.order,
 		temas: data.temas ?? [],
 	};
