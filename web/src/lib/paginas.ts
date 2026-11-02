@@ -1,5 +1,5 @@
 // Datos de las páginas de problemas y conceptos, leídos del frontmatter. Los
-// usan el menú lateral, los catálogos, la portada y el mapa.
+// usan los catálogos, la portada y los tracks.
 import { getCollection, type CollectionEntry } from 'astro:content';
 import { FUENTES } from './fuentes';
 import { dominioDe } from './menu';

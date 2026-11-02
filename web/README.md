@@ -24,7 +24,6 @@ src/
 │   └── …                    # Dibujos, vídeo y componentes interactivos
 ├── content/docs/
 │   ├── index.mdx            # Portada
-│   ├── mapa.mdx             # Mapa de relaciones
 │   ├── tracks/              # index.mdx: el catálogo de tracks
 │   ├── problemas/           # index.mdx (catálogo) y una página por ejercicio: 001-..., 012-...
 │   └── conceptos/           # index.mdx (catálogo) y la teoría reutilizable entre ejercicios
@@ -35,7 +34,8 @@ src/
 │   ├── tracks.ts            # Los tracks (rutas por dominio) y cómo se ordenan sus conceptos
 │   ├── rutas.ts             # Los datos de cada track, a partir del contenido
 │   ├── soluciones.ts        # Lenguajes y lectura de las soluciones del repositorio
-│   ├── grafo.ts             # Relaciones entre páginas y disposición del mapa
+│   ├── grafo.ts             # Relaciones entre páginas
+│   ├── arbol.ts             # Disposición del árbol de conceptos
 │   └── filtro.ts            # Filtro por conceptos de la lista de problemas
 ├── navegacion.ts            # Quita el menú lateral de Starlight en todas las páginas
 └── styles/
@@ -75,7 +75,9 @@ El dominio no se escribe: se deduce del área. Para añadir un área nueva, añ�
 Un track es una ruta de aprendizaje: uno por dominio (Matemáticas, Algoritmia, Implementación), definidos en `src/lib/tracks.ts` con su icono, su resumen y su descripción. La ruta ordena los conceptos del dominio por niveles: en el primero, los que no necesitan ningún otro concepto del dominio; en cada nivel, los que se apoyan en los anteriores. Los conceptos previos de otros dominios no cuentan para el nivel, pero se indican. Los ejercicios de un track son los que usan alguno de sus conceptos.
 
 - `/tracks/` (`content/docs/tracks/index.mdx`): el catálogo, una tarjeta por track.
-- `/tracks/<slug>/`, `/tracks/<slug>/aprender/` y `/tracks/<slug>/practicar/`: las pestañas «Acerca de», «Aprender» (la ruta) y «Practicar» (sus ejercicios). Las genera `src/pages/tracks/[track]/[...pestana].astro` con `<StarlightPage>`, así que no hay que escribirlas.
+- `/tracks/<slug>/`, `/tracks/<slug>/aprender/` y `/tracks/<slug>/practicar/`: las pestañas «Acerca de», «Aprender» (el árbol de conceptos de la ruta) y «Practicar» (sus ejercicios). Las genera `src/pages/tracks/[track]/[...pestana].astro` con `<StarlightPage>`, así que no hay que escribirlas.
+
+El árbol de conceptos (`ArbolConceptos.astro`, con la disposición de `src/lib/arbol.ts`) dibuja una ruta al estilo del de Exercism: solo conceptos, cada uno debajo de los que necesita y con el color de su dominio; los conceptos previos de otras rutas aparecen atenuados y con borde discontinuo. Sale en la pestaña «Aprender» de cada track y en la sección «Conceptos», y es el único mapa de la web: `/mapa/` redirige a `/conceptos/`.
 
 Al añadir un dominio en `DOMINIOS`, hay que añadir su track; los tests lo comprueban.
 
@@ -91,7 +93,7 @@ conceptos: [suma-de-gauss, inclusion-exclusion]
 requiere: [coeficientes-binomiales]
 ```
 
-A partir de ahí se genera todo lo demás: el [mapa](src/content/docs/mapa.mdx), las secciones «Conceptos utilizados» y «Problemas relacionados» de cada ejercicio, y «Conceptos previos» y «Dónde aparece» de cada concepto (con `<Relaciones mostrar="…" />`). Si una página usa un concepto que no existe, o los conceptos previos forman un ciclo, la compilación falla diciendo dónde está el error.
+A partir de ahí se genera todo lo demás: el árbol de conceptos de cada ruta, las secciones «Conceptos utilizados» y «Problemas relacionados» de cada ejercicio, y «Conceptos previos» y «Dónde aparece» de cada concepto (con `<Relaciones mostrar="…" />`). Si una página usa un concepto que no existe, o los conceptos previos forman un ciclo, la compilación falla diciendo dónde está el error.
 
 ## Soluciones
 
@@ -108,12 +110,12 @@ Y la página los muestra con `<Solucion />` (la primera) o `<Solucion indice={1}
 
 La web no tiene menú lateral, para dejar todo el ancho al contenido. La navegación son unas pocas secciones en la cabecera (`src/components/Cabecera.astro`), definidas en `src/lib/secciones.ts`; la sección de la página actual se resalta. En pantallas estrechas, las secciones pasan a un menú desplegable. `src/navegacion.ts`, un *route middleware* de Starlight, quita el menú lateral en todas las páginas; la lista `sidebar` de `astro.config.mjs` solo fija el orden de la paginación «Anterior / Siguiente».
 
-Las páginas de lectura (las que tienen índice a la derecha) usan una columna de unos 48rem, centrada; la portada, los catálogos y el mapa usan todo el ancho.
+Las páginas de lectura (las que tienen índice a la derecha) usan una columna de unos 48rem, centrada; la portada, los catálogos y los árboles de conceptos usan todo el ancho.
 
 Cada sección tiene su catálogo completo, con buscador sin que importen las tildes. La portada solo muestra las primeras tarjetas y enlaza a ellos.
 
 - **Todos los problemas** (`/problemas/`, `ListaProblemas.astro`), al estilo de la lista de ejercicios de Exercism. Cada tarjeta muestra el número, el título, la descripción y los conceptos que usa. Se puede **practicar por conceptos**: al elegir uno o varios, aparecen los ejercicios que los usan, primero los que usan más. El filtro queda en la dirección (`/problemas/?conceptos=suma-de-gauss,funcion-divisor&q=…`), así que cualquier selección se puede enlazar. Cada concepto tiene bajo su título un botón «Practicar: N problemas» que lleva a esa lista filtrada.
-- **Todos los conceptos** (`/conceptos/`, `Catalogo.astro`), agrupados por dominio y área.
+- **Todos los conceptos** (`/conceptos/`): primero el mapa de conceptos (`MapaConceptos.astro`), con el árbol de cada ruta en una pestaña, y debajo el catálogo (`Catalogo.astro`), agrupado por dominio y área.
 
 Si a un ejercicio le falta la fuente o el número, si dos ejercicios de la misma fuente tienen el mismo número, o si a un concepto le falta el área, la compilación falla diciendo dónde.
 

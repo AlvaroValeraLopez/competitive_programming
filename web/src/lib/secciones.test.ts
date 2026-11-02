@@ -9,7 +9,6 @@ describe('seccionDe', () => {
 		assert.equal(seccionDe('problemas/exercism-grains')?.nombre, 'Ejercicios');
 		assert.equal(seccionDe('problemas')?.nombre, 'Ejercicios');
 		assert.equal(seccionDe('conceptos/suma-de-gauss')?.nombre, 'Conceptos');
-		assert.equal(seccionDe('mapa')?.nombre, 'Mapa');
 		assert.equal(seccionDe('tracks')?.nombre, 'Tracks');
 		assert.equal(seccionDe('tracks/matematicas/aprender')?.nombre, 'Tracks');
 	});
