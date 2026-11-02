@@ -1,0 +1,340 @@
+---
+// Mapa de problemas y conceptos al estilo del «recorrido» de Exercism: tarjetas
+// en capas unidas por líneas discontinuas. Al pasar el ratón (o el foco) por
+// una tarjeta se resaltan sus relaciones directas.
+import { Icon } from '@astrojs/starlight/components';
+import { abreviatura, disponer, type Medidas } from '../lib/grafo';
+import { obtenerGrafo, urlDe } from '../lib/relaciones';
+
+const MEDIDAS: Medidas = {
+	anchoTarjeta: 280,
+	altoTarjeta: 116,
+	anchoHueco: 24,
+	separacionX: 40,
+	separacionY: 80,
+};
+const MARGEN = 24; // deja sitio a las sombras de las tarjetas
+
+const grafo = await obtenerGrafo();
+const { ancho, alto, nodos, aristas } = disponer(grafo, MEDIDAS);
+
+const usosDe = (id: string) =>
+	grafo.nodos.get(id)!.hijos.filter((h) => grafo.nodos.get(h)!.tipo === 'problema').length;
+const pieDe = (id: string) => {
+	const nodo = grafo.nodos.get(id)!;
+	if (nodo.tipo === 'problema') return nodo.temas.join(' · ');
+	const usos = usosDe(id);
+	return `${usos} ${usos === 1 ? 'problema' : 'problemas'}`;
+};
+const etiquetaDe = (id: string) => grafo.nodos.get(id)!.etiqueta;
+
+// Las mismas relaciones en forma de lista, para lectores de pantalla y pantallas pequeñas.
+const lista = [...grafo.nodos.values()]
+	.filter((n) => n.padres.length > 0)
+	.sort((a, b) => (a.tipo === b.tipo ? (a.numero ?? 0) - (b.numero ?? 0) : a.tipo === 'concepto' ? -1 : 1));
+---
+
+<div class="mapa-envoltorio not-content">
+	<ul class="leyenda" aria-label="Leyenda">
+		<li><span class="icono concepto">Co</span> Concepto</li>
+		<li><span class="icono problema">1</span> Problema</li>
+		<li>
+			<svg width="40" height="10" aria-hidden="true"><path d="M2 5 H38" class="muestra" /></svg>
+			se apoya en
+		</li>
+	</ul>
+
+	<div class="desplazable">
+		<mapa-relaciones
+			class="mapa"
+			style={`width: ${ancho + 2 * MARGEN}px; height: ${alto + 2 * MARGEN}px; --margen: ${MARGEN}px`}
+		>
+			<svg
+				class="lineas"
+				width={ancho + 2 * MARGEN}
+				height={alto + 2 * MARGEN}
+				viewBox={`${-MARGEN} ${-MARGEN} ${ancho + 2 * MARGEN} ${alto + 2 * MARGEN}`}
+				aria-hidden="true"
+			>
+				{
+					aristas.map((a) => (
+						<g class="arista" data-desde={a.desde} data-hasta={a.hasta}>
+							<path d={a.trazado} />
+							<circle cx={a.inicio.x} cy={a.inicio.y} r="4" />
+							<circle cx={a.fin.x} cy={a.fin.y} r="4" />
+						</g>
+					))
+				}
+			</svg>
+			{
+				nodos.map((caja) => {
+					const nodo = grafo.nodos.get(caja.id)!;
+					return (
+						<a
+							class:list={['nodo', nodo.tipo]}
+							href={urlDe(nodo.id)}
+							data-id={nodo.id}
+							title={nodo.descripcion}
+							style={`left: ${caja.x + MARGEN}px; top: ${caja.y + MARGEN}px; width: ${caja.ancho}px; height: ${caja.alto}px`}
+						>
+							<span class="cabecera">
+								<span class:list={['icono', nodo.tipo]} aria-hidden="true">
+									{nodo.tipo === 'problema' ? nodo.numero : abreviatura(nodo.etiqueta)}
+								</span>
+								<span class="titulo">
+									{nodo.tipo === 'problema' && <span class="sr-only">Problema {nodo.numero}: </span>}
+									{nodo.etiqueta}
+								</span>
+							</span>
+							<span class="pie">
+								<span class="insignia" aria-hidden="true">
+									<Icon name={nodo.tipo === 'problema' ? 'puzzle' : 'open-book'} size="0.95rem" />
+								</span>
+								<span class="detalle">{pieDe(nodo.id)}</span>
+							</span>
+						</a>
+					);
+				})
+			}
+		</mapa-relaciones>
+	</div>
+
+	<details class="como-lista">
+		<summary>Ver las relaciones como lista</summary>
+		<ul>
+			{
+				lista.map((n) => (
+					<li>
+						<a href={urlDe(n.id)}>{n.tipo === 'problema' ? `Problema ${n.numero}: ${n.etiqueta}` : n.etiqueta}</a>
+						{' se apoya en '}
+						{n.padres.map((p, i) => (
+							<>
+								{i > 0 && (i === n.padres.length - 1 ? ' y ' : ', ')}
+								<a href={urlDe(p)}>{etiquetaDe(p)}</a>
+							</>
+						))}
+					</li>
+				))
+			}
+		</ul>
+	</details>
+</div>
+
+<script>
+	class MapaRelaciones extends HTMLElement {
+		connectedCallback() {
+			const nodos = [...this.querySelectorAll<HTMLElement>('.nodo')];
+			const aristas = [...this.querySelectorAll<SVGGElement>('.arista')];
+			const vecinos = new Map<string, Set<string>>();
+			const unir = (a: string, b: string) => vecinos.set(a, (vecinos.get(a) ?? new Set()).add(b));
+			for (const arista of aristas) {
+				unir(arista.dataset.desde!, arista.dataset.hasta!);
+				unir(arista.dataset.hasta!, arista.dataset.desde!);
+			}
+
+			const resaltar = (id: string) => {
+				this.classList.add('resaltando');
+				for (const nodo of nodos) {
+					const activo = nodo.dataset.id === id || vecinos.get(id)?.has(nodo.dataset.id!) === true;
+					nodo.classList.toggle('activo', activo);
+				}
+				for (const arista of aristas) {
+					arista.classList.toggle('activa', arista.dataset.desde === id || arista.dataset.hasta === id);
+				}
+			};
+			const apagar = () => {
+				this.classList.remove('resaltando');
+				nodos.forEach((n) => n.classList.remove('activo'));
+				aristas.forEach((a) => a.classList.remove('activa'));
+			};
+
+			for (const nodo of nodos) {
+				nodo.addEventListener('mouseenter', () => resaltar(nodo.dataset.id!));
+				nodo.addEventListener('focus', () => resaltar(nodo.dataset.id!));
+				nodo.addEventListener('mouseleave', apagar);
+				nodo.addEventListener('blur', apagar);
+			}
+		}
+	}
+
+	customElements.define('mapa-relaciones', MapaRelaciones);
+</script>
+
+<style>
+	.mapa-envoltorio {
+		--mapa-linea: #c8d5ef;
+		margin-top: 1.5rem;
+	}
+	:global([data-theme='dark']) .mapa-envoltorio {
+		--mapa-linea: #433f56;
+	}
+
+	.leyenda {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem 1.75rem;
+		margin: 0 0 0.5rem;
+		padding: 0;
+		list-style: none;
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-2);
+	}
+	.leyenda li {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
+	}
+	.leyenda .icono {
+		width: 1.75rem;
+		height: 1.75rem;
+		font-size: var(--sl-text-2xs);
+	}
+	.muestra {
+		stroke: var(--mapa-linea);
+		stroke-width: 2;
+		stroke-dasharray: 8 6;
+	}
+
+	.desplazable {
+		overflow-x: auto;
+	}
+	.mapa {
+		position: relative;
+		display: block;
+		margin-inline: auto;
+	}
+	.lineas {
+		position: absolute;
+		inset: 0;
+	}
+	.arista path {
+		fill: none;
+		stroke: var(--mapa-linea);
+		stroke-width: 2;
+		stroke-dasharray: 8 6;
+		transition:
+			stroke 0.15s,
+			opacity 0.15s;
+	}
+	.arista circle {
+		fill: var(--sl-color-bg);
+		stroke: var(--mapa-linea);
+		stroke-width: 2;
+	}
+	.mapa.resaltando .arista:not(.activa) {
+		opacity: 0.25;
+	}
+	.arista.activa path {
+		stroke: var(--sl-color-accent);
+		stroke-dasharray: none;
+	}
+	.arista.activa circle {
+		stroke: var(--sl-color-accent);
+	}
+
+	.nodo {
+		position: absolute;
+		display: flex;
+		flex-direction: column;
+		border: 1px solid var(--sl-color-gray-6);
+		border-radius: var(--euler-radio);
+		background: var(--sl-color-black);
+		box-shadow: var(--euler-sombra);
+		color: var(--sl-color-white);
+		text-decoration: none;
+		transition:
+			opacity 0.15s,
+			box-shadow 0.15s,
+			border-color 0.15s;
+	}
+	.mapa.resaltando .nodo:not(.activo) {
+		opacity: 0.4;
+	}
+	.nodo.activo,
+	.nodo:hover,
+	.nodo:focus-visible {
+		border-color: var(--sl-color-accent);
+		box-shadow: var(--euler-sombra-grande);
+	}
+	.cabecera {
+		display: flex;
+		flex: 1;
+		gap: 0.9rem;
+		align-items: center;
+		padding: 0 1.25rem;
+	}
+	.icono {
+		display: grid;
+		flex-shrink: 0;
+		place-items: end start;
+		width: 2.6rem;
+		height: 2.6rem;
+		padding: 0.2rem 0.3rem;
+		border: 1px solid var(--sl-color-white);
+		font-size: var(--sl-text-sm);
+		font-weight: 600;
+		line-height: 1;
+		color: var(--sl-color-white);
+	}
+	.icono.problema {
+		place-items: center;
+		border-color: var(--euler-boton-borde);
+		border-radius: 6px;
+		background: var(--sl-color-accent);
+		color: #ffffff;
+	}
+	.titulo {
+		font-weight: 600;
+		line-height: 1.3;
+	}
+	.pie {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
+		justify-content: center;
+		height: 2.75rem;
+		padding: 0 1rem;
+		border-top: 1px solid var(--sl-color-gray-6);
+		font-size: var(--sl-text-2xs);
+		color: var(--sl-color-gray-2);
+	}
+	.insignia {
+		display: grid;
+		flex-shrink: 0;
+		place-items: center;
+		width: 1.6rem;
+		height: 1.6rem;
+		border-radius: 999rem;
+		background: var(--sl-color-black);
+		box-shadow: 0 0 0 1px var(--sl-color-gray-6), 0 2px 6px rgba(var(--euler-sombra-rgb), 0.45);
+		color: var(--sl-color-accent);
+	}
+	.detalle {
+		display: -webkit-box;
+		overflow: hidden;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		line-height: 1.3;
+		text-align: center;
+	}
+
+	.como-lista {
+		margin-top: 1.5rem;
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-2);
+	}
+	.como-lista summary {
+		cursor: pointer;
+		font-weight: 500;
+		color: var(--sl-color-text-accent);
+	}
+	.como-lista ul {
+		margin: 0.75rem 0 0;
+		padding-inline-start: 1.25rem;
+		line-height: 1.8;
+	}
+	.como-lista a {
+		color: var(--sl-color-text-accent);
+		font-weight: 500;
+	}
+</style>

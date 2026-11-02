@@ -14,6 +14,7 @@ hero:
       variant: secondary
 ---
 
+import { LinkButton } from '@astrojs/starlight/components';
 import Caracteristicas from '../../components/portada/Caracteristicas.astro';
 import LlamadaFinal from '../../components/portada/LlamadaFinal.astro';
 import Tarjetas from '../../components/portada/Tarjetas.astro';
@@ -31,6 +32,12 @@ import Tarjetas from '../../components/portada/Tarjetas.astro';
 Lo que se repite entre problemas se explica una sola vez, con sus demostraciones.
 
 <Tarjetas directorio="conceptos" />
+
+## Cómo se relaciona todo
+
+Cada problema se apoya en uno o varios conceptos, y algunos conceptos en otros. El mapa los muestra todos juntos y resalta las relaciones de cada uno.
+
+<LinkButton href="mapa/" variant="secondary" icon="right-arrow">Abrir el mapa</LinkButton>
 
 <LlamadaFinal titulo="Empieza por el principio" boton="Ir al problema 1" enlace="problemas/001-multiplos-de-3-y-5/">
 [Project Euler](https://projecteuler.net) pide no publicar soluciones, salvo de los 100 primeros problemas y siempre que el objetivo sea enseñar el método. Por eso aquí se explica el razonamiento y no se destacan los resultados: si no has resuelto un problema, inténtalo antes de leer su página.
