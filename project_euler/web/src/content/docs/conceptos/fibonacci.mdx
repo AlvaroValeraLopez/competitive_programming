@@ -1,0 +1,140 @@
+---
+title: La sucesión de Fibonacci
+description: La recurrencia en la que cada término es la suma de los dos anteriores, por qué uno de cada tres es par, la fórmula de Binet con la razón áurea y cuántas cifras tiene cada término.
+sidebar:
+  label: Fibonacci
+  order: 10
+area: Sumas y series
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+
+## Definición
+
+La sucesión de Fibonacci empieza con dos unos, y cada término siguiente es la suma de los dos anteriores:
+
+$$
+F_1 = F_2 = 1, \qquad F_{n+1} = F_n + F_{n-1}
+$$
+
+$$
+1,\ 1,\ 2,\ 3,\ 5,\ 8,\ 13,\ 21,\ 34,\ 55,\ 89,\ 144,\ \dots
+$$
+
+Conviene añadir $F_0 = 0$, que encaja con la recurrencia ($F_2 = F_1 + F_0$) y simplifica muchas fórmulas.
+
+<Aside type="note" title="Cuidado con los índices">
+No todo el mundo numera igual. El [problema 2](../../problemas/002-fibonacci-pares/) empieza la sucesión en 1, 2, saltándose el 1 repetido, y el [problema 25](../../problemas/025-fibonacci-de-1000-cifras/) usa $F_1 = F_2 = 1$. En esta web, $F_n$ significa siempre lo que dice la definición de arriba.
+</Aside>
+
+## Calcularla: un bucle con dos variables
+
+Programar la definición tal cual, con una función recursiva que se llama a sí misma para $n - 1$ y para $n - 2$, es una trampa: cada llamada repite el trabajo de las demás. Si $C(n)$ es el número de llamadas para calcular $F_n$, entonces $C(1) = C(2) = 1$ y $C(n) = 1 + C(n-1) + C(n-2)$, y por inducción $C(n) = 2F_n - 1$. **El número de llamadas crece tanto como la propia sucesión**: para $F_{40}$ son más de 200 millones.
+
+Basta con recordar los dos últimos términos:
+
+```python
+def fibonacci(n):
+    a, b = 0, 1        # F_0 y F_1
+    for _ in range(n):
+        a, b = b, a + b
+    return a           # F_n
+```
+
+Son $n$ sumas. Pero los números crecen muy deprisa: $F_{78}$ es el último que cabe en un `Number` de JavaScript sin perder exactitud (es menor que $2^{53}$ y $F_{79}$ ya no). A partir de ahí hacen falta [enteros de tamaño arbitrario](#cuántas-cifras-tiene-cada-término).
+
+## Uno de cada tres es par
+
+Fijémonos solo en si cada término es par (0) o impar (1). Como la paridad de una suma solo depende de la paridad de los sumandos, la sucesión de paridades sigue la misma regla:
+
+$$
+1,\ 1,\ 0,\ 1,\ 1,\ 0,\ 1,\ 1,\ 0,\ \dots
+$$
+
+Cada término depende solo de los dos anteriores, y la pareja $(1, 1)$ vuelve a aparecer después de tres pasos: $(1,1) \to (1,0) \to (0,1) \to (1,1)$. A partir de ahí todo se repite. Por tanto
+
+$$
+F_n \text{ es par} \iff n \text{ es múltiplo de } 3
+$$
+
+Es un caso particular de una propiedad más general. **Si $m$ divide a $n$, entonces $F_m$ divide a $F_n$**, y la paridad sale con $m = 3$, porque $F_3 = 2$. Para demostrarlo se usa la identidad
+
+$$
+F_{m+n} = F_m\,F_{n+1} + F_{m-1}\,F_n
+$$
+
+que se comprueba por inducción sobre $n$: vale para $n = 1$ y $n = 2$, y si vale para $n - 1$ y para $n$, al sumar ambas se obtiene la de $n + 1$, porque los dos lados siguen la recurrencia de Fibonacci. Con ella, $F_{(k+1)m} = F_{km}\,F_{m+1} + F_{km-1}\,F_m$: si $F_m$ divide a $F_{km}$, divide a los dos sumandos, y por inducción sobre $k$ divide a todos los $F_{km}$. Aún se puede ir más lejos: $\operatorname{mcd}(F_m, F_n) = F_{\operatorname{mcd}(m, n)}$.
+
+## La suma de los primeros términos
+
+$$
+F_1 + F_2 + \cdots + F_n = F_{n+2} - 1
+$$
+
+Como $F_i = F_{i+2} - F_{i+1}$, la suma es telescópica:
+
+$$
+\sum_{i=1}^{n} F_i = \sum_{i=1}^{n} \left(F_{i+2} - F_{i+1}\right) = F_{n+2} - F_2 = F_{n+2} - 1
+$$
+
+Por ejemplo, $1 + 1 + 2 + 3 + 5 + 8 = 20 = 21 - 1$.
+
+## La fórmula de Binet
+
+¿Hay alguna sucesión geométrica, $x^n$, que cumpla la recurrencia? Haría falta que $x^{n+1} = x^n + x^{n-1}$, es decir, que
+
+$$
+x^2 = x + 1
+$$
+
+Esta ecuación tiene dos soluciones:
+
+$$
+\varphi = \frac{1 + \sqrt{5}}{2} \approx 1{,}618, \qquad \psi = \frac{1 - \sqrt{5}}{2} \approx -0{,}618
+$$
+
+El número $\varphi$ es la **razón áurea**. Como la recurrencia es lineal, cualquier combinación $a\,\varphi^n + b\,\psi^n$ también la cumple. Elegimos $a$ y $b$ para que coincida con Fibonacci en los dos primeros términos: $F_0 = 0$ obliga a que $b = -a$, y $F_1 = 1$ obliga a que $a(\varphi - \psi) = 1$, con $\varphi - \psi = \sqrt{5}$. Dos sucesiones que siguen la misma recurrencia y empiezan igual coinciden siempre, así que
+
+$$
+F_n = \frac{\varphi^n - \psi^n}{\sqrt{5}}
+$$
+
+Es sorprendente que esta expresión, llena de raíces de 5, dé siempre un número entero.
+
+### Fₙ es φⁿ/√5 redondeado
+
+Como $|\psi| < 1$, el término $\psi^n / \sqrt{5}$ nunca pasa de $1/\sqrt{5} < 1/2$ en valor absoluto, y se hace minúsculo enseguida. Por tanto **$F_n$ es el entero más cercano a $\varphi^n / \sqrt{5}$**. Por ejemplo, $\varphi^{10} / \sqrt{5} \approx 55{,}0036$, y $F_{10} = 55$. También se deduce que cada término es aproximadamente $\varphi$ veces el anterior: $F_{n+1} / F_n \to \varphi$.
+
+<Aside type="caution" title="No sirve para calcular términos grandes">
+Con números de coma flotante de doble precisión, redondear $\varphi^n / \sqrt{5}$ da el resultado exacto solo hasta $F_{70}$: en $F_{71}$ ya falla. La fórmula sirve para razonar sobre el **tamaño** de $F_n$, no para obtener todas sus cifras.
+</Aside>
+
+## Cuántas cifras tiene cada término
+
+Un entero positivo $N$ tiene $\lfloor \log_{10} N \rfloor + 1$ cifras. Tomando logaritmos en $F_n \approx \varphi^n / \sqrt{5}$:
+
+$$
+\log_{10} F_n \approx n \log_{10} \varphi - \log_{10} \sqrt{5} \approx 0{,}20899\,n - 0{,}34949
+$$
+
+así que, para $n \ge 2$,
+
+$$
+\text{cifras de } F_n = \big\lfloor n \log_{10} \varphi - \log_{10} \sqrt{5} \big\rfloor + 1
+$$
+
+Como $1 / \log_{10} \varphi \approx 4{,}785$, **se gana una cifra cada 4 o 5 términos**: hay 4 o 5 números de Fibonacci con 2 cifras, otros 4 o 5 con 3 cifras, y así sucesivamente. En particular, $F_n$ tiene unas $0{,}209\,n$ cifras, y sumar dos de ellos cuesta un tiempo proporcional a $n$. Calcular $F_n$ con el bucle cuesta, por tanto, del orden de $n^2$ operaciones con cifras.
+
+<Aside type="note" title="¿Por qué la fórmula de las cifras es exacta?">
+La fórmula solo se equivoca si $\varphi^n / \sqrt{5}$ y $F_n$ quedan a distinto lado de una potencia de 10. Como se diferencian en menos de $1/2$ y $F_n$ es entero, la única posibilidad es que $F_n$ sea exactamente una potencia de 10 y $\varphi^n / \sqrt{5}$ quede un poco por debajo. Pasa con $F_1 = 1$ ($\varphi / \sqrt{5} \approx 0{,}72$), y por eso se excluye $n = 1$; con $F_2 = 1$ la aproximación queda por encima ($\approx 1{,}17$). Ningún otro término es una potencia de 10: el 10 no está en la sucesión, y 100, 1000, … son potencias perfectas, mientras que las únicas potencias perfectas de la sucesión son 0, 1, 8 y 144 (Bugeaud, Mignotte y Siksek, 2006).
+</Aside>
+
+## Para profundizar
+
+- **Calcular $F_n$ en unos $\log_2 n$ pasos.** Las identidades $F_{2k} = F_k\,(2F_{k+1} - F_k)$ y $F_{2k+1} = F_k^2 + F_{k+1}^2$ permiten saltar de $(F_k, F_{k+1})$ a $(F_{2k}, F_{2k+1})$, y así llegar a $F_n$ siguiendo las cifras binarias de $n$, como en la potenciación rápida. Es lo mismo que elevar la matriz $\left(\begin{smallmatrix} 1 & 1 \\ 1 & 0 \end{smallmatrix}\right)$ a la potencia $n$.
+- **Otras sucesiones con la misma regla.** Cualquier sucesión con $a_{n+1} = a_n + a_{n-1}$ es una combinación de $\varphi^n$ y $\psi^n$, y crece como $\varphi^n$. Con otros coeficientes, como $a_{n+1} = 4a_n + a_{n-1}$, la ecuación cambia ($x^2 = 4x + 1$), pero el método es el mismo. Esa recurrencia es justo la que siguen los términos pares de Fibonacci, como se ve en el problema 2.
+
+## Dónde aparece
+
+<Relaciones mostrar="aparece" />

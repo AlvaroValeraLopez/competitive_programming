@@ -1,0 +1,153 @@
+---
+title: Suma de cuadrados y de cubos
+description: Las fórmulas de 1² + 2² + … + n² y 1³ + 2³ + … + n³, tres formas de demostrarlas y por qué la suma de los cubos es el cuadrado de un número triangular.
+sidebar:
+  label: Suma de cuadrados
+  order: 3
+requiere: [suma-de-gauss]
+area: Sumas y series
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+
+## El resultado
+
+$$
+1^2 + 2^2 + 3^2 + \cdots + n^2 \;=\; \sum_{k=1}^{n} k^2 \;=\; \frac{n(n+1)(2n+1)}{6}
+$$
+
+Los primeros valores son
+
+$$
+1,\ 5,\ 14,\ 30,\ 55,\ 91,\ 140,\ 204,\ 285,\ 385,\ \dots
+$$
+
+Por ejemplo, para $n = 10$ la fórmula da $\frac{10 \cdot 11 \cdot 21}{6} = 385$. Igual que con la [suma de Gauss](../suma-de-gauss/), una suma de $n$ términos se convierte en unas pocas operaciones, sea cual sea $n$.
+
+**Siempre sale un entero.** De $n$ y $n + 1$, uno es par, así que el numerador es divisible entre 2. También es divisible entre 3: si $n$ deja resto 0 al dividirlo entre 3, el múltiplo de 3 es $n$; si deja resto 2, es $n + 1$; si deja resto 1, es $2n + 1$. Como 2 y 3 no tienen factores comunes, el numerador es divisible entre 6.
+
+## Demostración 1: una suma telescópica
+
+Desarrollamos un cubo:
+
+$$
+(k+1)^3 - k^3 = 3k^2 + 3k + 1
+$$
+
+y sumamos esta igualdad para $k = 1, 2, \dots, n$. A la izquierda casi todo se cancela:
+
+$$
+(2^3 - 1^3) + (3^3 - 2^3) + \cdots + \big((n+1)^3 - n^3\big) = (n+1)^3 - 1
+$$
+
+A la derecha aparece la suma que buscamos, $S = \sum k^2$, junto a una suma de Gauss y $n$ unos:
+
+$$
+(n+1)^3 - 1 = 3S + 3\,\frac{n(n+1)}{2} + n
+$$
+
+Despejamos $S$, sacando $n + 1$ factor común:
+
+$$
+3S = (n+1)^3 - (n+1) - \frac{3n(n+1)}{2} = (n+1)\left(n^2 + 2n - \frac{3n}{2}\right) = \frac{n(n+1)(2n+1)}{2}
+$$
+
+y al dividir entre 3 sale la fórmula.
+
+Esta demostración no solo comprueba el resultado: lo **encuentra**. Y sirve para cualquier potencia. Para obtener $\sum k^p$ se suma $(k+1)^{p+1} - k^{p+1}$, que deja la suma buscada junto a sumas de potencias más pequeñas, ya conocidas.
+
+## Demostración 2: por inducción
+
+- **Caso base.** Para $n = 1$: $1 = \frac{1 \cdot 2 \cdot 3}{6}$.
+- **Paso inductivo.** Si la fórmula vale para $n$, entonces
+
+$$
+\sum_{k=1}^{n+1} k^2 = \frac{n(n+1)(2n+1)}{6} + (n+1)^2 = \frac{(n+1)\,(2n^2 + 7n + 6)}{6} = \frac{(n+1)(n+2)(2n+3)}{6},
+$$
+
+que es la fórmula para $n + 1$, porque $2(n + 1) + 1 = 2n + 3$.
+
+La inducción es la forma más rápida de comprobar la fórmula, pero no explica de dónde sale: hay que conocerla de antemano.
+
+## Demostración 3: contando
+
+Escribimos cada cuadrado como $k^2 = k(k-1) + k$. La suma de los $k$ es una suma de Gauss. Para la otra parte, $k(k-1) = 2\binom{k}{2}$, el doble de las formas de elegir dos elementos entre $k$ (ver [coeficientes binomiales](../coeficientes-binomiales/)).
+
+**Cuánto suman los $\binom{k}{2}$.** Contamos de dos maneras los subconjuntos de tres elementos de $\{1, 2, \dots, n+1\}$. Por un lado son $\binom{n+1}{3}$. Por otro, los clasificamos según su elemento más grande: si es $k + 1$, los otros dos se eligen entre $\{1, \dots, k\}$, de $\binom{k}{2}$ formas. Por tanto
+
+$$
+\binom{2}{2} + \binom{3}{2} + \cdots + \binom{n}{2} = \binom{n+1}{3}
+$$
+
+Juntando las dos partes:
+
+$$
+\sum_{k=1}^{n} k^2 = 2\binom{n+1}{3} + \binom{n+1}{2} = \frac{(n+1)\,n\,(n-1)}{3} + \frac{(n+1)\,n}{2} = \frac{n(n+1)(2n+1)}{6}
+$$
+
+## La suma de los cubos
+
+$$
+1^3 + 2^3 + \cdots + n^3 = \left(\frac{n(n+1)}{2}\right)^2 = T_n^2
+$$
+
+**La suma de los primeros cubos es el cuadrado de la suma de los primeros números**, es decir, el cuadrado del número triangular $T_n$. Por ejemplo, $1 + 8 + 27 + 64 = 100 = (1 + 2 + 3 + 4)^2$. Se conoce como teorema de Nicómaco.
+
+**Demostración.** Dos números triangulares seguidos cumplen
+
+$$
+T_k - T_{k-1} = k, \qquad T_k + T_{k-1} = \frac{k(k+1)}{2} + \frac{(k-1)k}{2} = k^2
+$$
+
+así que
+
+$$
+T_k^2 - T_{k-1}^2 = (T_k - T_{k-1})(T_k + T_{k-1}) = k \cdot k^2 = k^3
+$$
+
+Al sumar para $k = 1, \dots, n$ la suma vuelve a ser telescópica: $\sum k^3 = T_n^2 - T_0^2 = T_n^2$.
+
+## El cuadrado de la suma frente a la suma de los cuadrados
+
+Al elevar al cuadrado una suma salen todos los productos de un término por otro:
+
+$$
+(a_1 + a_2 + \cdots + a_n)^2 = \sum_{i=1}^{n} a_i^2 + 2\sum_{i < j} a_i\, a_j
+$$
+
+Se ve bien en la tabla de multiplicar de $1, 2, 3, 4$. La tabla entera suma $(1 + 2 + 3 + 4)^2 = 100$, porque cada fila es un número por la suma de todos. La diagonal, en negrita, es la suma de los cuadrados, $30$. El resto son los productos $i \cdot j$ con $i \ne j$, cada uno dos veces, uno a cada lado de la diagonal: $70 = 2 \cdot 35$.
+
+$$
+\begin{array}{c|cccc}
+\times & 1 & 2 & 3 & 4 \\ \hline
+1 & \mathbf{1} & 2 & 3 & 4 \\
+2 & 2 & \mathbf{4} & 6 & 8 \\
+3 & 3 & 6 & \mathbf{9} & 12 \\
+4 & 4 & 8 & 12 & \mathbf{16}
+\end{array}
+$$
+
+El [problema 6](../../problemas/006-diferencia-suma-cuadrados/) pide justo esta diferencia y la convierte en una fórmula cerrada.
+
+## Potencias más altas
+
+Con el mismo método telescópico se obtienen todas las demás. Por ejemplo,
+
+$$
+\sum_{k=1}^{n} k^4 = \frac{n(n+1)(2n+1)(3n^2 + 3n - 1)}{30}
+$$
+
+En general, $\sum_{k=1}^{n} k^p$ es un polinomio en $n$ de grado $p + 1$ cuyo primer término es $\frac{n^{p+1}}{p+1}$, el mismo que el de la integral $\int_0^n x^p\,dx$. Los demás coeficientes siguen un patrón que se describe con los números de Bernoulli (fórmula de Faulhaber).
+
+<Aside type="caution" title="Desbordamiento en JavaScript">
+El numerador $n(n+1)(2n+1)$ crece como $2n^3$ y supera $2^{53} \approx 9 \cdot 10^{15}$, el mayor entero que un `Number` representa con exactitud, a partir de $n = 165\,140$, aunque el resultado final todavía quepa. Si hace falta llegar más lejos, se puede dividir antes de multiplicar o usar `BigInt`. En Python los enteros no tienen límite.
+</Aside>
+
+## Conceptos previos
+
+<Relaciones mostrar="requiere" />
+
+## Dónde aparece
+
+<Relaciones mostrar="aparece" />

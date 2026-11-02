@@ -1,0 +1,141 @@
+---
+title: Ternas pitagóricas
+description: Los enteros que cumplen a² + b² = c², por qué en una terna primitiva un cateto es par y el otro impar, y la fórmula de Euclides, que las genera todas exactamente una vez.
+sidebar:
+  label: Ternas pitagóricas
+  order: 11
+requiere: [mcd-y-mcm]
+area: Teoría de números
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+
+## Qué es una terna pitagórica
+
+Una **terna pitagórica** es un trío de enteros positivos $(a, b, c)$ que cumple
+
+$$
+a^2 + b^2 = c^2
+$$
+
+Son los lados de los triángulos rectángulos con todos los lados enteros. La más conocida es $(3, 4, 5)$, porque $9 + 16 = 25$; otras son $(5, 12, 13)$ y $(8, 15, 17)$.
+
+Si $(a, b, c)$ es una terna, también lo es $(ka, kb, kc)$ para cualquier entero $k \ge 1$, porque los dos lados de la ecuación se multiplican por $k^2$: de $(3, 4, 5)$ salen $(6, 8, 10)$, $(9, 12, 15)$… Una terna es **primitiva** si $\operatorname{mcd}(a, b, c) = 1$, y toda terna es un múltiplo de una sola terna primitiva: la que se obtiene al dividir entre $\operatorname{mcd}(a, b, c)$.
+
+**En una terna primitiva, los tres números son coprimos dos a dos.** Si un primo $p$ dividiera a $a$ y a $b$, dividiría a $a^2 + b^2 = c^2$, y por tanto a $c$; entonces dividiría a los tres. El mismo argumento vale para cualquier otra pareja: si $p$ divide a $a$ y a $c$, divide a $c^2 - a^2 = b^2$ y por tanto a $b$. Así que basta con comprobar que $\operatorname{mcd}(a, b) = 1$ (ver [mcd y mcm](../mcd-y-mcm/)).
+
+## Un cateto es par y el otro impar
+
+Los cuadrados solo pueden dejar resto 0 o 1 al dividirlos entre 4:
+
+$$
+(2t)^2 = 4t^2, \qquad (2t+1)^2 = 4(t^2 + t) + 1
+$$
+
+En una terna primitiva, $a$ y $b$ no pueden ser los dos pares. Si fueran los dos impares, $a^2 + b^2$ dejaría resto 2 al dividirlo entre 4, y ningún cuadrado lo hace. Por tanto, **exactamente uno de los catetos es par**, y la hipotenusa $c$ es impar. Desde ahora llamaremos $b$ al cateto par.
+
+**Los dos catetos nunca son iguales.** Si $a = b$, entonces $2a^2 = c^2$ y $\sqrt{2} = c / a$ sería racional, y no lo es.
+
+## La fórmula de Euclides
+
+> **Teorema.** Las ternas primitivas con $b$ par son exactamente las de la forma
+>
+> $$
+> a = m^2 - n^2, \qquad b = 2mn, \qquad c = m^2 + n^2
+> $$
+>
+> con $m > n \ge 1$, $\operatorname{mcd}(m, n) = 1$ y $m$, $n$ de distinta paridad. Cada terna sale de un único par $(m, n)$.
+
+Que estos números forman una terna se comprueba desarrollando:
+
+$$
+(m^2 - n^2)^2 + (2mn)^2 = m^4 - 2m^2n^2 + n^4 + 4m^2n^2 = m^4 + 2m^2n^2 + n^4 = (m^2 + n^2)^2
+$$
+
+### Toda terna primitiva tiene esta forma
+
+Sea $(a, b, c)$ primitiva con $b$ par. Entonces $a$ y $c$ son impares, así que $c + a$ y $c - a$ son pares, y podemos escribir
+
+$$
+u = \frac{c + a}{2}, \qquad v = \frac{c - a}{2}, \qquad \left(\frac{b}{2}\right)^2 = \frac{c^2 - a^2}{4} = \frac{c + a}{2} \cdot \frac{c - a}{2} = u\,v
+$$
+
+**$u$ y $v$ no tienen factores comunes**: un divisor común de los dos divide a $u + v = c$ y a $u - v = a$, que son coprimos.
+
+Ahora usamos un hecho que sale de la [factorización en primos](../factorizacion-en-primos/): **si el producto de dos números coprimos es un cuadrado, cada uno de ellos es un cuadrado.** En un cuadrado, cada primo aparece con exponente par; como $u$ y $v$ no comparten primos, cada primo del producto está entero en uno de los dos, con su exponente par. Por tanto $u = m^2$ y $v = n^2$ para ciertos enteros positivos $m$ y $n$, y
+
+$$
+c = u + v = m^2 + n^2, \qquad a = u - v = m^2 - n^2, \qquad b = 2\sqrt{uv} = 2mn
+$$
+
+Las condiciones también salen solas: $m > n$ porque $a > 0$; $\operatorname{mcd}(m, n) = 1$ porque $u$ y $v$ son coprimos; y $m$ y $n$ tienen distinta paridad porque $c = m^2 + n^2$ es impar. Además $m$ y $n$ quedan determinados por la terna, $m = \sqrt{(c + a)/2}$ y $n = \sqrt{(c - a)/2}$, así que el par es único.
+
+### Y todas las que da son primitivas
+
+Supongamos que se cumplen las condiciones y que un primo $p$ divide a $a$ y a $c$. Como $c = m^2 + n^2$ es impar, $p \ne 2$. Pero $p$ divide a $c + a = 2m^2$ y a $c - a = 2n^2$, así que divide a $m$ y a $n$, en contra de que $\operatorname{mcd}(m, n) = 1$.
+
+Las dos condiciones sobre $m$ y $n$ son necesarias. Con $m = 3$, $n = 1$, los dos impares, sale $(8, 6, 10)$, que es el doble de $(4, 3, 5)$. Con $m = 4$, $n = 2$, que no son coprimos, sale $(12, 16, 20)$, cuatro veces $(3, 4, 5)$.
+
+### Las primeras
+
+| $m$ | $n$ | $a = m^2 - n^2$ | $b = 2mn$ | $c = m^2 + n^2$ |
+| --- | --- | --- | --- | --- |
+| 2 | 1 | 3 | 4 | 5 |
+| 3 | 2 | 5 | 12 | 13 |
+| 4 | 1 | 15 | 8 | 17 |
+| 4 | 3 | 7 | 24 | 25 |
+| 5 | 2 | 21 | 20 | 29 |
+| 5 | 4 | 9 | 40 | 41 |
+| 6 | 1 | 35 | 12 | 37 |
+| 6 | 5 | 11 | 60 | 61 |
+
+El cateto impar $a$ puede ser el mayor de los dos catetos, como en $(15, 8, 17)$.
+
+## Todas las ternas
+
+Juntando las dos ideas, toda terna pitagórica, primitiva o no, es de la forma
+
+$$
+a = k\,(m^2 - n^2), \qquad b = 2kmn, \qquad c = k\,(m^2 + n^2)
+$$
+
+con $k \ge 1$ y $m$, $n$ como en el teorema, salvo que puede hacer falta intercambiar $a$ y $b$. Cada terna sale de un único trío $(k, m, n)$.
+
+## Ternas con un perímetro dado
+
+El perímetro de la terna anterior es
+
+$$
+a + b + c = k\,(m^2 - n^2 + 2mn + m^2 + n^2) = 2km\,(m + n)
+$$
+
+Así que para encontrar todas las ternas de perímetro $s$ hay que escribir $s/2$ como $k \cdot m \cdot (m + n)$, donde el factor $m + n$ es impar, primo con $m$ y cumple $m < m + n < 2m$. En particular, **el perímetro siempre es par**.
+
+**Ejemplo: perímetro 60.** Buscamos $k \cdot m(m + n) = 30$. Para cada divisor $d$ de 30 que pueda valer $m(m + n)$, la condición $m < m + n < 2m$ obliga a que $m^2 < d < 2m^2$:
+
+| $d = m(m+n)$ | $m$ | $m + n$ | ¿Vale? | $k = 30/d$ | Terna |
+| --- | --- | --- | --- | --- | --- |
+| 30 | 5 | 6 | no: $m + n$ par | | |
+| 15 | 3 | 5 | sí, $n = 2$ | 2 | $2 \cdot (5, 12, 13) = (10, 24, 26)$ |
+| 6 | 2 | 3 | sí, $n = 1$ | 5 | $5 \cdot (3, 4, 5) = (15, 20, 25)$ |
+
+Los demás divisores (1, 2, 3, 5 y 10) no tienen ningún $m$ que divida a $d$ con $m^2 < d < 2m^2$. Hay, por tanto, dos ternas de perímetro 60. La fila descartada, $m = 5$ y $n = 1$, daría $(24, 10, 26)$: la misma terna que la de $k = 2$ con los catetos cambiados. La condición de paridad es la que evita contarla dos veces.
+
+<Aside type="tip" title="Por qué es útil">
+Recorrer todos los posibles $a$ y $b$ hasta un perímetro $s$ cuesta del orden de $s^2$ pasos. Con la fórmula de Euclides solo hay que recorrer los divisores de $s/2$, o los pares $(m, n)$ con $m < \sqrt{s/2}$.
+</Aside>
+
+## Para profundizar
+
+- **Cuántas hay.** El número de ternas primitivas con hipotenusa menor o igual que $N$ es aproximadamente $N / (2\pi)$. Para $N = 10^6$ hay 159 139, y $10^6 / (2\pi) \approx 159\,155$.
+- **Un árbol con todas.** Las ternas primitivas forman un árbol con raíz $(3, 4, 5)$: cada terna tiene exactamente tres hijas, que se obtienen multiplicando por tres matrices fijas, y cada terna primitiva aparece una sola vez (árbol de Berggren).
+- **Otros problemas.** Las ternas vuelven a aparecer en Project Euler, por ejemplo en el problema 39 (el perímetro con más soluciones) o en el 75, donde hay que contar perímetros con una única terna.
+
+## Conceptos previos
+
+<Relaciones mostrar="requiere" />
+
+## Dónde aparece
+
+<Relaciones mostrar="aparece" />
