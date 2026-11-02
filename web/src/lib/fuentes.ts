@@ -1,10 +1,9 @@
 /**
  * Fuentes de ejercicios: de dónde viene cada uno y cómo se identifica.
  *
- * Hoy solo hay Project Euler, pero el modelo no depende de él: una fuente
- * puede numerar sus ejercicios (Project Euler, Acepta el reto) o identificarlos
- * solo por su nombre (Exercism). Los ejercicios numerados se agrupan por
- * decenas; los demás, por orden alfabético.
+ * Una fuente puede numerar sus ejercicios (Project Euler, Acepta el reto) o
+ * identificarlos solo por su nombre (Exercism). Los ejercicios numerados se
+ * agrupan por decenas; los demás, por orden alfabético.
  *
  * Lógica pura, sin Astro, para poder probarla con `node --test`.
  */
@@ -19,6 +18,7 @@ export interface Fuente {
 
 export const FUENTES = {
 	'project-euler': { nombre: 'Project Euler', numerada: true, prefijo: 'Problema' },
+	exercism: { nombre: 'Exercism', numerada: false },
 } as const satisfies Record<string, Fuente>;
 
 export type IdFuente = keyof typeof FUENTES;

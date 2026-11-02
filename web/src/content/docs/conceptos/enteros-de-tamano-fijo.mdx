@@ -1,0 +1,83 @@
+---
+title: Enteros de tamaño fijo y desbordamiento
+description: Hasta dónde llega un entero de 8, 32 o 64 bits, por qué en C los enteros sin signo dan la vuelta módulo 2ᵏ y los que tienen signo no se pueden desbordar, y cómo evitarlo.
+sidebar:
+  label: Desbordamiento de enteros
+  order: 18
+requiere: [congruencias]
+area: Números grandes
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+
+## Hasta dónde llega un entero
+
+En lenguajes como C, Java o Rust, los enteros ocupan un número fijo de bits. Con $k$ bits hay $2^k$ valores posibles:
+
+- **Sin signo**, de $0$ a $2^k - 1$. El máximo es $1 + 2 + 4 + \cdots + 2^{k-1}$, los $k$ bits a 1 (ver [progresión geométrica](../progresion-geometrica/)).
+- **Con signo**, en complemento a dos, de $-2^{k-1}$ a $2^{k-1} - 1$: la mitad de los valores son negativos.
+
+| Tipo en C (`<stdint.h>`) | Bits | Mínimo | Máximo |
+| --- | --- | --- | --- |
+| `uint8_t` | 8 | 0 | 255 |
+| `int32_t` | 32 | −2 147 483 648 | 2 147 483 647 |
+| `uint32_t` | 32 | 0 | 4 294 967 295 |
+| `int64_t` | 64 | −9 223 372 036 854 775 808 | 9 223 372 036 854 775 807 |
+| `uint64_t` | 64 | 0 | 18 446 744 073 709 551 615 |
+
+El tipo `int` de C no tiene un tamaño fijo por norma, pero en casi todas las máquinas actuales es de 32 bits; `long long` tiene al menos 64. Para no depender de la máquina se usan los tipos de `<stdint.h>`, que dicen su tamaño en el nombre.
+
+Cuando el resultado de una operación no cabe en el tipo, se **desborda**. Qué pasa entonces depende del lenguaje y, en C, de si el tipo tiene signo.
+
+## Sin signo: la vuelta, módulo 2ᵏ
+
+En C, la aritmética de los enteros sin signo está definida **módulo $2^k$**: cuando un resultado se sale, da la vuelta, como un cuentakilómetros. Es una [congruencia](../congruencias/):
+
+- `UINT64_MAX + 1` vale `0`.
+- Convertir $-1$ a `uint64_t` da $2^{64} - 1$, porque $-1 \equiv 2^{64} - 1 \pmod{2^{64}}$.
+- Convertir a un tipo más pequeño se queda con el resto: $300$ guardado en un `uint8_t` es $300 \bmod 256 = 44$.
+
+Que esté definido no significa que sea lo que se quería: si un contador da la vuelta sin que nadie lo espere, el programa sigue funcionando con un número equivocado.
+
+## Con signo: comportamiento indefinido
+
+Con los enteros con signo es peor. En C, desbordar un entero con signo es **comportamiento indefinido**: la norma no dice qué pasa, y el compilador puede optimizar suponiendo que nunca ocurre. `INT_MAX + 1` no tiene por qué dar `INT_MIN`; puede dar cualquier cosa, y el código de alrededor puede comportarse de forma inesperada.
+
+<Aside type="caution" title="Los desplazamientos también se desbordan">
+`1 << n` calcula $2^n$, pero solo si $n$ es menor que el número de bits del tipo de la izquierda y, si tiene signo, si el resultado cabe:
+
+- `1 << 31` es indefinido con un `int` de 32 bits: el literal `1` es un `int`, y $2^{31}$ no cabe.
+- `1ULL << 63` está bien: `1ULL` es un `unsigned long long`, de al menos 64 bits.
+- `1ULL << 64` es indefinido **aunque no tenga signo**: desplazar tantas posiciones como bits tiene el tipo, o más, no está permitido.
+
+Por eso $2^{64} - 1$ no se puede escribir como `(1ULL << 64) - 1`. Se escribe `UINT64_MAX`, `~0ULL` o `(uint64_t)-1`.
+</Aside>
+
+**Hay herramientas que ayudan.** `-Wconversion` avisa al compilar de las conversiones que pueden perder valores, y `-fsanitize=undefined`, en GCC y Clang, detiene el programa y dice dónde se ha producido un comportamiento indefinido.
+
+## Más trampas de C
+
+- **Los literales tienen tipo.** `1` es `int`, `1U` es `unsigned`, `1LL` es `long long` y `1ULL` es `unsigned long long`. El tipo del literal decide en qué tipo se hace la operación.
+- **Los tipos pequeños se promocionan.** Antes de operar, un `uint8_t` o un `short` se convierten en `int`.
+- **Un entero sin signo nunca es negativo.** Con `unsigned i`, la condición `i < 0` es siempre falsa e `i <= 0` equivale a `i == 0`. Un bucle `for (unsigned i = n; i >= 0; i--)` no termina nunca.
+
+## Cómo evitarlo
+
+1. **Elegir un tipo con margen.** Antes de programar, acotar el mayor valor posible: si cabe en $2^{63}$, `int64_t`; si llega a $2^{64} - 1$, `uint64_t` y nada más; si puede pasar de ahí, no cabe en ningún tipo de tamaño fijo.
+2. **Comprobar antes de operar.** Con enteros sin signo, $a + b$ se desborda si y solo si $a > \text{MAX} - b$, y $a \cdot b$ si y solo si $b \ne 0$ y $a > \lfloor \text{MAX} / b \rfloor$. GCC y Clang lo hacen con `__builtin_add_overflow` y `__builtin_mul_overflow`, y C23 trae `ckd_add` y `ckd_mul` en `<stdckdint.h>`.
+3. **Si no cabe en ningún tipo**, usar [enteros de precisión arbitraria](../precision-arbitraria/).
+
+## En otros lenguajes
+
+- **Java**: `int` y `long` dan la vuelta en complemento a dos, sin comportamiento indefinido; `Math.addExact` y `Math.multiplyExact` lanzan una excepción si hay desbordamiento.
+- **JavaScript**: los `Number` no dan la vuelta, se **redondean**: por encima de $2^{53}$ pierden exactitud, y `2 ** 64 - 1 === 2 ** 64` es `true`. Para enteros exactos de cualquier tamaño están los `BigInt`.
+- **Python**: los enteros no tienen tamaño fijo, así que no se desbordan nunca.
+
+## Conceptos previos
+
+<Relaciones mostrar="requiere" />
+
+## Dónde aparece
+
+<Relaciones mostrar="aparece" />

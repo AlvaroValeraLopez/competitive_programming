@@ -1,0 +1,86 @@
+---
+title: Progresión geométrica
+description: La suma 1 + r + r² + ⋯ + rⁿ⁻¹ = (rⁿ − 1)/(r − 1), por qué 1 + 2 + 4 + ⋯ + 2ⁿ⁻¹ es un número binario de unos y cómo convierte un decimal periódico en fracción.
+sidebar:
+  label: Progresión geométrica
+  order: 17
+area: Sumas y series
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+
+## El resultado
+
+En una **progresión geométrica** cada término se obtiene multiplicando el anterior por una misma razón $r$. Su suma tiene fórmula cerrada:
+
+$$
+1 + r + r^2 + \cdots + r^{n-1} \;=\; \sum_{k=0}^{n-1} r^k \;=\; \frac{r^n - 1}{r - 1}, \qquad r \ne 1
+$$
+
+Si el primer término es $a$ en lugar de 1, todo se multiplica por $a$: la suma es $a\,\frac{r^n - 1}{r - 1}$. Con $r = 1$ todos los términos valen 1 y la suma es simplemente $n$.
+
+El caso más frecuente en programación es $r = 2$:
+
+$$
+1 + 2 + 4 + \cdots + 2^{n-1} = 2^n - 1
+$$
+
+Por ejemplo, $1 + 2 + 4 + 8 = 15 = 2^4 - 1$.
+
+<Aside type="note" title="Geométrica frente a aritmética">
+En la [suma de Gauss](../suma-de-gauss/) los términos crecen **sumando** siempre lo mismo (progresión aritmética), y la suma crece como $n^2$. Aquí crecen **multiplicando**, y la suma crece como $r^n$: con $r = 2$, cada término nuevo duplica el tamaño de todo lo anterior.
+</Aside>
+
+## Demostración: multiplicar y restar
+
+Llamamos $S$ a la suma y la multiplicamos por $r$:
+
+$$
+\begin{aligned}
+S &= 1 + r + r^2 + \cdots + r^{n-1} \\
+rS &= \phantom{1 + {}} r + r^2 + \cdots + r^{n-1} + r^n
+\end{aligned}
+$$
+
+Al restar, todos los términos intermedios se cancelan y solo quedan los extremos:
+
+$$
+rS - S = r^n - 1 \quad\Longrightarrow\quad S = \frac{r^n - 1}{r - 1}
+$$
+
+## Con r = 2: un número binario hecho de unos
+
+En binario, $2^k$ es un 1 seguido de $k$ ceros. Sumar $1 + 2 + 4 + \cdots + 2^{n-1}$ es, por tanto, poner un 1 en cada una de las $n$ primeras posiciones:
+
+$$
+1 + 2 + 4 + 8 = 1111_2 = 15
+$$
+
+y al sumarle 1 todas las llevadas se encadenan: $1111_2 + 1 = 10000_2 = 16 = 2^4$. Es la fórmula otra vez, leída en binario.
+
+Se deduce algo que sorprende siempre: **cada potencia de 2 es mayor que todas las anteriores juntas**, porque $2^k = (2^k - 1) + 1$. Por eso el número binario más grande de $n$ cifras es $2^n - 1$, y por eso un entero sin signo de 64 bits llega exactamente hasta $2^{64} - 1$ (ver [enteros de tamaño fijo](../enteros-de-tamano-fijo/)).
+
+Lo mismo pasa en base 10 con los números hechos de unos: $1 + 10 + 100 + \cdots + 10^{n-1} = \frac{10^n - 1}{9} = 11\ldots1$, que multiplicado por 9 da $99\ldots9 = 10^n - 1$.
+
+## Series infinitas
+
+Si $|r| < 1$, el término $r^n$ se hace tan pequeño como se quiera, y la suma infinita existe:
+
+$$
+1 + r + r^2 + r^3 + \cdots = \lim_{n \to \infty} \frac{1 - r^n}{1 - r} = \frac{1}{1 - r}
+$$
+
+Por ejemplo, $\frac12 + \frac14 + \frac18 + \cdots = \frac{1/2}{1 - 1/2} = 1$.
+
+**Un decimal periódico es una serie geométrica.** El periodo de $1/7$ es $142857$, y
+
+$$
+0{,}\overline{142857} = 142857 \left(10^{-6} + 10^{-12} + 10^{-18} + \cdots\right) = 142857 \cdot \frac{10^{-6}}{1 - 10^{-6}} = \frac{142857}{999\,999} = \frac{1}{7}
+$$
+
+porque $7 \cdot 142857 = 999\,999$. En general, un decimal periódico puro con periodo $P$ de $k$ cifras vale $P / (10^k - 1)$, que es lo que relaciona el periodo con el [orden multiplicativo](../orden-multiplicativo/) de 10.
+
+## Dónde aparece
+
+<Relaciones mostrar="aparece" />
