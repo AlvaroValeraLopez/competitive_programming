@@ -16,6 +16,9 @@ export const collections = {
 				// fuente los numera, su número en ella.
 				fuente: z.enum(ID_FUENTES).optional(),
 				numero: z.number().int().positive().optional(),
+				// Ejercicios: sus soluciones, archivos del repositorio en cualquier
+				// lenguaje, con la ruta desde la raíz (ver src/lib/soluciones.ts).
+				soluciones: z.array(z.object({ archivo: z.string() })).optional(),
 				// Relaciones (ver src/lib/grafo.ts). Ejercicios: conceptos que usan.
 				// Conceptos: conceptos previos que necesitan. Sin el prefijo «conceptos/».
 				conceptos: z.array(z.string()).optional(),

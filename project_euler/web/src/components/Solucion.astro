@@ -1,0 +1,21 @@
+---
+// Una solución del repositorio, con su código resaltado según el lenguaje y el
+// nombre del archivo como título. Las soluciones se listan en el frontmatter de
+// la página (`soluciones`); `indice` elige cuál, empezando por 0.
+import { Code } from '@astrojs/starlight/components';
+import { leerSolucion, lenguajeDe, nombreDeArchivo } from '../lib/soluciones';
+
+interface Props {
+	indice?: number;
+}
+
+const { indice = 0 } = Astro.props;
+const entrada = Astro.locals.starlightRoute.entry;
+const soluciones = entrada.data.soluciones ?? [];
+const solucion = soluciones[indice];
+if (!solucion) {
+	throw new Error(`${entrada.id}: <Solucion indice={${indice}} />, pero la página lista ${soluciones.length} soluciones`);
+}
+---
+
+<Code code={leerSolucion(solucion.archivo)} lang={lenguajeDe(solucion.archivo).resaltado} title={nombreDeArchivo(solucion.archivo)} />
