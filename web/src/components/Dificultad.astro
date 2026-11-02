@@ -1,0 +1,32 @@
+---
+// Píldora con la dificultad de un ejercicio, como las de Exercism: verde si es
+// fácil, ámbar si es media y roja si es difícil (colores en tema.css).
+import { nombreDeDificultad, type Dificultad } from '../lib/dificultad';
+
+interface Props {
+	dificultad: Dificultad;
+}
+
+const { dificultad } = Astro.props;
+---
+
+<span class="dificultad" data-dificultad={dificultad}>
+	<span class="sr-only">Dificultad: </span>{nombreDeDificultad(dificultad)}
+</span>
+
+<style>
+	.dificultad {
+		display: inline-flex;
+		flex-shrink: 0;
+		align-items: center;
+		padding: 0.1rem 0.6rem;
+		border: 1px solid var(--dificultad-borde);
+		border-radius: 999rem;
+		background: var(--dificultad-fondo);
+		color: var(--dificultad-texto);
+		font-size: var(--sl-text-2xs);
+		font-weight: 600;
+		line-height: 1.6;
+		white-space: nowrap;
+	}
+</style>

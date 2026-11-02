@@ -17,7 +17,8 @@ src/
 ├── components/
 │   ├── Cabecera.astro       # Sustituye a la cabecera de Starlight: secciones, buscador y tema
 │   ├── Heroe.astro          # Sustituye al Hero de Starlight (portada)
-│   ├── TituloPagina.astro   # Título de página con las etiquetas de `temas`
+│   ├── TituloPagina.astro   # Título con las etiquetas de `temas` y la ficha de cada ejercicio
+│   ├── Dificultad.astro     # Píldora con la dificultad de un ejercicio
 │   ├── Solucion.astro       # Muestra una solución del repositorio (ver «Soluciones»)
 │   ├── portada/             # Secciones de la portada: tarjetas, características…
 │   ├── tracks/              # Catálogo de tracks y las pestañas de cada uno
@@ -36,7 +37,8 @@ src/
 │   ├── soluciones.ts        # Lenguajes y lectura de las soluciones del repositorio
 │   ├── grafo.ts             # Relaciones entre páginas
 │   ├── arbol.ts             # Disposición del árbol de conceptos
-│   └── filtro.ts            # Filtro por conceptos de la lista de problemas
+│   ├── dificultad.ts        # Los niveles de dificultad de los ejercicios
+│   └── filtro.ts            # Filtros y orden de la lista de ejercicios
 ├── navegacion.ts            # Quita el menú lateral de Starlight en todas las páginas
 └── styles/
     ├── tema.css             # Colores, tipografía y formas (estética de Exercism)
@@ -51,14 +53,17 @@ Los vídeos (`../videos`) usan la paleta del modo oscuro, y sus tests comprueban
 
 ## Ejercicios y fuentes
 
-Cada ejercicio declara de qué fuente viene y, si la fuente los numera, su número en ella:
+Cada ejercicio declara de qué fuente viene, si la fuente los numera su número en ella, y su dificultad:
 
 ```yaml
 fuente: project-euler
 numero: 3
+dificultad: media # facil | media | dificil
 ```
 
 Las fuentes están en `src/lib/fuentes.ts`. Una fuente numerada (Project Euler, Acepta el reto) agrupa sus ejercicios por decenas y los nombra con su prefijo («Problema 3: …»); una que no lo está (Exercism) los ordena alfabéticamente. Para añadir una fuente nueva basta con añadirla ahí.
+
+La dificultad (`src/lib/dificultad.ts`) es obligatoria en todos los ejercicios: si falta, la compilación falla. Es **fácil** si basta una idea directa o la fuerza bruta ya es suficiente, **media** si hace falta un concepto que no es inmediato (la criba, la factorización, la programación dinámica…) y **difícil** si hay que combinar varios conceptos y pensar en la eficiencia. Se ve como una píldora verde, ámbar o roja en la lista de ejercicios y en la ficha que hay bajo el título de cada ejercicio, junto a su fuente y los conceptos que aplica, separados por dominio.
 
 ## Conceptos, dominios y áreas
 
@@ -114,7 +119,7 @@ Las páginas de lectura (las que tienen índice a la derecha) usan una columna d
 
 Cada sección tiene su catálogo completo, con buscador sin que importen las tildes. La portada solo muestra las primeras tarjetas y enlaza a ellos.
 
-- **Todos los problemas** (`/problemas/`, `ListaProblemas.astro`), al estilo de la lista de ejercicios de Exercism. Cada tarjeta muestra el número, el título, la descripción y los conceptos que usa. Se puede **practicar por conceptos**: al elegir uno o varios, aparecen los ejercicios que los usan, primero los que usan más. El filtro queda en la dirección (`/problemas/?conceptos=suma-de-gauss,funcion-divisor&q=…`), así que cualquier selección se puede enlazar. Cada concepto tiene bajo su título un botón «Practicar: N problemas» que lleva a esa lista filtrada.
+- **Todos los ejercicios** (`/problemas/`, `ListaProblemas.astro`), al estilo de la lista de ejercicios de Exercism. Cada tarjeta muestra la fuente, el número, el título, la dificultad, la descripción y los conceptos que usa, con un punto del color de su dominio. Se filtra desde varias vistas a la vez: pestañas de dificultad y un panel con track, fuente, conceptos (por dominio y área) y temas; dentro de un grupo basta con cumplir una opción, y entre grupos hay que cumplirlos todos. Con conceptos elegidos, salen antes los ejercicios que usan más de ellos. Se ordena por fuente y número o por dificultad. El filtro queda en la dirección (`/problemas/?dificultad=media&conceptos=suma-de-gauss,funcion-divisor&q=…&orden=dificultad`), así que cualquier selección se puede enlazar. Cada concepto tiene bajo su título un botón «Practicar: N ejercicios» que lleva a esa lista filtrada, y la pestaña «Practicar» de cada track la muestra restringida a sus ejercicios.
 - **Todos los conceptos** (`/conceptos/`): primero el mapa de conceptos (`MapaConceptos.astro`), con el árbol de cada ruta en una pestaña, y debajo el catálogo (`Catalogo.astro`), agrupado por dominio y área.
 
 Si a un ejercicio le falta la fuente o el número, si dos ejercicios de la misma fuente tienen el mismo número, o si a un concepto le falta el área, la compilación falla diciendo dónde.
@@ -131,7 +136,7 @@ npm test
 
 1. Crea `src/content/docs/problemas/NNN-nombre.mdx` siguiendo la estructura de los existentes:
    el problema, la idea en una frase, la fuerza bruta, el desarrollo, el código, la complejidad
-   y los conceptos utilizados. En el frontmatter van `fuente` y `numero` (ver «Ejercicios y
+   y los conceptos utilizados. En el frontmatter van `fuente`, `numero` y `dificultad` (ver «Ejercicios y
    fuentes»), `soluciones` (ver «Soluciones»), `temas` (las etiquetas) y `conceptos` (ver
    «Relaciones»); `sidebar.order` solo fija el orden. La tarjeta del catálogo y su entrada en el
    menú salen de estos campos y de `description`. Un concepto nuevo necesita además `area`.

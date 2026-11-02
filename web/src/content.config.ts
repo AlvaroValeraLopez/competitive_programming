@@ -2,6 +2,7 @@ import { defineCollection } from 'astro:content';
 import { z } from 'astro/zod';
 import { docsLoader } from '@astrojs/starlight/loaders';
 import { docsSchema } from '@astrojs/starlight/schema';
+import { ID_DIFICULTADES } from './lib/dificultad';
 import { ID_FUENTES } from './lib/fuentes';
 import { AREAS } from './lib/menu';
 
@@ -16,6 +17,9 @@ export const collections = {
 				// fuente los numera, su número en ella.
 				fuente: z.enum(ID_FUENTES).optional(),
 				numero: z.number().int().positive().optional(),
+				// Ejercicios: fácil, media o difícil (ver src/lib/dificultad.ts). Todos la
+				// llevan; si falta, la compilación falla.
+				dificultad: z.enum(ID_DIFICULTADES).optional(),
 				// Ejercicios: sus soluciones, archivos del repositorio en cualquier
 				// lenguaje, con la ruta desde la raíz (ver src/lib/soluciones.ts).
 				soluciones: z.array(z.object({ archivo: z.string() })).optional(),

@@ -175,38 +175,6 @@ const conjuncion = (i: number, total: number) => (i === 0 ? '' : i === total - 1
 		--mapa-linea: #433f56;
 	}
 
-	/* El color de cada dominio: borde y relleno del hexágono, y el texto que va dentro. */
-	[data-track='matematicas'] {
-		--dominio: #604fcd;
-		--dominio-suave: #f2f0fc;
-		--dominio-texto: #3b2a93;
-	}
-	[data-track='algoritmia'] {
-		--dominio: #0e8a7a;
-		--dominio-suave: #e0f4f0;
-		--dominio-texto: #0a5c52;
-	}
-	[data-track='implementacion'] {
-		--dominio: #c4560f;
-		--dominio-suave: #fcede2;
-		--dominio-texto: #8a3a07;
-	}
-	:global([data-theme='dark']) [data-track='matematicas'] {
-		--dominio: #8b7cf0;
-		--dominio-suave: #2b2650;
-		--dominio-texto: #cbc4f6;
-	}
-	:global([data-theme='dark']) [data-track='algoritmia'] {
-		--dominio: #2fb5a3;
-		--dominio-suave: #11322e;
-		--dominio-texto: #8fe0d4;
-	}
-	:global([data-theme='dark']) [data-track='implementacion'] {
-		--dominio: #f08d4f;
-		--dominio-suave: #3a2416;
-		--dominio-texto: #f7c39f;
-	}
-
 	.leyenda {
 		display: flex;
 		flex-wrap: wrap;

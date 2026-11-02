@@ -1,6 +1,7 @@
 // Datos de las páginas de problemas y conceptos, leídos del frontmatter. Los
 // usan los catálogos, la portada y los tracks.
 import { getCollection, type CollectionEntry } from 'astro:content';
+import type { Dificultad } from './dificultad';
 import { FUENTES } from './fuentes';
 import { dominioDe } from './menu';
 import { lenguajeDe } from './soluciones';
@@ -15,6 +16,8 @@ export interface PaginaContenido {
 	fuente?: string;
 	/** Ejercicios de una fuente numerada: su número en ella. */
 	numero?: number;
+	/** Ejercicios: fácil, media o difícil. */
+	dificultad?: Dificultad;
 	/** Ejercicios: los lenguajes de sus soluciones, sin repetir. */
 	lenguajes: string[];
 	/** Conceptos: su área y el dominio al que pertenece. */
@@ -39,6 +42,9 @@ export function etiquetaDe({ id, data }: CollectionEntry<'docs'>): string {
 
 function aPagina(entrada: CollectionEntry<'docs'>): PaginaContenido {
 	const { id, data } = entrada;
+	if (id.startsWith('problemas/') && !data.dificultad) {
+		throw new Error(`El ejercicio ${id} no tiene dificultad: añade «dificultad: facil | media | dificil» a su frontmatter`);
+	}
 	return {
 		id,
 		href: urlDe(id),
@@ -46,6 +52,7 @@ function aPagina(entrada: CollectionEntry<'docs'>): PaginaContenido {
 		descripcion: data.description,
 		fuente: data.fuente,
 		numero: data.numero,
+		dificultad: data.dificultad,
 		lenguajes: [...new Set((data.soluciones ?? []).map((s) => lenguajeDe(s.archivo).nombre))],
 		area: data.area,
 		dominio: dominioDe(data.area),
