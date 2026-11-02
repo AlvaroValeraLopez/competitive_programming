@@ -1,0 +1,58 @@
+---
+// Secciones de relaciones de una página, generadas a partir del frontmatter
+// (las mismas relaciones que dibuja el mapa).
+//   conceptos    → conceptos que usa este problema
+//   relacionados → otros problemas que comparten conceptos con este
+//   requiere     → conceptos previos de este concepto
+//   aparece      → problemas y conceptos que se apoyan en este concepto
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { problemasRelacionados } from '../lib/grafo';
+import { obtenerGrafo, urlDe } from '../lib/relaciones';
+
+interface Props {
+	mostrar: 'conceptos' | 'relacionados' | 'requiere' | 'aparece';
+}
+
+const { mostrar } = Astro.props;
+const id = Astro.locals.starlightRoute.entry.id;
+const grafo = await obtenerGrafo();
+const nodo = grafo.nodos.get(id);
+if (!nodo) throw new Error(`<Relaciones> solo funciona en páginas de problemas o conceptos (está en ${id})`);
+
+const nombre = (otro: string) => {
+	const n = grafo.nodos.get(otro)!;
+	return n.tipo === 'problema' ? `Problema ${n.numero}: ${n.etiqueta}` : n.etiqueta;
+};
+
+let tarjetas: { id: string; descripcion?: string }[];
+let vacio: string;
+if (mostrar === 'relacionados') {
+	tarjetas = problemasRelacionados(grafo, id).map(({ id: otro, compartidos }) => ({
+		id: otro,
+		descripcion: `También usa ${compartidos.map((c) => grafo.nodos.get(c)!.etiqueta).join(' y ')}.`,
+	}));
+	vacio = 'Todavía no hay otros problemas que usen estos conceptos.';
+} else {
+	const ids = mostrar === 'aparece' ? nodo.hijos : nodo.padres;
+	tarjetas = ids.map((otro) => ({ id: otro, descripcion: grafo.nodos.get(otro)!.descripcion }));
+	vacio = mostrar === 'aparece' ? 'Todavía no lo usa ningún problema.' : 'No depende de otros conceptos.';
+}
+tarjetas.sort((a, b) => {
+	const na = grafo.nodos.get(a.id)!;
+	const nb = grafo.nodos.get(b.id)!;
+	if (na.tipo !== nb.tipo) return na.tipo === 'problema' ? -1 : 1;
+	return (na.numero ?? 0) - (nb.numero ?? 0) || na.etiqueta.localeCompare(nb.etiqueta, 'es');
+});
+---
+
+{
+	tarjetas.length > 0 ? (
+		<CardGrid>
+			{tarjetas.map((t) => (
+				<LinkCard title={nombre(t.id)} description={t.descripcion} href={urlDe(t.id)} />
+			))}
+		</CardGrid>
+	) : (
+		<p>{vacio}</p>
+	)
+}

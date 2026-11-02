@@ -5,9 +5,11 @@ sidebar:
   label: '15 · Caminos en una cuadrícula'
   order: 15
 temas: [Combinatoria, Triángulo de Pascal]
+conceptos: [coeficientes-binomiales]
 ---
 
-import { CardGrid, Code, LinkCard, TabItem, Tabs } from '@astrojs/starlight/components';
+import { Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
 import LatticePaths from '../../../components/LatticePaths.astro';
 import solucion from '@soluciones/11_20/15_latticePaths.js?raw';
 
@@ -147,10 +149,8 @@ Python trae los coeficientes binomiales en la biblioteca estándar desde la vers
 
 ## Conceptos utilizados
 
-<CardGrid>
-	<LinkCard
-		title="Coeficientes binomiales"
-		description="Elegir k entre n, el triángulo de Pascal y cómo calcularlos."
-		href="../../conceptos/coeficientes-binomiales/"
-	/>
-</CardGrid>
+<Relaciones mostrar="conceptos" />
+
+## Problemas relacionados
+
+<Relaciones mostrar="relacionados" />

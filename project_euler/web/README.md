@@ -34,13 +34,33 @@ La web toma la estética de [Exercism](https://exercism.org): tipografía Poppin
 
 Los vídeos (`../videos`) usan la paleta del modo oscuro, y sus tests comprueban que coincide con `tema.css`: si cambias un color aquí, actualiza también `../videos/euler_video/estilo.py`.
 
+## Relaciones
+
+Las relaciones entre páginas se declaran solo en el frontmatter, con el nombre del archivo del concepto sin extensión:
+
+```yaml
+# En un problema: los conceptos que usa
+conceptos: [suma-de-gauss, inclusion-exclusion]
+
+# En un concepto: los conceptos que necesita
+requiere: [coeficientes-binomiales]
+```
+
+A partir de ahí se genera todo lo demás: el [mapa](src/content/docs/mapa.mdx), las secciones «Conceptos utilizados» y «Problemas relacionados» de cada problema, y «Conceptos previos» y «Dónde aparece» de cada concepto (con `<Relaciones mostrar="…" />`). Si una página usa un concepto que no existe, o los conceptos previos forman un ciclo, la compilación falla diciendo dónde está el error.
+
+La lógica está en `src/lib/grafo.ts`, sin dependencias de Astro, y tiene tests:
+
+```bash
+npm test
+```
+
 ## Añadir un problema
 
 1. Crea `src/content/docs/problemas/NNN-nombre.mdx` siguiendo la estructura de los existentes:
    el problema, la idea en una frase, la fuerza bruta, el desarrollo matemático, el código,
    la complejidad y los conceptos utilizados. En el frontmatter, `sidebar.order` es el número
-   del problema y `temas` la lista de etiquetas; la portada genera su tarjeta a partir de
-   ambos y de `description`.
+   del problema, `temas` la lista de etiquetas y `conceptos` los conceptos que usa (ver
+   «Relaciones»); la portada genera su tarjeta a partir de estos campos y de `description`.
 2. El código del repositorio se importa sin copiarlo, con el alias `@soluciones`, que apunta a
    `../problems_1_to_hundred`:
 

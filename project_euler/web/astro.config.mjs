@@ -66,6 +66,7 @@ export default defineConfig({
 			},
 			sidebar: [
 				{ label: 'Inicio', link: '/' },
+				{ label: 'Mapa', link: '/mapa/' },
 				{
 					label: 'Problemas',
 					items: [{ autogenerate: { directory: 'problemas' } }],
