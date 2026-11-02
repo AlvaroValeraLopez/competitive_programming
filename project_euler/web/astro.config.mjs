@@ -45,7 +45,25 @@ export default defineConfig({
 					href: 'https://github.com/AlvaroValeraLopez/competitive_programming',
 				},
 			],
-			customCss: ['katex/dist/katex.min.css', './src/styles/custom.css'],
+			logo: { src: './src/assets/logo.svg' },
+			customCss: [
+				'@fontsource/poppins/400.css',
+				'@fontsource/poppins/500.css',
+				'@fontsource/poppins/600.css',
+				'@fontsource/poppins/700.css',
+				'@fontsource/source-code-pro/400.css',
+				'@fontsource/source-code-pro/600.css',
+				'katex/dist/katex.min.css',
+				'./src/styles/tema.css',
+				'./src/styles/custom.css',
+			],
+			components: {
+				Hero: './src/components/Heroe.astro',
+				PageTitle: './src/components/TituloPagina.astro',
+			},
+			expressiveCode: {
+				styleOverrides: { borderRadius: '8px' },
+			},
 			sidebar: [
 				{ label: 'Inicio', link: '/' },
 				{

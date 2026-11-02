@@ -1,32 +1,18 @@
 """Estilo común de todos los vídeos.
 
-Los colores son los del modo oscuro de la web (variables CSS de Starlight),
-así los vídeos encajan con las páginas en las que se insertan.
+Los colores son los del modo oscuro de la web (variables CSS definidas en
+web/src/styles/tema.css), así los vídeos encajan con las páginas en las que se
+insertan.
 """
-
-import colorsys
-import math
 
 from manim import UP, Animation, FadeIn, FadeOut, MathTex, ManimColor, Scene, Tex, Text
 
-
-def hsl(h: float, s: float, l: float) -> ManimColor:
-    """Color a partir de tono (grados), saturación y luminosidad (porcentajes), como en CSS.
-
-    Redondea a enteros de 0 a 255 igual que el navegador, para obtener exactamente
-    el mismo color que la web. Manim truncaría (22,95 → 22) y `round()` de Python
-    redondea los medios al par (178,5 → 178); el navegador da 23 y 179.
-    """
-    r, g, b = colorsys.hls_to_rgb(h / 360, l / 100, s / 100)
-    return ManimColor.from_rgb(tuple(math.floor(x * 255 + 0.5) for x in (r, g, b)))
-
-
-FONDO = hsl(224, 10, 10)  # --sl-color-bg
-ACENTO = hsl(224, 100, 60)  # --sl-color-accent
-ACENTO_CLARO = hsl(224, 100, 85)  # --sl-color-text-accent
-GRIS = hsl(224, 7, 36)  # --sl-color-gray-4
-TEXTO = hsl(224, 6, 77)  # --sl-color-gray-2
-BLANCO = hsl(0, 0, 100)  # --sl-color-white
+FONDO = ManimColor("#211D2F")  # --sl-color-black (fondo de página)
+ACENTO = ManimColor("#604FCD")  # --sl-color-accent
+ACENTO_CLARO = ManimColor("#B0A8E3")  # --sl-color-accent-high
+GRIS = ManimColor("#6A6781")  # --sl-color-gray-4
+TEXTO = ManimColor("#CBC9D9")  # --sl-color-gray-2
+BLANCO = ManimColor("#FFFFFF")  # --sl-color-white
 
 # Fuente sin serifa para los rótulos, parecida a la de la web. Las fórmulas van
 # en LaTeX (Computer Modern), como en un libro.

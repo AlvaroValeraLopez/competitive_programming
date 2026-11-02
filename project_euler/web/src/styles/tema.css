@@ -1,0 +1,210 @@
+/*
+ * Tema inspirado en la estética de Exercism (exercism.org): Poppins, azul marino
+ * para el texto, morado como color principal, fondos lavanda muy claros y
+ * tarjetas blancas con sombra azulada. Solo se toman colores, tipografía y
+ * formas; ni el logotipo ni las ilustraciones.
+ */
+
+/* ---------- Tokens: modo oscuro (por defecto en Starlight) ---------- */
+:root {
+	--sl-font: 'Poppins', var(--sl-font-system);
+	--sl-font-mono: 'Source Code Pro', var(--sl-font-system-mono);
+
+	--sl-color-white: #ffffff;
+	--sl-color-gray-1: #f0f3f9;
+	--sl-color-gray-2: #cbc9d9;
+	--sl-color-gray-3: #a9a6bd;
+	--sl-color-gray-4: #6a6781;
+	--sl-color-gray-5: #433f56;
+	--sl-color-gray-6: #302b42;
+	--sl-color-gray-7: #282339;
+	--sl-color-black: #211d2f;
+
+	--sl-color-accent-low: #403a66;
+	--sl-color-accent: #604fcd;
+	--sl-color-accent-high: #b0a8e3;
+
+	--sl-color-text: var(--sl-color-gray-1);
+	--sl-color-text-accent: #7097ff; /* enlaces */
+	--sl-color-bg-nav: var(--sl-color-gray-6);
+	--sl-color-bg-sidebar: var(--sl-color-black);
+	--sl-color-hairline: var(--sl-color-gray-5);
+	--sl-color-hairline-shade: var(--sl-color-gray-5);
+
+	--sl-line-height: 1.6;
+	--euler-radio: 8px;
+	--euler-sombra-rgb: 0, 0, 0;
+	--euler-sombra: 0 4px 24px rgba(var(--euler-sombra-rgb), 0.4);
+	--euler-sombra-grande: 0 4px 42px rgba(var(--euler-sombra-rgb), 0.6);
+	--euler-boton: #604fcd;
+	--euler-boton-hover: #3b2a93;
+	--euler-boton-borde: #130b43;
+	--euler-boton-secundario: #302b42;
+	--euler-boton-secundario-hover: #191525;
+	--euler-boton-secundario-texto: #b0a8e3;
+}
+
+/* ---------- Tokens: modo claro ---------- */
+:root[data-theme='light'] {
+	--sl-color-white: #130b43;
+	--sl-color-gray-1: #3f3a5a;
+	--sl-color-gray-2: #5c5589;
+	--sl-color-gray-3: #76709f;
+	--sl-color-gray-4: #a9a6bd;
+	--sl-color-gray-5: #d5d8e4;
+	--sl-color-gray-6: #eaecf3;
+	--sl-color-gray-7: #f6f7fb;
+	--sl-color-black: #ffffff;
+
+	--sl-color-accent-low: #f2f0fc;
+	--sl-color-accent: #604fcd;
+	--sl-color-accent-high: #3b2a93;
+
+	--sl-color-text: #130b43;
+	--sl-color-text-accent: #2e57e8; /* enlaces */
+	--sl-color-bg: #fbfcfe;
+	--sl-color-bg-nav: #ffffff;
+	--sl-color-bg-sidebar: #fbfcfe;
+	--sl-color-bg-inline-code: #f0f3f9;
+	--sl-color-hairline: var(--sl-color-gray-6);
+	--sl-color-hairline-light: var(--sl-color-gray-6);
+	--sl-color-hairline-shade: var(--sl-color-gray-6);
+
+	--euler-sombra-rgb: 79, 114, 205;
+	--euler-sombra: 0 4px 24px rgba(var(--euler-sombra-rgb), 0.15);
+	--euler-sombra-grande: 0 4px 42px rgba(var(--euler-sombra-rgb), 0.15);
+	--euler-boton-secundario: #fafaff;
+	--euler-boton-secundario-hover: #f2f0fc;
+	--euler-boton-secundario-texto: #604fcd;
+}
+
+/* ---------- Tipografía ---------- */
+body {
+	font-feature-settings: normal;
+}
+
+h1#_top,
+.sl-markdown-content :is(h1, h2) {
+	font-weight: 700;
+	letter-spacing: -0.01em;
+}
+
+.sl-markdown-content :is(h3, h4, h5) {
+	font-weight: 600;
+}
+
+.sl-markdown-content a:not(.sl-link-button, .sl-link-card a) {
+	font-weight: 500;
+	text-underline-offset: 0.2em;
+}
+
+/* ---------- Cabecera y menú lateral ---------- */
+.site-title {
+	color: var(--sl-color-white);
+	font-weight: 700;
+	gap: 0.6rem;
+}
+
+.sidebar-content a[aria-current='page'],
+.sidebar-content a[aria-current='page']:hover,
+.sidebar-content a[aria-current='page']:focus {
+	color: #ffffff;
+	background-color: var(--sl-color-accent);
+	border-radius: 6px;
+}
+
+.sidebar-content a {
+	border-radius: 6px;
+}
+
+/* ---------- Botones ---------- */
+.sl-link-button {
+	border-radius: var(--euler-radio);
+	font-weight: 600;
+	transition:
+		background-color 0.15s,
+		box-shadow 0.15s;
+}
+
+.sl-link-button.primary {
+	background: var(--euler-boton);
+	border-color: var(--euler-boton-borde);
+	color: #ffffff;
+	box-shadow: 0 4px 8px rgba(var(--euler-sombra-rgb), 0.4);
+}
+
+.sl-link-button.primary:hover {
+	background: var(--euler-boton-hover);
+	color: #ffffff;
+}
+
+.sl-link-button:is(.secondary, .minimal) {
+	background: var(--euler-boton-secundario);
+	border-color: var(--euler-boton-secundario-texto);
+	color: var(--euler-boton-secundario-texto);
+	padding-inline: 1.25rem;
+}
+
+.sl-link-button:is(.secondary, .minimal):hover {
+	background: var(--euler-boton-secundario-hover);
+	color: var(--euler-boton-secundario-texto);
+}
+
+/* ---------- Tarjetas ---------- */
+.card,
+.sl-link-card,
+.pagination-links a {
+	border: 1px solid var(--sl-color-gray-6);
+	border-radius: var(--euler-radio);
+	background-color: var(--sl-color-black);
+	box-shadow: var(--euler-sombra);
+}
+
+.sl-link-card,
+.pagination-links a {
+	transition:
+		box-shadow 0.15s,
+		border-color 0.15s;
+}
+
+.sl-link-card:hover,
+.pagination-links a:hover {
+	background-color: var(--sl-color-black);
+	border-color: var(--sl-color-accent);
+	box-shadow: var(--euler-sombra-grande);
+}
+
+.card .title,
+.sl-link-card .title {
+	font-weight: 600;
+}
+
+/* ---------- Pestañas, avisos, etiquetas y código ---------- */
+.tab [role='tab'][aria-selected='true'] {
+	border-color: var(--sl-color-accent);
+	font-weight: 600;
+}
+
+.starlight-aside {
+	border-radius: var(--euler-radio);
+}
+
+.sl-badge {
+	border-radius: 999rem;
+	font-weight: 500;
+	padding-inline: 0.65em;
+}
+
+.sl-markdown-content :not(pre) > code {
+	border-radius: 4px;
+}
+
+/* ---------- Tablas ---------- */
+.sl-markdown-content table {
+	border-radius: var(--euler-radio);
+}
+
+.sl-markdown-content th {
+	background-color: var(--sl-color-gray-7);
+	font-weight: 600;
+}

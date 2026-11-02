@@ -1,0 +1,55 @@
+---
+// Banda final con degradado lavanda y un botón, como el cierre de la portada
+// de Exercism.
+import { LinkButton } from '@astrojs/starlight/components';
+
+interface Props {
+	titulo: string;
+	boton: string;
+	enlace: string;
+}
+
+const { titulo, boton, enlace } = Astro.props;
+---
+
+<section class="llamada not-content">
+	<h2>{titulo}</h2>
+	<div class="cuerpo"><slot /></div>
+	<LinkButton href={enlace} icon="right-arrow">{boton}</LinkButton>
+</section>
+
+<style>
+	.llamada {
+		display: grid;
+		gap: 1rem;
+		justify-items: center;
+		margin-top: 4rem;
+		padding: 3rem 1.5rem;
+		border-radius: calc(var(--euler-radio) * 2);
+		background: linear-gradient(135deg, var(--sl-color-accent-low), var(--sl-color-gray-7));
+		text-align: center;
+	}
+	h2 {
+		margin: 0;
+		font-size: var(--sl-text-3xl);
+		font-weight: 700;
+		color: var(--sl-color-white);
+	}
+	.cuerpo {
+		max-width: 36rem;
+		line-height: 1.6;
+		color: var(--sl-color-gray-2);
+	}
+	.cuerpo :global(p) {
+		margin: 0;
+	}
+	.cuerpo :global(a) {
+		color: var(--sl-color-text-accent);
+		font-weight: 500;
+	}
+	.llamada :global(.sl-link-button) {
+		margin-top: 0.5rem;
+		padding: 0.9rem 1.5rem;
+		font-size: var(--sl-text-lg);
+	}
+</style>
