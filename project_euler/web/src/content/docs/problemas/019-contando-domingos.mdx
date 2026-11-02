@@ -1,0 +1,151 @@
+---
+title: 'Problema 19: Contando domingos'
+description: Contar cuántos meses del siglo XX empezaron en domingo siguiendo el día de la semana módulo 7, sumando a cada mes su longitud reducida módulo 7.
+sidebar:
+  label: '19 · Contando domingos'
+  order: 19
+temas: [Aritmética modular, Calendario]
+conceptos: [congruencias]
+---
+
+import { Aside, Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+import solucion from '@soluciones/11_20/19_countingSundays.js?raw';
+
+## El problema
+
+Sabiendo que:
+
+- el 1 de enero de 1900 fue lunes;
+- abril, junio, septiembre y noviembre tienen 30 días; febrero, 28, o 29 en los años bisiestos; y los demás meses, 31;
+- un año es bisiesto si es múltiplo de 4, salvo los múltiplos de 100 que no lo son de 400;
+
+**¿cuántos domingos cayeron en el primer día de un mes durante el siglo XX, del 1 de enero de 1901 al 31 de diciembre de 2000?**
+
+[Enunciado original en Project Euler](https://projecteuler.net/problem=19)
+
+## La idea en una frase
+
+Solo importa el día de la semana, un número del 0 al 6, y pasar de un mes al siguiente es sumarle la longitud del mes módulo 7: basta con recorrer los 1200 meses contando las veces que sale 0.
+
+## Primer intento: con la biblioteca de fechas
+
+Casi todos los lenguajes saben qué día de la semana es cada fecha:
+
+```js
+let domingos = 0;
+for (let anio = 1901; anio <= 2000; anio++) {
+  for (let mes = 0; mes < 12; mes++) {
+    if (new Date(anio, mes, 1).getDay() === 0) domingos++;
+  }
+}
+```
+
+Funciona, porque el objeto `Date` de JavaScript usa el calendario gregoriano. Pero esconde precisamente lo interesante: cómo se calcula el día de la semana. Y no sirve si el calendario es otro, o si las fechas caen fuera del rango que admite la biblioteca.
+
+## Desarrollo matemático
+
+### Paso 1: el día de la semana es un resto
+
+Numeramos los días de la semana del 0 (domingo) al 6 (sábado). Avanzar $L$ días desde el día $w$ lleva al día $(w + L) \bmod 7$, porque cada 7 días se vuelve al mismo. Es una [congruencia](../../conceptos/congruencias/) módulo 7.
+
+### Paso 2: de un mes al siguiente
+
+Si el día 1 de un mes cae en $w$ y el mes tiene $L$ días, el día 1 del mes siguiente cae en $(w + L) \bmod 7$. Y como solo importa el resto, basta con la longitud del mes módulo 7:
+
+| Días del mes | 28 | 29 | 30 | 31 |
+| --- | --- | --- | --- | --- |
+| Avance (módulo 7) | 0 | 1 | 2 | 3 |
+
+Un febrero de 28 días no mueve nada: el 1 de marzo cae el mismo día de la semana que el 1 de febrero.
+
+### Paso 3: empezar en 1901
+
+El enunciado da el 1 de enero de 1900, pero hay que contar desde 1901. 1900 es múltiplo de 100 y no de 400, así que **no fue bisiesto**: tuvo $365 = 52 \cdot 7 + 1$ días. El 1 de enero de 1901 cayó, por tanto, un día después que el de 1900: en martes ($w = 2$).
+
+### Paso 4: comprobarlo con 1901
+
+Recorriendo 1901 mes a mes, sumando el avance del paso 2:
+
+| Mes | Ene | Feb | Mar | Abr | May | Jun | Jul | Ago | Sep | Oct | Nov | Dic |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Día 1 | 2 | 5 | 5 | 1 | 3 | 6 | 1 | 4 | **0** | 2 | 5 | **0** |
+| Avance | 3 | 0 | 3 | 2 | 3 | 2 | 3 | 3 | 2 | 3 | 2 | 3 |
+
+En 1901, el 1 de septiembre y el 1 de diciembre fueron domingo, como se puede comprobar en cualquier calendario. El avance de diciembre, 3, lleva al 1 de enero de 1902: $0 + 3 = 3$, miércoles.
+
+### Paso 5: los años bisiestos del siglo
+
+Entre 1901 y 2000 son bisiestos los múltiplos de 4: 1904, 1908, …, 1996 y también **2000**, que es múltiplo de 400. En esos años febrero tiene 29 días y avanza 1 en lugar de 0. Recorrer los 1200 meses así da la respuesta.
+
+### Una fórmula para cualquier fecha
+
+También se puede calcular el día de la semana de una fecha directamente, sin recorrer las anteriores. La **congruencia de Zeller** da, para el día $q$ del mes $m$ del año $A$,
+
+$$
+h = \left(q + \left\lfloor \frac{13(m+1)}{5} \right\rfloor + K + \left\lfloor \frac{K}{4} \right\rfloor + \left\lfloor \frac{J}{4} \right\rfloor + 5J\right) \bmod 7
+$$
+
+donde $K = A \bmod 100$ y $J = \lfloor A / 100 \rfloor$, y $h = 0$ es sábado, $1$ domingo, …, $6$ viernes. Enero y febrero se cuentan como los meses 13 y 14 del año anterior, para que el posible 29 de febrero quede al final. Por ejemplo, el 1 de enero de 1900 cuenta como el mes 13 de 1899, con $K = 99$ y $J = 18$:
+
+$$
+h = (1 + 36 + 99 + 24 + 4 + 90) \bmod 7 = 254 \bmod 7 = 2
+$$
+
+es decir, lunes, como dice el enunciado.
+
+<Aside type="note" title="El calendario se repite cada 400 años">
+400 años gregorianos tienen $400 \cdot 365 + 97 = 146\,097$ días, que son exactamente $20\,871$ semanas. Así que el día de la semana de una fecha se repite cada 400 años, y la respuesta para cualquier siglo solo depende de qué lugar ocupa en ese ciclo.
+</Aside>
+
+## El código
+
+<Tabs>
+<TabItem label="JavaScript (repositorio)">
+
+<Code code={solucion} lang="js" title="19_countingSundays.js" />
+
+`dayOfWeek` es el día de la semana del paso 1, con 0 para el domingo, y empieza en 1, el lunes 1 de enero de 1900. La línea `(dayOfWeek + 365) % 7` es el paso 3. Después recorre los meses de 1901 a 2000: para cada uno, primero comprueba si su día 1 es domingo y después avanza la longitud del mes, con febrero según la regla de los bisiestos (paso 5).
+
+</TabItem>
+<TabItem label="Python (módulo 7)">
+
+```python
+def es_bisiesto(anio):
+    return anio % 4 == 0 and (anio % 100 != 0 or anio % 400 == 0)
+
+dia = (1 + 365) % 7   # 1 de enero de 1901: el lunes de 1900 más un año de 365 días
+domingos = 0
+for anio in range(1901, 2001):
+    longitudes = [31, 29 if es_bisiesto(anio) else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    for dias in longitudes:
+        domingos += dia == 0
+        dia = (dia + dias) % 7
+print(domingos)
+```
+
+</TabItem>
+<TabItem label="Python (biblioteca)">
+
+```python
+from datetime import date
+
+print(sum(date(anio, mes, 1).weekday() == 6 for anio in range(1901, 2001) for mes in range(1, 13)))
+```
+
+Sirve para comprobar la otra versión. En Python, `weekday()` numera del lunes (0) al domingo (6).
+
+</TabItem>
+</Tabs>
+
+## Complejidad
+
+Son 1200 meses, una suma y un resto por mes. Para un periodo de $Y$ años, $12Y$ pasos; y gracias al ciclo de 400 años, para periodos larguísimos basta con contar un ciclo y multiplicar.
+
+## Conceptos utilizados
+
+<Relaciones mostrar="conceptos" />
+
+## Problemas relacionados
+
+<Relaciones mostrar="relacionados" />

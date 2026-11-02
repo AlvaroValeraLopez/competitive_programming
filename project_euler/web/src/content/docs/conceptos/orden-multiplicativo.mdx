@@ -1,0 +1,119 @@
+---
+title: Orden multiplicativo y decimales periódicos
+description: El menor exponente con aᵏ ≡ 1 (mod n), por qué divide a p − 1 (pequeño teorema de Fermat) y por qué el periodo del decimal de 1/d es el orden de 10 módulo d.
+sidebar:
+  label: Orden multiplicativo
+  order: 16
+requiere: [congruencias]
+area: Aritmética modular
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Relaciones from '../../../components/Relaciones.astro';
+
+## Las potencias acaban en ciclo
+
+Tomemos las potencias de 10 módulo 7:
+
+$$
+10^1 \equiv 3,\quad 10^2 \equiv 2,\quad 10^3 \equiv 6,\quad 10^4 \equiv 4,\quad 10^5 \equiv 5,\quad 10^6 \equiv 1 \pmod 7
+$$
+
+Al llegar a 1 se repite todo: $10^7 \equiv 10 \equiv 3$, y así sucesivamente.
+
+> Si $\operatorname{mcd}(a, n) = 1$, el **orden de $a$ módulo $n$**, $\operatorname{ord}_n(a)$, es el menor $k \ge 1$ con $a^k \equiv 1 \pmod n$.
+
+En el ejemplo, $\operatorname{ord}_7(10) = 6$. Otro: las potencias de 2 módulo 9 son $2, 4, 8, 7, 5, 1$, así que $\operatorname{ord}_9(2) = 6$.
+
+**Siempre existe.** Las potencias $a, a^2, a^3, \dots$ módulo $n$ solo pueden tomar $n$ valores, así que dos de ellas coinciden: $a^i \equiv a^j$ con $i < j$. Como $a$ tiene inverso módulo $n$ (ver [congruencias](../congruencias/#dividir-solo-a-veces)), se puede tachar $a^i$ en los dos lados, y queda $a^{j-i} \equiv 1$.
+
+**Si $\operatorname{mcd}(a, n) > 1$ no hay orden**: ninguna potencia de $a$ es congruente con 1, porque $\operatorname{mcd}(a, n)$ divide a $a^k$ y a $n$, pero no a $1$.
+
+## El orden divide a todos los exponentes que dan 1
+
+> $a^k \equiv 1 \pmod n$ si y solo si $\operatorname{ord}_n(a)$ divide a $k$.
+
+**Demostración.** Sea $r = \operatorname{ord}_n(a)$ y dividamos: $k = qr + s$ con $0 \le s < r$. Entonces $a^k = (a^r)^q \cdot a^s \equiv a^s$. Si $s$ no fuera 0, $a^s \equiv 1$ con $0 < s < r$ contradiría que $r$ es el menor. Así que $a^k \equiv 1$ exactamente cuando $s = 0$.
+
+## El pequeño teorema de Fermat
+
+> Si $p$ es primo y no divide a $a$, entonces $a^{p-1} \equiv 1 \pmod p$.
+
+**Demostración.** Los números $a, 2a, 3a, \dots, (p-1)a$ módulo $p$ son distintos dos a dos, porque se puede tachar $a$, y ninguno es 0. Así que son, en otro orden, $1, 2, \dots, p - 1$. Multiplicándolos todos:
+
+$$
+a^{p-1} \cdot (p-1)! \equiv (p-1)! \pmod p
+$$
+
+y como $(p-1)!$ no es múltiplo de $p$, se puede tachar.
+
+Juntando las dos cosas: **el orden de $a$ módulo un primo $p$ divide a $p - 1$**. Con 7: $\operatorname{ord}_7(10) = 6$, que divide a $6$. Para un $n$ cualquiera vale lo mismo con $\varphi(n)$, el número de enteros entre 1 y $n$ coprimos con $n$: $a^{\varphi(n)} \equiv 1 \pmod n$ (teorema de Euler), así que el orden divide a $\varphi(n)$.
+
+## Decimales periódicos
+
+Al dividir $1$ entre $d$ a mano, en cada paso se multiplica el resto por 10, se escribe una cifra y queda un resto nuevo:
+
+$$
+r_0 = 1, \qquad \text{cifra}_k = \left\lfloor \frac{10\, r_{k-1}}{d} \right\rfloor, \qquad r_k = 10\, r_{k-1} \bmod d
+$$
+
+Así que $r_k \equiv 10^k \pmod d$, y **cada cifra solo depende del resto anterior**. En cuanto se repite un resto, las cifras se repiten a partir de ahí. Con $d = 7$, los restos son $3, 2, 6, 4, 5, 1, 3, \dots$ y las cifras, $1, 4, 2, 8, 5, 7, 1, \dots$:
+
+$$
+\frac{1}{7} = 0{,}\overline{142857}
+$$
+
+> Si $\operatorname{mcd}(d, 10) = 1$, el decimal de $1/d$ es periódico puro y su periodo es $\operatorname{ord}_d(10)$.
+
+**Demostración.** El resto vuelve a ser $r_0 = 1$ por primera vez cuando $10^k \equiv 1$, es decir, en $k = \operatorname{ord}_d(10)$; a partir de ahí todo se repite. Y antes no puede repetirse ningún otro resto: si $10^i \equiv 10^j$ con $0 \le i < j$, tachando $10^i$ queda $10^{j-i} \equiv 1$, así que $j - i$ es múltiplo del orden.
+
+**Si $d$ tiene factores 2 o 5**, se separan: $d = 2^a 5^b m$ con $\operatorname{mcd}(m, 10) = 1$. Los factores 2 y 5 solo añaden un **anteperiodo** de $\max(a, b)$ cifras, y el periodo es $\operatorname{ord}_m(10)$, o no hay periodo si $m = 1$. Por ejemplo, $1/6 = 0{,}1\overline{6}$, con $6 = 2 \cdot 3$: una cifra de anteperiodo y periodo $\operatorname{ord}_3(10) = 1$.
+
+| $d$ | $1/d$ | Periodo | $\operatorname{ord}$ |
+| --- | --- | --- | --- |
+| 3 | $0{,}\overline{3}$ | 1 | $\operatorname{ord}_3(10) = 1$ |
+| 6 | $0{,}1\overline{6}$ | 1 | $\operatorname{ord}_3(10) = 1$ |
+| 7 | $0{,}\overline{142857}$ | 6 | $\operatorname{ord}_7(10) = 6$ |
+| 11 | $0{,}\overline{09}$ | 2 | $\operatorname{ord}_{11}(10) = 2$ |
+| 13 | $0{,}\overline{076923}$ | 6 | $\operatorname{ord}_{13}(10) = 6$ |
+
+## El periodo más largo posible
+
+Hay $d - 1$ restos distintos de cero, así que el periodo de $1/d$ es como mucho $d - 1$. Más precisamente, es un divisor de $\varphi(d)$, y $\varphi(d) = d - 1$ solo si $d$ es primo. Así que **el periodo es $d - 1$ exactamente cuando $d$ es un primo para el que $\operatorname{ord}_d(10) = d - 1$**; se dice que 10 es una **raíz primitiva** módulo $d$. Los primeros son
+
+$$
+7,\ 17,\ 19,\ 23,\ 29,\ 47,\ 59,\ 61,\ 97,\ \dots
+$$
+
+Para un primo que no es de estos, el orden es un divisor propio de $p - 1$, así que como mucho $(p - 1)/2$. Y para un $d$ compuesto, $\varphi(d) \le d - \sqrt{d}$: si $q \le \sqrt{d}$ es un factor primo de $d$, los múltiplos de $q$ no son coprimos con $d$, y hay $d/q \ge \sqrt{d}$ de ellos.
+
+<Aside type="note" title="¿Hay infinitos?">
+Nadie lo sabe. La conjetura de Artin (1927) dice que hay infinitos primos con 10 como raíz primitiva, y que son, aproximadamente, el 37,4 % de todos los primos. Está demostrada si se acepta la hipótesis de Riemann generalizada, pero no sin ella.
+</Aside>
+
+**Un detalle curioso.** El periodo de $1/7$ es un número **cíclico**: al multiplicar $142\,857$ por $2, 3, 4, 5$ y $6$ salen sus rotaciones, $285\,714$, $428\,571$, $571\,428$, $714\,285$ y $857\,142$. Pasa lo mismo con el periodo de $1/p$ para cualquier primo de periodo completo.
+
+## Calcular el orden
+
+Lo más directo es multiplicar por $a$ módulo $n$ hasta llegar a 1: como mucho $n - 1$ pasos.
+
+```python
+def orden(a, n):
+    k, r = 1, a % n
+    while r != 1:
+        r = r * a % n
+        k += 1
+    return k
+
+print(orden(10, 7))  # 6
+```
+
+Si se conoce la factorización de $\varphi(n)$ se puede hacer mucho más rápido: el orden es un divisor de $\varphi(n)$, así que basta con probar si $a^{\varphi(n)/q} \equiv 1$ para cada factor primo $q$ de $\varphi(n)$, e ir quitando factores mientras dé 1.
+
+## Conceptos previos
+
+<Relaciones mostrar="requiere" />
+
+## Dónde aparece
+
+<Relaciones mostrar="aparece" />
