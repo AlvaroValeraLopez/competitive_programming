@@ -11,7 +11,7 @@ import {
 	type Pagina,
 } from './grafo.ts';
 
-const MEDIDAS: Medidas = { anchoTarjeta: 232, altoTarjeta: 112, anchoHueco: 24, separacionX: 40, separacionY: 72 };
+const MEDIDAS: Medidas = { anchoTarjeta: 220, altoTarjeta: 112, altoHueco: 20, separacionColumnas: 48, separacionFilas: 28 };
 
 // Las relaciones actuales de la web.
 const PAGINAS: Pagina[] = [
@@ -110,18 +110,19 @@ describe('disponer', () => {
 		}
 	});
 
-	test('cada arista sale del borde inferior del padre y llega al superior del hijo', () => {
+	test('cada arista sale del borde derecho del padre y llega al izquierdo del hijo', () => {
 		for (const arista of disposicion.aristas) {
 			const padre = caja.get(arista.desde)!;
 			const hijo = caja.get(arista.hasta)!;
-			assert.equal(arista.inicio.y, padre.y + padre.alto);
-			assert.ok(arista.inicio.x > padre.x && arista.inicio.x < padre.x + padre.ancho);
-			assert.equal(arista.fin.y, hijo.y);
-			assert.ok(arista.fin.x > hijo.x && arista.fin.x < hijo.x + hijo.ancho);
+			assert.equal(arista.inicio.x, padre.x + padre.ancho);
+			assert.ok(arista.inicio.y > padre.y && arista.inicio.y < padre.y + padre.alto);
+			assert.equal(arista.fin.x, hijo.x);
+			assert.ok(arista.fin.y > hijo.y && arista.fin.y < hijo.y + hijo.alto);
+			assert.ok(hijo.x > padre.x, `${arista.hasta} debería estar a la derecha de ${arista.desde}`);
 		}
 	});
 
-	test('las aristas que saltan capas pasan por huecos que no tocan ninguna tarjeta', () => {
+	test('las aristas que saltan columnas pasan por huecos que no tocan ninguna tarjeta', () => {
 		const larga = disposicion.aristas.find(
 			(a) => a.desde === 'conceptos/suma-de-gauss' && a.hasta === 'problemas/001-multiplos-de-3-y-5',
 		)!;
@@ -129,12 +130,30 @@ describe('disponer', () => {
 		for (const arista of disposicion.aristas) {
 			for (const hueco of arista.huecos) {
 				for (const n of disposicion.nodos) {
-					const mismaCapa = n.y === hueco.yArriba;
-					const dentro = hueco.x > n.x - MEDIDAS.separacionX / 2 && hueco.x < n.x + n.ancho + MEDIDAS.separacionX / 2;
-					assert.ok(!(mismaCapa && dentro), `la arista ${arista.desde} → ${arista.hasta} atraviesa ${n.id}`);
+					const mismaColumna = n.x === hueco.xIzquierda;
+					const dentro =
+						hueco.y > n.y - MEDIDAS.separacionFilas / 2 && hueco.y < n.y + n.alto + MEDIDAS.separacionFilas / 2;
+					assert.ok(!(mismaColumna && dentro), `la arista ${arista.desde} → ${arista.hasta} atraviesa ${n.id}`);
 				}
 			}
 		}
+	});
+
+	test('el ancho solo depende del número de niveles, no del de problemas', () => {
+		const anchoEsperado = (columnas: number) =>
+			columnas * MEDIDAS.anchoTarjeta + (columnas - 1) * MEDIDAS.separacionColumnas;
+		assert.equal(disposicion.ancho, anchoEsperado(3));
+		// Cuarenta problemas más que usan la suma de Gauss: más alto, igual de ancho.
+		const muchos: Pagina[] = Array.from({ length: 40 }, (_, i) => ({
+			id: `problemas/${100 + i}-extra`,
+			titulo: `Extra ${i}`,
+			etiqueta: `${100 + i}`,
+			numero: 100 + i,
+			conceptos: ['suma-de-gauss'],
+		}));
+		const grande = disponer(construirGrafo([...PAGINAS, ...muchos]), MEDIDAS);
+		assert.equal(grande.ancho, disposicion.ancho);
+		assert.ok(grande.alto > disposicion.alto);
 	});
 
 	test('el resultado no depende del orden de las páginas', () => {
