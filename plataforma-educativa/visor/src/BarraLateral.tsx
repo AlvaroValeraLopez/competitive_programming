@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import {
+  BookOpen,
   ChevronRight,
   Columns3,
   Database,
@@ -15,13 +16,14 @@ import {
   Table2,
   X,
 } from 'lucide-react';
-import { COLOR_SIN_GRUPO, type ErrorEsquema, type Esquema } from './modelo.ts';
+import { COLOR_SIN_GRUPO, type Documentacion, type ErrorEsquema, type Esquema } from './modelo.ts';
 import type { buscar } from './visor.ts';
 
 export type Seleccion = { tipo: 'tabla' | 'enum'; nombre: string };
 
 interface Props {
   esquema: Esquema | null;
+  documentacion: Documentacion | null;
   archivo: { nombre: string; cargado: Date } | null;
   error: ErrorEsquema | null;
   consulta: string;
@@ -42,7 +44,7 @@ interface Props {
 const MAX_RESULTADOS = 40;
 
 export function BarraLateral(p: Props) {
-  const { esquema, resultados, error } = p;
+  const { esquema, documentacion, resultados, error } = p;
   const buscador = useRef<HTMLInputElement>(null);
   const hora = p.archivo?.cargado.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
   const total = resultados ? resultados.tablas.length + resultados.columnas.length : 0;
@@ -101,6 +103,32 @@ export function BarraLateral(p: Props) {
               <div>
                 <b>{esquema.enums.length}</b>enums
               </div>
+            </div>
+          )}
+          {esquema && documentacion && (
+            <div
+              className="archivo-doc"
+              title={`${esquema.tablas.length - documentacion.sinExplicar.length} de ${esquema.tablas.length} tablas explicadas. Las explicaciones del panel de cada tabla salen de este documento`}
+            >
+              <BookOpen size={13} />
+              <span className="archivo-doc-nombre">{documentacion.archivo}</span>
+              <span className={documentacion.sinExplicar.length ? 'contador contador-aviso' : 'contador contador-ok'}>
+                {esquema.tablas.length - documentacion.sinExplicar.length}/{esquema.tablas.length}
+              </span>
+            </div>
+          )}
+          {documentacion && (documentacion.sinExplicar.length > 0 || documentacion.huerfanas.length > 0) && (
+            <div className="archivo-aviso">
+              {documentacion.sinExplicar.length > 0 && (
+                <div>
+                  Sin explicar: <span className="mono">{documentacion.sinExplicar.join(', ')}</span>
+                </div>
+              )}
+              {documentacion.huerfanas.length > 0 && (
+                <div>
+                  En el documento pero no en el esquema: <span className="mono">{documentacion.huerfanas.join(', ')}</span>
+                </div>
+              )}
             </div>
           )}
           {error && (

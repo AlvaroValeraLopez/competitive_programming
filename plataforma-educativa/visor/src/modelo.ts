@@ -81,10 +81,53 @@ export interface ErrorEsquema {
   total: number;
 }
 
-/** Lo que responde `GET /api/esquema`: el modelo o, si el DBML no compila, el error. */
+// ─── Documentación (modelo-datos.md) ────────────────────────
+
+/** Texto con formato en línea, tal cual viene del markdown: código, negrita, cursiva y enlaces. */
+export type Texto = (
+  | { tipo: 'texto'; texto: string }
+  | { tipo: 'codigo'; texto: string }
+  | { tipo: 'negrita'; hijos: Texto }
+  | { tipo: 'cursiva'; hijos: Texto }
+  | { tipo: 'enlace'; url: string; hijos: Texto }
+)[];
+
+/** Un punto de una lista, con sus subpuntos si los tiene. */
+export interface Punto {
+  texto: Texto;
+  subpuntos: Texto[];
+}
+
+/** Lo que dice el documento de una tabla. */
+export interface DocTabla {
+  /** El módulo en el que la explica, por ejemplo «1. Organización». */
+  modulo: string | null;
+  /** Su fila en la tabla «Tabla | Qué representa» del módulo. */
+  representa: Texto | null;
+  /** Los puntos del «Por qué así» de su módulo que hablan de ella. */
+  porQue: Punto[];
+  /** Las filas de «Cómo sale cada funcionalidad del modelo» que la usan. */
+  funcionalidades: { queSeVe: Texto; deDondeSale: Texto }[];
+  /** Su fila en «Valores derivados», si se recalcula a partir de otras. */
+  derivado: { valor: Texto; fuente: Texto } | null;
+  /** Las filas de «Lo que cambiaría según las preguntas abiertas» que la nombran. */
+  cambios: { pregunta: Texto; cambio: Texto }[];
+}
+
+export interface Documentacion {
+  archivo: string;
+  tablas: Record<string, DocTabla>;
+  modulos: { titulo: string; tablas: string[]; porQue: Punto[] }[];
+  /** Tablas del esquema que el documento no explica. */
+  sinExplicar: string[];
+  /** Tablas que el documento explica y ya no están en el esquema. */
+  huerfanas: string[];
+}
+
+/** Lo que responde `GET /api/esquema`: el modelo y su documentación o, si el DBML no compila, el error. */
 export type RespuestaEsquema = { archivo: string; modificado: number } & (
-  | { esquema: Esquema; error?: undefined }
-  | { error: ErrorEsquema; esquema?: undefined }
+  | { esquema: Esquema; documentacion: Documentacion | null; error?: undefined }
+  | { error: ErrorEsquema; esquema?: undefined; documentacion?: undefined }
 );
 
 export const COLOR_SIN_GRUPO = '#475569';
