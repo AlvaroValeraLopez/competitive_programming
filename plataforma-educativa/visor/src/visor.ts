@@ -1,6 +1,14 @@
 import { createContext } from 'react';
-import type { Edge, Node } from '@xyflow/react';
-import { COLOR_SIN_GRUPO, type Columna, type Esquema, type Grupo, type Relacion, type Tabla } from './modelo.ts';
+import { Position, type Edge, type Node } from '@xyflow/react';
+import {
+  COLOR_SIN_GRUPO,
+  type Cardinalidad,
+  type Columna,
+  type Esquema,
+  type Grupo,
+  type Relacion,
+  type Tabla,
+} from './modelo.ts';
 import { aGuardar, encajarGrupo, medidasDe, type Disposicion, type Medidas, type PosicionesGuardadas } from './disposicion.ts';
 
 export type NodoTabla = Node<{ tabla: Tabla; color: string }, 'tabla'>;
@@ -9,6 +17,25 @@ export type NodoVisor = NodoTabla | NodoGrupo;
 export type AristaVisor = Edge<{ relacion: Relacion }, 'relacion'>;
 
 export const idGrupo = (nombre: string) => `grupo:${nombre}`;
+
+// ─── Forma de las relaciones (la misma en pantalla y en el SVG exportado) ───
+
+export const FORMA_RELACION = { borderRadius: 10, offset: 22 };
+
+/**
+ * La marca de un extremo, dibujada sobre el borde de la tabla: pata de gallo para «muchos» y barra
+ * para «uno». Se dibuja a mano y no con `<marker>` de SVG porque Chrome dejaba las del inicio de la
+ * línea debajo de la tabla.
+ */
+export function marca(x: number, y: number, lado: Position, cardinalidad: Cardinalidad): string {
+  const fuera = lado === Position.Left ? -1 : 1;
+  if (cardinalidad === '*') {
+    const c = x + fuera * 13;
+    return `M${c},${y} L${x},${y - 6} M${c},${y} L${x},${y} M${c},${y} L${x},${y + 6}`;
+  }
+  const b = x + fuera * 7;
+  return `M${b},${y - 6} L${b},${y + 6}`;
+}
 
 // ─── Resaltado ──────────────────────────────────────────────
 

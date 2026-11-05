@@ -59,8 +59,10 @@ export function PanelDetalle({ esquema, seleccion, alCerrar, alElegirTabla, alEl
               const [tabla, columna] = uso.split('.');
               return (
                 <li key={uso} className="relacion-linea-detalle">
-                  {enlaceTabla(tabla)}
-                  <span className="mono muted">.{columna}</span>
+                  <span className="campo">
+                    {enlaceTabla(tabla)}
+                    <span className="mono muted">.{columna}</span>
+                  </span>
                 </li>
               );
             })}
@@ -129,8 +131,10 @@ export function PanelDetalle({ esquema, seleccion, alCerrar, alElegirTabla, alEl
               <li key={r.id} className="relacion-linea-detalle">
                 <span className="mono">{r.origen.columnas.join(', ')}</span>
                 <span className="muted">→</span>
-                {enlaceTabla(r.destino.tabla)}
-                <span className="mono muted">.{r.destino.columnas.join(', ')}</span>
+                <span className="campo">
+                  {enlaceTabla(r.destino.tabla)}
+                  <span className="mono muted">.{r.destino.columnas.join(', ')}</span>
+                </span>
                 <span className="spacer" />
                 <span className="insignia insignia-suave">{tipo(r)}</span>
                 {r.opcional && <span className="insignia insignia-suave">opcional</span>}
@@ -148,8 +152,10 @@ export function PanelDetalle({ esquema, seleccion, alCerrar, alElegirTabla, alEl
           <ul className="lista-detalle">
             {entrantes.map((r) => (
               <li key={r.id} className="relacion-linea-detalle">
-                {enlaceTabla(r.origen.tabla)}
-                <span className="mono muted">.{r.origen.columnas.join(', ')}</span>
+                <span className="campo">
+                  {enlaceTabla(r.origen.tabla)}
+                  <span className="mono muted">.{r.origen.columnas.join(', ')}</span>
+                </span>
                 <span className="muted">→</span>
                 <span className="mono">{r.destino.columnas.join(', ')}</span>
                 <span className="spacer" />

@@ -10,7 +10,6 @@ import {
   useReactFlow,
   type OnNodeDrag,
 } from '@xyflow/react';
-import { toPng } from 'html-to-image';
 import { TriangleAlert } from 'lucide-react';
 import type { ErrorEsquema, Esquema } from './modelo.ts';
 import { combinar, disponer, medidasDe } from './disposicion.ts';
@@ -18,6 +17,7 @@ import { guardarPosiciones, pedirEsquema, pedirPosiciones } from './api.ts';
 import { GrupoNodo, RelacionArista, TablaNodo } from './diagrama.tsx';
 import { BarraLateral, type Seleccion } from './BarraLateral.tsx';
 import { PanelDetalle } from './PanelDetalle.tsx';
+import { generarSvg } from './svg.ts';
 import {
   ContextoVisor,
   buscar,
@@ -49,7 +49,15 @@ export function App() {
   );
 }
 
-const dosFotogramas = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+let lienzoDeMedida: CanvasRenderingContext2D | null = null;
+
+/** Mide un texto con las mismas fuentes que la pantalla, para colocar bien los textos del SVG. */
+function medirTexto(texto: string, fuente: string): number {
+  lienzoDeMedida ??= document.createElement('canvas').getContext('2d');
+  if (!lienzoDeMedida) return texto.length * 7;
+  lienzoDeMedida.font = fuente;
+  return lienzoDeMedida.measureText(texto).width;
+}
 
 function Visor() {
   const flujo = useReactFlow<NodoVisor, AristaVisor>();
@@ -171,38 +179,16 @@ function Visor() {
     setTimeout(() => flujo.fitView({ padding: 0.04, duration: 400 }), 60);
   };
 
-  /**
-   * Descarga los grupos visibles como PNG a doble resolución. No hay SVG: html-to-image mete el HTML
-   * con todos sus estilos y, con este esquema, salía un archivo de casi 50 MB.
-   */
-  const exportar = async () => {
-    // Se exporta el diagrama tal cual, sin resaltados.
-    setSeleccion(null);
-    setEncima(null);
-    setConsulta('');
-    await dosFotogramas();
-    const visibles = flujo.getNodes().filter((n) => !n.hidden);
-    const vista = document.querySelector<HTMLElement>('.react-flow__viewport');
-    if (!visibles.length || !vista) return;
-    const caja = flujo.getNodesBounds(visibles);
-    const margen = 48;
-    const ancho = Math.ceil(caja.width + 2 * margen);
-    const alto = Math.ceil(caja.height + 2 * margen);
-    const opciones = {
-      backgroundColor: '#ffffff',
-      width: ancho,
-      height: alto,
-      style: {
-        width: `${ancho}px`,
-        height: `${alto}px`,
-        transform: `translate(${margen - caja.x}px, ${margen - caja.y}px) scale(1)`,
-      },
-    };
-    const url = await toPng(vista, { ...opciones, pixelRatio: 2 });
+  /** Descarga los grupos visibles como SVG vectorial (ver svg.ts), sin resaltados. */
+  const exportar = () => {
+    if (!esquema) return;
+    const svg = generarSvg(esquema, actual.current.nodos, { medirTexto });
+    const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
     const enlace = document.createElement('a');
-    enlace.download = `${(archivo?.nombre ?? 'esquema').replace(/\.dbml$/, '')}.png`;
+    enlace.download = `${(archivo?.nombre ?? 'esquema').replace(/\.dbml$/, '')}.svg`;
     enlace.href = url;
     enlace.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   return (
