@@ -96,6 +96,26 @@ test('las relaciones van de la clave ajena a la tabla referenciada', () => {
   assert.equal(deAlumno.entrantes.length, 1);
 });
 
+test('en las 1-1 el origen es el lado que declara la referencia, se llame como se llame', () => {
+  const e = leerEsquema(`
+Table alumno {
+  usuario_id uuid [pk]
+}
+Table progreso {
+  alumno_id uuid [pk, ref: - alumno.usuario_id]
+}
+Table ficha {
+  progreso_id uuid [pk]
+}
+Ref: ficha.progreso_id - progreso.alumno_id
+`);
+  assert.deepEqual(
+    e.relaciones.map((r) => `${r.origen.tabla}.${r.origen.columnas[0]} -> ${r.destino.tabla}.${r.destino.columnas[0]}`),
+    ['progreso.alumno_id -> alumno.usuario_id', 'ficha.progreso_id -> progreso.alumno_id'],
+  );
+  assert.deepEqual(e.tablas.map((t) => t.columnas[0].esFk), [false, true, true]);
+});
+
 test('lee los enums con sus valores y dónde se usan', () => {
   assert.deepEqual(leerEsquema(EJEMPLO).enums, [
     {
