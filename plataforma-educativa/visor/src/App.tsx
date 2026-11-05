@@ -11,7 +11,7 @@ import {
   type OnNodeDrag,
 } from '@xyflow/react';
 import { TriangleAlert } from 'lucide-react';
-import type { ErrorEsquema, Esquema } from './modelo.ts';
+import type { Documentacion, ErrorEsquema, Esquema } from './modelo.ts';
 import { combinar, disponer, medidasDe } from './disposicion.ts';
 import { guardarPosiciones, pedirEsquema, pedirPosiciones } from './api.ts';
 import { GrupoNodo, RelacionArista, TablaNodo } from './diagrama.tsx';
@@ -63,6 +63,7 @@ function Visor() {
   const flujo = useReactFlow<NodoVisor, AristaVisor>();
   const [esquema, setEsquema] = useState<Esquema | null>(null);
   const [archivo, setArchivo] = useState<{ nombre: string; cargado: Date } | null>(null);
+  const [documentacion, setDocumentacion] = useState<Documentacion | null>(null);
   const [error, setError] = useState<ErrorEsquema | null>(null);
   const [nodos, setNodos, alCambiarNodos] = useNodesState<NodoVisor>([]);
   const [ocultos, setOcultos] = useState<Set<string>>(new Set());
@@ -85,6 +86,7 @@ function Visor() {
       const guardadas = inicial ? await pedirPosiciones() : anterior ? posicionesActuales(anterior, nodosAnteriores) : null;
       const auto = await disponer(nuevo);
       setEsquema(nuevo);
+      setDocumentacion(respuesta.documentacion);
       setNodos(construirNodos(nuevo, combinar(nuevo, auto, guardadas), ocultosAhora));
       setError(null);
       if (inicial) setTimeout(() => flujo.fitView({ padding: 0.04 }), 60);
@@ -196,6 +198,7 @@ function Visor() {
       <div className="app">
         <BarraLateral
           esquema={esquema}
+          documentacion={documentacion}
           archivo={archivo}
           error={error}
           consulta={consulta}
@@ -270,6 +273,7 @@ function Visor() {
         {esquema && seleccion && (
           <PanelDetalle
             esquema={esquema}
+            documentacion={documentacion}
             seleccion={seleccion}
             alCerrar={() => setSeleccion(null)}
             alElegirTabla={elegirTabla}

@@ -13,7 +13,14 @@ npm --prefix plataforma-educativa/visor install
 npm --prefix plataforma-educativa/visor run dev      # http://localhost:5200
 ```
 
-Dibuja cada módulo en un grupo de color. Al hacer clic en una tabla se ve todo lo que dice el DBML de ella: notas, columnas, relaciones e índices. Además, se actualiza solo cada vez que se guarda `esquema.dbml`.
+Dibuja cada módulo en un grupo de color. Al hacer clic en una tabla se ve todo lo que dice el DBML de ella (notas, columnas, relaciones e índices) junto con lo que explica de ella **este documento**. Además, se actualiza solo cada vez que se guarda `esquema.dbml` o este archivo.
+
+Para que el visor encuentre lo que dice este documento de cada tabla, hay que mantener su estructura:
+
+- **Módulos:** cada uno es un `## N. Título`.
+- **Qué representa:** cada módulo tiene su tabla «Tabla | Qué representa», con el nombre de cada tabla en código.
+- **Por qué así:** va como una lista tras el párrafo «**Por qué así**».
+- **Tablas del final:** son las de funcionalidades, valores derivados y preguntas abiertas, y en ellas las tablas se nombran en código.
 
 El mismo archivo sigue sirviendo en [dbdiagram.io](https://dbdiagram.io/d) si algún día hace falta: se pega en su editor y desde allí se puede exportar a SQL de PostgreSQL.
 
