@@ -1,0 +1,283 @@
+{
+  "grupos": {
+    "organizacion": {
+      "x": 0,
+      "y": 0
+    },
+    "curriculo_y_contenido": {
+      "x": 1436,
+      "y": 0
+    },
+    "ejercicios_y_correccion": {
+      "x": 0,
+      "y": 1234
+    },
+    "tareas": {
+      "x": 1816,
+      "y": 1234
+    },
+    "seguimiento": {
+      "x": 2582,
+      "y": 1234
+    },
+    "examenes_y_rutas": {
+      "x": 0,
+      "y": 2481
+    },
+    "asistente": {
+      "x": 1374,
+      "y": 2481
+    },
+    "gamificacion": {
+      "x": 2170,
+      "y": 2481
+    }
+  },
+  "tablas": {
+    "centro": {
+      "x": 28,
+      "y": 56,
+      "grupo": "organizacion"
+    },
+    "usuario": {
+      "x": 355,
+      "y": 66,
+      "grupo": "organizacion"
+    },
+    "alumno": {
+      "x": 708,
+      "y": 748,
+      "grupo": "organizacion"
+    },
+    "profesor": {
+      "x": 713,
+      "y": 71,
+      "grupo": "organizacion"
+    },
+    "tutor_legal": {
+      "x": 738,
+      "y": 948,
+      "grupo": "organizacion"
+    },
+    "alumno_tutor": {
+      "x": 1058,
+      "y": 920,
+      "grupo": "organizacion"
+    },
+    "curso_academico": {
+      "x": 368,
+      "y": 332,
+      "grupo": "organizacion"
+    },
+    "nivel_educativo": {
+      "x": 348,
+      "y": 748,
+      "grupo": "organizacion"
+    },
+    "asignatura": {
+      "x": 348,
+      "y": 532,
+      "grupo": "organizacion"
+    },
+    "clase": {
+      "x": 688,
+      "y": 438,
+      "grupo": "organizacion"
+    },
+    "docencia": {
+      "x": 1058,
+      "y": 433,
+      "grupo": "organizacion"
+    },
+    "matricula": {
+      "x": 1058,
+      "y": 692,
+      "grupo": "organizacion"
+    },
+    "bloque": {
+      "x": 28,
+      "y": 115,
+      "grupo": "curriculo_y_contenido"
+    },
+    "concepto": {
+      "x": 356,
+      "y": 82,
+      "grupo": "curriculo_y_contenido"
+    },
+    "prerrequisito": {
+      "x": 678,
+      "y": 56,
+      "grupo": "curriculo_y_contenido"
+    },
+    "unidad_didactica": {
+      "x": 348,
+      "y": 480,
+      "grupo": "curriculo_y_contenido"
+    },
+    "unidad_concepto": {
+      "x": 678,
+      "y": 500,
+      "grupo": "curriculo_y_contenido"
+    },
+    "explicacion": {
+      "x": 708,
+      "y": 256,
+      "grupo": "curriculo_y_contenido"
+    },
+    "formato": {
+      "x": 738,
+      "y": 678,
+      "grupo": "curriculo_y_contenido"
+    },
+    "representacion": {
+      "x": 1058,
+      "y": 269,
+      "grupo": "curriculo_y_contenido"
+    },
+    "tipologia": {
+      "x": 28,
+      "y": 260,
+      "grupo": "ejercicios_y_correccion"
+    },
+    "plantilla_ejercicio": {
+      "x": 348,
+      "y": 210,
+      "grupo": "ejercicios_y_correccion"
+    },
+    "ejercicio": {
+      "x": 708,
+      "y": 194,
+      "grupo": "ejercicios_y_correccion"
+    },
+    "ejercicio_concepto": {
+      "x": 1088,
+      "y": 56,
+      "grupo": "ejercicios_y_correccion"
+    },
+    "paso_resolucion": {
+      "x": 1088,
+      "y": 234,
+      "grupo": "ejercicios_y_correccion"
+    },
+    "opcion_respuesta": {
+      "x": 1088,
+      "y": 876,
+      "grupo": "ejercicios_y_correccion"
+    },
+    "error_tipico": {
+      "x": 768,
+      "y": 939,
+      "grupo": "ejercicios_y_correccion"
+    },
+    "intento": {
+      "x": 1108,
+      "y": 478,
+      "grupo": "ejercicios_y_correccion"
+    },
+    "intento_error": {
+      "x": 1448,
+      "y": 293,
+      "grupo": "ejercicios_y_correccion"
+    },
+    "tarea": {
+      "x": 28,
+      "y": 162,
+      "grupo": "tareas"
+    },
+    "tarea_ejercicio": {
+      "x": 388,
+      "y": 56,
+      "grupo": "tareas"
+    },
+    "entrega": {
+      "x": 388,
+      "y": 256,
+      "grupo": "tareas"
+    },
+    "dominio_concepto": {
+      "x": 624,
+      "y": 56,
+      "grupo": "seguimiento"
+    },
+    "preferencia_formato": {
+      "x": 28,
+      "y": 56,
+      "grupo": "seguimiento"
+    },
+    "consumo_contenido": {
+      "x": 316,
+      "y": 56,
+      "grupo": "seguimiento"
+    },
+    "observacion_clase": {
+      "x": 28,
+      "y": 382,
+      "grupo": "seguimiento"
+    },
+    "examen": {
+      "x": 356,
+      "y": 76,
+      "grupo": "examenes_y_rutas"
+    },
+    "examen_concepto": {
+      "x": 676,
+      "y": 56,
+      "grupo": "examenes_y_rutas"
+    },
+    "resultado_examen": {
+      "x": 676,
+      "y": 234,
+      "grupo": "examenes_y_rutas"
+    },
+    "ruta": {
+      "x": 676,
+      "y": 412,
+      "grupo": "examenes_y_rutas"
+    },
+    "paso_ruta": {
+      "x": 996,
+      "y": 390,
+      "grupo": "examenes_y_rutas"
+    },
+    "notificacion": {
+      "x": 28,
+      "y": 56,
+      "grupo": "examenes_y_rutas"
+    },
+    "conversacion": {
+      "x": 28,
+      "y": 56,
+      "grupo": "asistente"
+    },
+    "mensaje": {
+      "x": 418,
+      "y": 67,
+      "grupo": "asistente"
+    },
+    "movimiento_puntos": {
+      "x": 348,
+      "y": 316,
+      "grupo": "gamificacion"
+    },
+    "progreso_juego": {
+      "x": 348,
+      "y": 56,
+      "grupo": "gamificacion"
+    },
+    "nivel_juego": {
+      "x": 28,
+      "y": 89,
+      "grupo": "gamificacion"
+    },
+    "logro": {
+      "x": 28,
+      "y": 373,
+      "grupo": "gamificacion"
+    },
+    "logro_alumno": {
+      "x": 348,
+      "y": 604,
+      "grupo": "gamificacion"
+    }
+  }
+}

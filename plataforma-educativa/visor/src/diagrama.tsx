@@ -1,14 +1,15 @@
 import { memo, useContext } from 'react';
 import { Handle, Position, getSmoothStepPath, type EdgeProps, type NodeProps } from '@xyflow/react';
 import { KeyRound, Link2, StickyNote } from 'lucide-react';
-import type { Cardinalidad } from './modelo.ts';
 import {
   ContextoVisor,
+  FORMA_RELACION,
   conAlfa,
   descripcionColumna,
   descripcionRelacion,
   estadoArista,
   estadoTabla,
+  marca,
   type AristaVisor,
   type NodoGrupo,
   type NodoTabla,
@@ -61,26 +62,11 @@ export const GrupoNodo = memo(function GrupoNodo({ data }: NodeProps<NodoGrupo>)
   );
 });
 
-/**
- * La marca de un extremo, dibujada sobre el borde de la tabla: pata de gallo para «muchos» y barra
- * para «uno». Se dibuja a mano y no con `<marker>` de SVG porque Chrome dejaba las del inicio de la
- * línea debajo de la tabla.
- */
-function marca(x: number, y: number, lado: Position, cardinalidad: Cardinalidad): string {
-  const fuera = lado === Position.Left ? -1 : 1;
-  if (cardinalidad === '*') {
-    const c = x + fuera * 13;
-    return `M${c},${y} L${x},${y - 6} M${c},${y} L${x},${y} M${c},${y} L${x},${y + 6}`;
-  }
-  const b = x + fuera * 7;
-  return `M${b},${y - 6} L${b},${y + 6}`;
-}
-
 export const RelacionArista = memo(function RelacionArista(props: EdgeProps<AristaVisor>) {
   const contexto = useContext(ContextoVisor);
   const relacion = props.data!.relacion;
   const estado = estadoArista(contexto, relacion);
-  const [ruta] = getSmoothStepPath({ ...props, borderRadius: 10, offset: 22 });
+  const [ruta] = getSmoothStepPath({ ...props, ...FORMA_RELACION });
   const marcas = [
     marca(props.sourceX, props.sourceY, props.sourcePosition, relacion.origen.cardinalidad),
     marca(props.targetX, props.targetY, props.targetPosition, relacion.destino.cardinalidad),
