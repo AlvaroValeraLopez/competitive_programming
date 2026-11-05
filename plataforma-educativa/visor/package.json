@@ -1,0 +1,29 @@
+{
+  "name": "visor-esquema",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "typecheck": "tsc -b",
+    "test": "node --test \"src/**/*.test.ts\""
+  },
+  "dependencies": {
+    "@dbml/core": "^11.0.1",
+    "@xyflow/react": "^12.12.1",
+    "elkjs": "^0.12.1",
+    "html-to-image": "1.11.11",
+    "lucide-react": "^1.69.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.5"
+  }
+}
