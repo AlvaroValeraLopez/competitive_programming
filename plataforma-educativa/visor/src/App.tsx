@@ -36,6 +36,11 @@ import {
 const tiposNodo = { tabla: TablaNodo, grupo: GrupoNodo };
 const tiposArista = { relacion: RelacionArista };
 
+// React Flow separa cada panel 15 px del borde (`.react-flow__panel`).
+const MARGEN_PANEL = 15;
+const MINIMAPA = { ancho: 200, alto: 150 };
+const SEPARACION_CONTROLES = 8;
+
 export function App() {
   return (
     <ReactFlowProvider>
@@ -253,13 +258,20 @@ function Visor() {
             edgesFocusable={false}
             minZoom={0.05}
             maxZoom={2}
+            attributionPosition="bottom-left"
           >
             <Background gap={24} color="#dfe3ea" />
-            <Controls showInteractive={false} position="top-right" />
+            {/* Los controles van pegados a la izquierda del minimapa, los dos abajo a la derecha. */}
+            <Controls
+              showInteractive={false}
+              position="bottom-right"
+              style={{ marginRight: MARGEN_PANEL + MINIMAPA.ancho + SEPARACION_CONTROLES }}
+            />
             <MiniMap
               pannable
               zoomable
-              position="bottom-left"
+              position="bottom-right"
+              style={{ width: MINIMAPA.ancho, height: MINIMAPA.alto }}
               nodeStrokeWidth={0}
               maskColor="rgba(246, 247, 249, 0.75)"
               nodeColor={(n) =>
