@@ -1,6 +1,6 @@
 # Plataforma educativa (nombre provisional)
 
-> **Documento vivo.** Aquí se recoge, de forma ordenada, todo lo que vamos decidiendo de la aplicación: qué es, para quién, qué hace y por qué. El esquema de la base de datos está en [esquema.dbml](esquema.dbml) y se ve como diagrama con el [visor propio](visor/README.md). Lo que representa cada parte del esquema se explica en [modelo-datos.md](modelo-datos.md).
+> **Documento vivo.** Aquí se recoge, de forma ordenada, todo lo que vamos decidiendo de la aplicación: qué es, para quién, qué hace y por qué. El esquema de la base de datos está en [esquema.dbml](esquema.dbml) y se ve como diagrama con el [visor propio](visor/README.md). Lo que representa cada parte del esquema se explica en [modelo-datos.md](modelo-datos.md). Para recorrer la plataforma por dominios funcionales está el [mapa](mapa/README.md): se abre con doble clic en `mapa/index.html`.
 >
 > **Estado:** diseño. Todavía no hay código de la aplicación; solo el visor del esquema, que es una herramienta para diseñarla.
 
@@ -199,3 +199,4 @@ Las marcadas con ⭐ son las que más cambian el modelo de datos.
 | 2026-11-05 | [Visor propio](visor/README.md) del esquema, para no depender de las funciones de pago de dbdiagram.io. Lee el DBML con el parser oficial y muestra grupos de color, cardinalidades, notas y detalle de cada tabla. Además se recarga en vivo, guarda la disposición y exporta a PNG |
 | 2026-11-05 | Visor: barra lateral rediseñada (tarjeta del archivo, buscador con atajo, leyenda completa y acciones fijas abajo) y exportación a SVG vectorial dibujado a mano, en lugar de PNG |
 | 2026-11-05 | El panel de cada tabla del visor muestra lo que explica de ella `modelo-datos.md`: qué representa, el «Por qué así», funcionalidades, valores derivados y preguntas abiertas. Se recarga en vivo al editar el documento |
+| 2026-11-05 | [Mapa de la plataforma](mapa/README.md): una página en HTML, CSS y JavaScript para explorar los 8 dominios funcionales, cómo se conectan y qué tiene cada uno. El visor corrige además el sentido de las relaciones 1-1 cuya columna referenciada no se llama `id`, como `progreso_juego.alumno_id → alumno.usuario_id` |

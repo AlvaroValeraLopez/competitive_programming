@@ -32,14 +32,23 @@ export class ErrorDbml extends Error {
 
 type Normalizado = ReturnType<ReturnType<InstanceType<typeof Parser>['parse']>['normalize']>;
 
+/** Lo que hace falta del modelo sin normalizar: dónde está escrita cada referencia. */
+interface RefConPosicion {
+  id: number;
+  token?: { start?: { offset?: number } };
+  endpoints: { tableName: string; fieldNames: string[]; token?: { start?: { offset?: number } } }[];
+}
+
 interface Diagnostico {
   message?: string;
   location?: { start?: { line?: number; column?: number } };
 }
 
-function compilar(texto: string): Normalizado {
+function compilar(texto: string): { n: Normalizado; refs: RefConPosicion[] } {
   try {
-    return new Parser().parse(texto, 'dbmlv2').normalize();
+    const db = new Parser().parse(texto, 'dbmlv2');
+    const refs = (db.schemas as unknown as { refs: RefConPosicion[] }[]).flatMap((s) => s.refs);
+    return { n: db.normalize(), refs };
   } catch (error) {
     const diags: Diagnostico[] = (error as { diags?: Diagnostico[] }).diags ?? [];
     const primero = diags[0];
@@ -63,7 +72,19 @@ const porId = <T extends { id: number }>(coleccion: Record<number, T>) =>
 
 /** Convierte un texto DBML en el modelo que dibuja el visor. Lanza `ErrorDbml` si no compila. */
 export function leerEsquema(texto: string): Esquema {
-  const n = compilar(texto);
+  const { n, refs } = compilar(texto);
+
+  // Qué lado declara cada referencia, que en las 1-1 es el que guarda la clave ajena. En una
+  // referencia en línea (`campo uuid [ref: - otra.id]`) el parser pone primero el lado referenciado,
+  // y el campo que la declara es el otro; en una suelta (`Ref: a.x - b.y`), el que la declara es el
+  // de la izquierda.
+  const declarante = new Map<number, string>();
+  for (const r of refs) {
+    const [primero, segundo] = r.endpoints;
+    const enLinea = r.token?.start?.offset !== undefined && r.token.start.offset === primero.token?.start?.offset;
+    const lado = enLinea ? segundo : primero;
+    declarante.set(r.id, `${lado.tableName}.${lado.fieldNames.join(',')}`);
+  }
 
   const grupos: Grupo[] = porId(n.tableGroups).map((g) => ({
     nombre: g.name,
@@ -75,12 +96,10 @@ export function leerEsquema(texto: string): Esquema {
   const columnasFk = new Set<number>();
   const relaciones: Relacion[] = porId(n.refs).map((ref) => {
     let [a, b] = ref.endpointIds.map((id) => n.endpoints[id]);
-    // El origen es el lado «muchos». En las 1-1 el parser no dice quién guarda la clave ajena
-    // (las referencias en línea dan primero la tabla referenciada; las sueltas, el orden escrito),
-    // así que el destino es el lado que es un `id` a secas.
-    const esId = (e: typeof a) => e.fieldNames.length === 1 && e.fieldNames[0] === 'id';
+    // El origen es el lado «muchos»; en las 1-1, el que declara la referencia.
+    const clave = (e: typeof a) => `${e.tableName}.${e.fieldNames.join(',')}`;
     if (a.relation === '1' && b.relation === '*') [a, b] = [b, a];
-    else if (a.relation === '1' && b.relation === '1' && esId(a) && !esId(b)) [a, b] = [b, a];
+    else if (a.relation === '1' && b.relation === '1' && declarante.get(ref.id) === clave(b)) [a, b] = [b, a];
     a.fieldIds.forEach((id) => columnasFk.add(id));
     const opcional = a.fieldIds.some((id) => !n.fields[id].not_null && !n.fields[id].pk);
     const extremo = (e: typeof a): Extremo => ({
