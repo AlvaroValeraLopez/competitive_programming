@@ -1,0 +1,965 @@
+// Plataforma educativa · esquema v0.1
+//
+// Para verlo: copia este archivo entero y pégalo en el editor de https://dbdiagram.io/d
+// Qué representa cada tabla y por qué está así: modelo-datos.md
+
+Project plataforma_educativa {
+  database_type: 'PostgreSQL'
+  Note: '''
+  Esquema v0.1 de la plataforma educativa: alumnos y profesores de matemáticas y ciencias.
+  Lo que significa cada módulo y cada tabla está en plataforma-educativa/modelo-datos.md.
+  '''
+}
+
+// ─────────────────────────────────────────────────────────────
+// Módulos
+// ─────────────────────────────────────────────────────────────
+
+TableGroup organizacion [color: #4F46E5] {
+  Note: '1. Quién es quién y qué alumno está en qué clase con qué profesor'
+  centro
+  usuario
+  alumno
+  profesor
+  tutor_legal
+  alumno_tutor
+  curso_academico
+  nivel_educativo
+  asignatura
+  clase
+  docencia
+  matricula
+}
+
+TableGroup curriculo_y_contenido [color: #0EA5E9] {
+  Note: '2. Qué se aprende, en qué orden, cómo lo da cada profesor y en qué formatos se explica'
+  bloque
+  concepto
+  prerrequisito
+  unidad_didactica
+  unidad_concepto
+  explicacion
+  formato
+  representacion
+}
+
+TableGroup ejercicios_y_correccion [color: #10B981] {
+  Note: '3. Los ejercicios, sus soluciones y cada respuesta de cada alumno con su diagnóstico'
+  tipologia
+  plantilla_ejercicio
+  ejercicio
+  ejercicio_concepto
+  paso_resolucion
+  opcion_respuesta
+  error_tipico
+  intento
+  intento_error
+}
+
+TableGroup tareas [color: #F59E0B] {
+  Note: '4. Lo que manda el profesor'
+  tarea
+  tarea_ejercicio
+  entrega
+}
+
+TableGroup seguimiento [color: #EF4444] {
+  Note: '5. Cuánto sabe cada alumno, cómo prefiere aprender y qué le contamos al profesor'
+  dominio_concepto
+  preferencia_formato
+  consumo_contenido
+  observacion_clase
+}
+
+TableGroup examenes_y_rutas [color: #8B5CF6] {
+  Note: '6. El director de estudios, la ruta de aprendizaje y la práctica bajo demanda'
+  examen
+  examen_concepto
+  resultado_examen
+  ruta
+  paso_ruta
+  notificacion
+}
+
+TableGroup asistente [color: #EC4899] {
+  Note: '7. Las conversaciones con el tutor'
+  conversacion
+  mensaje
+}
+
+TableGroup gamificacion [color: #84CC16] {
+  Note: '8. Puntos, niveles, logros y rankings'
+  movimiento_puntos
+  progreso_juego
+  nivel_juego
+  logro
+  logro_alumno
+}
+
+// ─────────────────────────────────────────────────────────────
+// Valores posibles
+// ─────────────────────────────────────────────────────────────
+
+Enum tipo_centro {
+  publico
+  concertado
+  privado
+}
+
+Enum etapa_educativa {
+  primaria
+  eso
+  bachillerato
+}
+
+Enum area_asignatura {
+  matematicas
+  ciencias
+}
+
+Enum modo_desbloqueo {
+  bloquear [note: 'no se puede abrir sin dominar los prerrequisitos']
+  avisar [note: 'se abre con un aviso y se propone un refuerzo']
+}
+
+Enum rol_docente {
+  titular
+  apoyo
+}
+
+Enum fuerza_prerrequisito {
+  necesario [note: 'bloquea']
+  recomendable [note: 'solo avisa']
+}
+
+Enum estado_unidad {
+  planificada
+  en_curso
+  impartida
+}
+
+Enum profundidad {
+  intro
+  base
+  ampliacion
+}
+
+Enum origen_contenido {
+  equipo
+  ia
+  profesor
+}
+
+Enum estado_representacion {
+  borrador
+  revisada
+  publicada
+}
+
+Enum nivel_dificultad {
+  facil
+  media
+  dificil
+}
+
+Enum tipo_respuesta {
+  numerica
+  expresion
+  opcion_multiple
+  verdadero_falso
+  desarrollo
+}
+
+Enum origen_ejercicio {
+  catalogo
+  profesor
+  generado
+}
+
+Enum visibilidad {
+  privado [note: 'solo las clases del autor']
+  centro [note: 'todo el centro del autor']
+  catalogo [note: 'todos los centros']
+}
+
+Enum estado_ejercicio {
+  borrador
+  verificado [note: 'su solución se ha comprobado por cálculo']
+  publicado
+  retirado
+}
+
+Enum peso_concepto {
+  principal
+  secundario
+}
+
+Enum detector {
+  regla
+  ia
+}
+
+Enum estado_tarea {
+  borrador
+  publicada
+  cerrada
+}
+
+Enum mostrar_solucion {
+  al_responder
+  al_entregar
+  al_cerrar
+}
+
+Enum estado_entrega {
+  pendiente
+  en_curso
+  entregada
+  fuera_de_plazo
+}
+
+Enum estado_concepto {
+  bloqueado
+  disponible
+  en_progreso
+  dominado
+}
+
+Enum tipo_observacion {
+  debilidad
+  fortaleza
+  alumno_en_riesgo
+  participacion
+}
+
+Enum estado_observacion {
+  nueva
+  vista
+  atendida
+  descartada
+}
+
+Enum tipo_ruta {
+  temario [note: 'la ruta de aprendizaje de su clase']
+  examen [note: 'el mapa de estudio del director de estudios']
+  refuerzo [note: 'cuando le falta un prerrequisito']
+  practica [note: 'los ejercicios que pide bajo demanda']
+}
+
+Enum estado_ruta {
+  activa
+  completada
+  abandonada
+}
+
+Enum tipo_paso {
+  contenido
+  ejercicio
+  repaso
+}
+
+Enum estado_paso {
+  pendiente
+  hecho
+  saltado
+}
+
+Enum tipo_notificacion {
+  examen_proximo
+  tarea_nueva
+  tarea_vence
+  desbloqueo
+  nivel_nuevo
+  bandeja
+}
+
+Enum desenlace_conversacion {
+  lo_resolvio
+  vio_solucion
+  abandono
+  duda_resuelta
+}
+
+Enum autor_mensaje {
+  alumno
+  asistente
+}
+
+Enum tipo_mensaje {
+  pregunta
+  pista
+  explicacion
+  animo
+}
+
+Enum motivo_puntos {
+  acierto
+  paso_ruta
+  racha
+  examen_preparado
+  logro
+}
+
+// ─────────────────────────────────────────────────────────────
+// 1. Organización
+// ─────────────────────────────────────────────────────────────
+
+Table centro {
+  id uuid [pk]
+  nombre varchar [not null]
+  codigo_oficial varchar [unique, note: 'código del centro en la consejería']
+  localidad varchar
+  tipo tipo_centro
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+}
+
+Table usuario {
+  id uuid [pk]
+  centro_id uuid [ref: > centro.id, note: 'nulo si no viene por un centro (P1)']
+  email varchar [not null, unique]
+  nombre varchar [not null]
+  apellidos varchar
+  idioma varchar [not null, default: 'es']
+  ultimo_acceso_en timestamptz
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+}
+
+Table alumno {
+  usuario_id uuid [pk, ref: - usuario.id]
+  fecha_nacimiento date [note: 'decide si hace falta consentimiento']
+  nivel_id uuid [ref: > nivel_educativo.id, note: 'nivel educativo actual']
+  alias varchar [note: 'lo que ven sus compañeros en el ranking']
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+}
+
+Table profesor {
+  usuario_id uuid [pk, ref: - usuario.id]
+  especialidad varchar
+  es_admin_centro boolean [not null, default: false]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+}
+
+Table tutor_legal {
+  id uuid [pk]
+  nombre varchar [not null]
+  email varchar
+  telefono varchar
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+}
+
+Table alumno_tutor {
+  alumno_id uuid [not null, ref: > alumno.usuario_id]
+  tutor_id uuid [not null, ref: > tutor_legal.id]
+  parentesco varchar
+  consentimiento_en timestamptz [note: 'nulo = sin consentimiento']
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  indexes {
+    (alumno_id, tutor_id) [pk]
+  }
+}
+
+Table curso_academico {
+  id uuid [pk]
+  nombre varchar [not null, unique, note: '2026-27']
+  fecha_inicio date [not null]
+  fecha_fin date [not null]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+}
+
+Table nivel_educativo {
+  id uuid [pk]
+  etapa etapa_educativa [not null]
+  curso int [not null, note: '1 a 6']
+  nombre varchar [not null, note: '3º ESO']
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  indexes {
+    (etapa, curso) [unique]
+  }
+}
+
+Table asignatura {
+  id uuid [pk]
+  nombre varchar [not null, unique, note: 'Matemáticas, Física y Química…']
+  area area_asignatura [not null]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+}
+
+Table clase {
+  id uuid [pk]
+  centro_id uuid [not null, ref: > centro.id]
+  curso_academico_id uuid [not null, ref: > curso_academico.id]
+  nivel_id uuid [not null, ref: > nivel_educativo.id]
+  asignatura_id uuid [not null, ref: > asignatura.id]
+  nombre varchar [not null, note: '3º ESO B']
+  codigo_invitacion varchar [unique, note: 'para que se unan los alumnos']
+  ranking_activo boolean [not null, default: true, note: 'el profesor puede apagarlo']
+  modo_desbloqueo modo_desbloqueo [not null, default: 'avisar', note: 'P16']
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  Note: 'Un grupo en una asignatura durante un curso académico: Matemáticas de 3º ESO B en 2026-27'
+}
+
+Table docencia {
+  clase_id uuid [not null, ref: > clase.id]
+  profesor_id uuid [not null, ref: > profesor.usuario_id]
+  rol rol_docente [not null, default: 'titular']
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  indexes {
+    (clase_id, profesor_id) [pk]
+  }
+}
+
+Table matricula {
+  clase_id uuid [not null, ref: > clase.id]
+  alumno_id uuid [not null, ref: > alumno.usuario_id]
+  fecha_alta date [not null]
+  fecha_baja date [note: 'nulo = sigue en la clase']
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  indexes {
+    (clase_id, alumno_id) [pk]
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// 2. Currículo y contenido
+// ─────────────────────────────────────────────────────────────
+
+Table bloque {
+  id uuid [pk]
+  asignatura_id uuid [not null, ref: > asignatura.id]
+  nombre varchar [not null, note: 'Números, Álgebra, Geometría…']
+  orden int [not null]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+}
+
+Table concepto {
+  id uuid [pk]
+  bloque_id uuid [not null, ref: > bloque.id]
+  nivel_id uuid [not null, ref: > nivel_educativo.id, note: 'nivel en el que se introduce']
+  codigo varchar [not null, unique, note: 'algebra.ecuaciones.segundo-grado']
+  nombre varchar [not null]
+  descripcion text
+  objetivo text [note: 'qué tiene que saber hacer el alumno']
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  Note: 'La unidad mínima de conocimiento. Todo cuelga de aquí'
+}
+
+Table prerrequisito {
+  concepto_id uuid [not null, ref: > concepto.id]
+  requiere_id uuid [not null, ref: > concepto.id, note: 'el concepto previo']
+  fuerza fuerza_prerrequisito [not null, default: 'necesario']
+  dominio_minimo decimal(3,2) [not null, default: 0.70, note: 'para desbloquear (P17)']
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  indexes {
+    (concepto_id, requiere_id) [pk]
+  }
+}
+
+Table unidad_didactica {
+  id uuid [pk]
+  clase_id uuid [not null, ref: > clase.id]
+  titulo varchar [not null, note: 'Tema 4: Ecuaciones']
+  orden int [not null]
+  fecha_inicio date
+  fecha_fin date
+  estado estado_unidad [not null, default: 'planificada']
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  Note: 'El tema tal y como lo da un profesor, con sus fechas. Apunta a conceptos del catálogo'
+}
+
+Table unidad_concepto {
+  unidad_id uuid [not null, ref: > unidad_didactica.id]
+  concepto_id uuid [not null, ref: > concepto.id]
+  orden int [not null]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  indexes {
+    (unidad_id, concepto_id) [pk]
+  }
+}
+
+Table explicacion {
+  id uuid [pk]
+  concepto_id uuid [not null, ref: > concepto.id]
+  titulo varchar [not null]
+  idea_clave text [note: 'lo que tiene que quedar claro']
+  profundidad profundidad [not null, default: 'base']
+  orden int [not null]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+}
+
+Table formato {
+  codigo varchar [pk, note: 'texto, video, interactivo, audio, ejemplo_resuelto, esquema']
+  nombre varchar [not null]
+  descripcion text
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+}
+
+Table representacion {
+  id uuid [pk]
+  explicacion_id uuid [not null, ref: > explicacion.id]
+  formato_codigo varchar [not null, ref: > formato.codigo]
+  idioma varchar [not null, default: 'es', note: 'P11']
+  cuerpo text [note: 'Markdown con LaTeX, si es texto']
+  url varchar [note: 'si es vídeo, audio o interactivo']
+  duracion_min int
+  origen origen_contenido [not null]
+  estado estado_representacion [not null, default: 'borrador']
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  Note: 'Una explicación en un formato concreto. Una explicación tiene varias'
+}
+
+// ─────────────────────────────────────────────────────────────
+// 3. Ejercicios y corrección
+// ─────────────────────────────────────────────────────────────
+
+Table tipologia {
+  id uuid [pk]
+  bloque_id uuid [not null, ref: > bloque.id]
+  nombre varchar [not null, note: 'problemas de móviles']
+  descripcion text
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+}
+
+Table plantilla_ejercicio {
+  id uuid [pk]
+  tipologia_id uuid [not null, ref: > tipologia.id]
+  enunciado_patron text [not null, note: 'con huecos para los parámetros']
+  parametros jsonb [not null, note: 'rangos y restricciones']
+  generador varchar [not null, note: 'código que calcula la solución y los pasos']
+  dificultad nivel_dificultad [not null]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+}
+
+Table ejercicio {
+  id uuid [pk]
+  tipologia_id uuid [not null, ref: > tipologia.id]
+  plantilla_id uuid [ref: > plantilla_ejercicio.id, note: 'si sale de una plantilla']
+  enunciado text [not null, note: 'Markdown con LaTeX']
+  tipo_respuesta tipo_respuesta [not null]
+  solucion jsonb [not null, note: 'respuesta canónica y formas equivalentes']
+  dificultad nivel_dificultad [not null]
+  dificultad_estimada decimal(6,2) [note: 'calibrada con las respuestas reales']
+  origen origen_ejercicio [not null]
+  autor_id uuid [ref: > profesor.usuario_id, note: 'profesor, si lo escribió él']
+  generado_para_id uuid [ref: > alumno.usuario_id, note: 'alumno, si se generó bajo demanda']
+  visibilidad visibilidad [not null, default: 'catalogo', note: 'P4']
+  estado estado_ejercicio [not null, default: 'borrador']
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+}
+
+Table ejercicio_concepto {
+  ejercicio_id uuid [not null, ref: > ejercicio.id]
+  concepto_id uuid [not null, ref: > concepto.id]
+  peso peso_concepto [not null, default: 'principal']
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  indexes {
+    (ejercicio_id, concepto_id) [pk]
+  }
+}
+
+Table paso_resolucion {
+  id uuid [pk]
+  ejercicio_id uuid [not null, ref: > ejercicio.id]
+  orden int [not null]
+  descripcion text [not null]
+  resultado_intermedio text
+  concepto_id uuid [ref: > concepto.id, note: 'el concepto que aplica este paso']
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  indexes {
+    (ejercicio_id, orden) [unique]
+  }
+}
+
+Table opcion_respuesta {
+  id uuid [pk]
+  ejercicio_id uuid [not null, ref: > ejercicio.id]
+  texto text [not null]
+  es_correcta boolean [not null]
+  error_tipico_id uuid [ref: > error_tipico.id, note: 'el error que delata elegirla']
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+}
+
+Table error_tipico {
+  id uuid [pk]
+  concepto_id uuid [not null, ref: > concepto.id]
+  nombre varchar [not null, note: 'cambia mal el signo al trasponer']
+  descripcion text
+  como_ayudar text [note: 'qué decirle al alumno']
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+}
+
+Table intento {
+  id uuid [pk]
+  alumno_id uuid [not null, ref: > alumno.usuario_id]
+  ejercicio_id uuid [not null, ref: > ejercicio.id]
+  entrega_id uuid [ref: > entrega.id, note: 'si es de una tarea']
+  paso_ruta_id uuid [ref: > paso_ruta.id, note: 'si es de una ruta']
+  respuesta text
+  es_correcta boolean
+  puntuacion decimal(4,3) [note: '0 a 1, admite parcial']
+  feedback text
+  pistas_usadas int [not null, default: 0]
+  vio_solucion boolean [not null, default: false]
+  iniciado_en timestamptz [not null]
+  enviado_en timestamptz
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  Note: 'Cada respuesta de un alumno. Viene de una tarea (entrega_id) o de una ruta (paso_ruta_id): exactamente uno de los dos'
+}
+
+Table intento_error {
+  intento_id uuid [not null, ref: > intento.id]
+  error_tipico_id uuid [not null, ref: > error_tipico.id]
+  paso_id uuid [ref: > paso_resolucion.id, note: 'el paso en el que se equivocó']
+  detectado_por detector [not null]
+  confianza decimal(4,3)
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  indexes {
+    (intento_id, error_tipico_id) [pk]
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// 4. Tareas
+// ─────────────────────────────────────────────────────────────
+
+Table tarea {
+  id uuid [pk]
+  clase_id uuid [not null, ref: > clase.id]
+  profesor_id uuid [not null, ref: > profesor.usuario_id]
+  titulo varchar [not null]
+  instrucciones text
+  publicada_en timestamptz
+  fecha_entrega timestamptz
+  estado estado_tarea [not null, default: 'borrador']
+  max_intentos int [note: 'por ejercicio; nulo = sin límite']
+  mostrar_solucion mostrar_solucion [not null, default: 'al_entregar']
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+}
+
+Table tarea_ejercicio {
+  tarea_id uuid [not null, ref: > tarea.id]
+  ejercicio_id uuid [not null, ref: > ejercicio.id]
+  orden int [not null]
+  puntos decimal(5,2) [not null, default: 1]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  indexes {
+    (tarea_id, ejercicio_id) [pk]
+  }
+}
+
+Table entrega {
+  id uuid [pk]
+  tarea_id uuid [not null, ref: > tarea.id]
+  alumno_id uuid [not null, ref: > alumno.usuario_id]
+  estado estado_entrega [not null, default: 'pendiente']
+  entregada_en timestamptz
+  nota decimal(5,2) [note: 'calculada a partir de los intentos']
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  indexes {
+    (tarea_id, alumno_id) [unique]
+  }
+
+  Note: 'Se crea una por alumno destinatario al publicar la tarea'
+}
+
+// ─────────────────────────────────────────────────────────────
+// 5. Seguimiento
+// ─────────────────────────────────────────────────────────────
+
+Table dominio_concepto {
+  alumno_id uuid [not null, ref: > alumno.usuario_id]
+  concepto_id uuid [not null, ref: > concepto.id]
+  nivel decimal(4,3) [not null, default: 0, note: '0 a 1']
+  confianza decimal(4,3) [not null, default: 0, note: '0 a 1, crece con las respuestas']
+  intentos int [not null, default: 0]
+  aciertos int [not null, default: 0]
+  estado estado_concepto [not null, default: 'bloqueado']
+  desbloqueado_en timestamptz
+  ultima_practica_en timestamptz
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  indexes {
+    (alumno_id, concepto_id) [pk]
+  }
+
+  Note: 'Valor derivado: se recalcula a partir de los intentos'
+}
+
+Table preferencia_formato {
+  alumno_id uuid [not null, ref: > alumno.usuario_id]
+  formato_codigo varchar [not null, ref: > formato.codigo]
+  peso_declarado decimal(4,3) [note: 'del cuestionario inicial']
+  peso_inferido decimal(4,3) [note: 'de lo que consume y le funciona']
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  indexes {
+    (alumno_id, formato_codigo) [pk]
+  }
+}
+
+Table consumo_contenido {
+  id uuid [pk]
+  alumno_id uuid [not null, ref: > alumno.usuario_id]
+  representacion_id uuid [not null, ref: > representacion.id]
+  paso_ruta_id uuid [ref: > paso_ruta.id, note: 'si venía de una ruta']
+  iniciado_en timestamptz [not null]
+  segundos int
+  completado decimal(4,3) [note: '0 a 1']
+  valoracion int [note: 'te ha ayudado, de 1 a 5']
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+}
+
+Table observacion_clase {
+  id uuid [pk]
+  clase_id uuid [not null, ref: > clase.id]
+  tipo tipo_observacion [not null]
+  concepto_id uuid [ref: > concepto.id]
+  error_tipico_id uuid [ref: > error_tipico.id]
+  tarea_id uuid [ref: > tarea.id]
+  examen_id uuid [ref: > examen.id]
+  alumno_id uuid [ref: > alumno.usuario_id, note: 'solo en alertas individuales']
+  porcentaje_alumnos decimal(5,2)
+  respuestas_analizadas int
+  resumen text [note: 'redactado por la IA a partir de las cifras']
+  accion_sugerida text [note: 'p. ej. mandar una tarea de refuerzo']
+  prioridad int [not null, default: 0]
+  estado estado_observacion [not null, default: 'nueva']
+  generada_en timestamptz [not null]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  Note: 'La bandeja del profesor'
+}
+
+// ─────────────────────────────────────────────────────────────
+// 6. Exámenes y rutas
+// ─────────────────────────────────────────────────────────────
+
+Table examen {
+  id uuid [pk]
+  clase_id uuid [not null, ref: > clase.id]
+  profesor_id uuid [not null, ref: > profesor.usuario_id]
+  titulo varchar [not null]
+  fecha date [not null]
+  descripcion text
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+}
+
+Table examen_concepto {
+  examen_id uuid [not null, ref: > examen.id]
+  concepto_id uuid [not null, ref: > concepto.id]
+  peso int [not null, default: 2, note: '1 poco, 2 normal, 3 mucho']
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  indexes {
+    (examen_id, concepto_id) [pk]
+  }
+}
+
+Table resultado_examen {
+  examen_id uuid [not null, ref: > examen.id]
+  alumno_id uuid [not null, ref: > alumno.usuario_id]
+  nota decimal(5,2) [note: 'P10']
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  indexes {
+    (examen_id, alumno_id) [pk]
+  }
+}
+
+Table ruta {
+  id uuid [pk]
+  alumno_id uuid [not null, ref: > alumno.usuario_id]
+  tipo tipo_ruta [not null]
+  examen_id uuid [ref: > examen.id, note: 'si prepara un examen']
+  concepto_id uuid [ref: > concepto.id, note: 'si refuerza un concepto']
+  tipologia_id uuid [ref: > tipologia.id, note: 'si practica una tipología']
+  titulo varchar [not null]
+  fecha_objetivo date
+  estado estado_ruta [not null, default: 'activa']
+  recalculada_en timestamptz
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  Note: 'Una única estructura para el temario, la preparación de exámenes, el refuerzo y la práctica'
+}
+
+Table paso_ruta {
+  id uuid [pk]
+  ruta_id uuid [not null, ref: > ruta.id]
+  orden int [not null]
+  tipo tipo_paso [not null]
+  concepto_id uuid [not null, ref: > concepto.id]
+  representacion_id uuid [ref: > representacion.id, note: 'si es de contenido']
+  ejercicio_id uuid [ref: > ejercicio.id, note: 'si es un ejercicio']
+  prioridad decimal(4,3) [note: '0 a 1']
+  motivo varchar [note: 'lo fallas a menudo / repaso para no olvidarlo']
+  fecha_sugerida date
+  estado estado_paso [not null, default: 'pendiente']
+  completado_en timestamptz
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  indexes {
+    (ruta_id, orden) [unique]
+  }
+}
+
+Table notificacion {
+  id uuid [pk]
+  usuario_id uuid [not null, ref: > usuario.id]
+  tipo tipo_notificacion [not null]
+  titulo varchar [not null]
+  cuerpo text
+  enlace varchar [note: 'a qué pantalla lleva']
+  leida_en timestamptz
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+}
+
+// ─────────────────────────────────────────────────────────────
+// 7. Asistente
+// ─────────────────────────────────────────────────────────────
+
+Table conversacion {
+  id uuid [pk]
+  alumno_id uuid [not null, ref: > alumno.usuario_id]
+  ejercicio_id uuid [ref: > ejercicio.id, note: 'si está con un ejercicio']
+  intento_id uuid [ref: > intento.id, note: 'si viene de un fallo']
+  concepto_id uuid [ref: > concepto.id, note: 'si es una duda de teoría']
+  paso_ruta_id uuid [ref: > paso_ruta.id]
+  iniciada_en timestamptz [not null]
+  cerrada_en timestamptz
+  desenlace desenlace_conversacion
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+}
+
+Table mensaje {
+  id uuid [pk]
+  conversacion_id uuid [not null, ref: > conversacion.id]
+  autor autor_mensaje [not null]
+  contenido text [not null]
+  tipo tipo_mensaje
+  nivel_pista int [note: '1 pregunta, 2 conceptual, 3 concreta, 4 ejemplo análogo']
+  paso_id uuid [ref: > paso_resolucion.id, note: 'el paso de la resolución al que apunta']
+  revisar boolean [not null, default: false, note: 'el filtro detectó que casi da la solución']
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+}
+
+// ─────────────────────────────────────────────────────────────
+// 8. Gamificación
+// ─────────────────────────────────────────────────────────────
+
+Table movimiento_puntos {
+  id uuid [pk]
+  alumno_id uuid [not null, ref: > alumno.usuario_id]
+  clase_id uuid [ref: > clase.id, note: 'para el ranking de esa clase']
+  puntos int [not null]
+  motivo motivo_puntos [not null]
+  intento_id uuid [ref: > intento.id]
+  paso_ruta_id uuid [ref: > paso_ruta.id]
+  logro_id uuid [ref: > logro.id]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  Note: 'Libro de movimientos: cada punto sabe de dónde viene. El ranking es la suma por clase y periodo'
+}
+
+Table progreso_juego {
+  alumno_id uuid [pk, ref: - alumno.usuario_id]
+  puntos_totales int [not null, default: 0, note: 'suma de sus movimientos']
+  nivel_numero int [not null, default: 1, ref: > nivel_juego.numero]
+  racha_dias int [not null, default: 0]
+  mejor_racha int [not null, default: 0]
+  ultimo_dia_activo date
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  Note: 'Valor derivado de movimiento_puntos'
+}
+
+Table nivel_juego {
+  numero int [pk]
+  nombre varchar [not null, note: 'Aprendiz, Explorador…']
+  puntos_minimos int [not null, unique]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+}
+
+Table logro {
+  id uuid [pk]
+  codigo varchar [not null, unique]
+  nombre varchar [not null]
+  descripcion text
+  condicion jsonb [not null, note: 'p. ej. 7 días seguidos, dominar un bloque']
+  puntos int [not null, default: 0]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+}
+
+Table logro_alumno {
+  alumno_id uuid [not null, ref: > alumno.usuario_id]
+  logro_id uuid [not null, ref: > logro.id]
+  conseguido_en timestamptz [not null]
+  creado_en timestamptz [not null, default: `now()`]
+  actualizado_en timestamptz [not null, default: `now()`]
+
+  indexes {
+    (alumno_id, logro_id) [pk]
+  }
+}
